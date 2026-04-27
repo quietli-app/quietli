@@ -1,85 +1,99 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
-const MAX_LENGTH = 240;
+type BlipComposerProps = {
+  userId: string;
+  onPosted?: () => void | Promise<void>;
+};
 
-export function BlipComposer({ userId }: { userId: string }) {
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function BlipComposer({ userId, onPosted }: BlipComposerProps) {
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
+  const supabase = createClient();
 
-  async function submitBlip(e?: React.FormEvent<HTMLFormElement>) {
-    e?.preventDefault();
+  const [content, setContent] = useState("");
+  const [isPosting, setIsPosting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-    const value = content.trim();
-    if (!value || loading) return;
+  const maxLength = 240;
 
-    setLoading(true);
-    setError(null);
+  async function postBlip() {
+    const trimmedContent = content.trim();
+
+    if (!trimmedContent) return;
+    if (trimmedContent.length > maxLength) return;
+
+    setIsPosting(true);
+    setErrorMessage("");
 
     const { error } = await supabase.from("blips").insert({
       user_id: userId,
-      content: value,
+      content: trimmedContent,
     });
 
-    setLoading(false);
-
     if (error) {
-      setError(error.message);
+      console.error("Error posting blip:", error);
+      setErrorMessage("Something went wrong while posting your blip.");
+      setIsPosting(false);
       return;
     }
 
     setContent("");
-    router.refresh();
+    setIsPosting(false);
+
+    if (onPosted) {
+      await onPosted();
+    } else {
+      router.refresh();
+    }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      submitBlip();
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      postBlip();
     }
   }
 
   return (
-    <form
-      onSubmit={submitBlip}
-      className="mb-8 rounded-[2rem] border border-white/20 bg-white/30 p-5 backdrop-blur-xl"
-    >
+    <div className="mb-8 rounded-[2rem] border border-white/20 bg-white/20 p-6 backdrop-blur-xl">
       <label
-        htmlFor="blip"
-        className="mb-3 block text-sm font-bold text-black"
+        htmlFor="blip-content"
+        className="mb-4 block text-lg font-bold text-white"
       >
         What floated through your brain?
       </label>
 
       <textarea
-        id="blip"
+        id="blip-content"
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={(event) => setContent(event.target.value)}
         onKeyDown={handleKeyDown}
-        maxLength={MAX_LENGTH}
+        maxLength={maxLength}
         placeholder="A passing thought, a soft observation, a tiny idea..."
-        className="min-h-[120px] w-full resize-none rounded-[1.5rem] border border-white/30 bg-white/60 px-4 py-3 text-[#642B73] outline-none ring-0 placeholder:text-[#642B73]/60"
+        className="min-h-[140px] w-full resize-none rounded-[1.5rem] border border-white/30 bg-white/60 px-5 py-4 text-lg text-[#642B73] outline-none placeholder:text-[#8f6a99]"
       />
 
-      <div className="mt-4 flex items-center justify-between gap-4">
-        <p className="text-sm text-slate-100">{content.length}/{MAX_LENGTH}</p>
+      <div className="mt-5 flex items-center justify-between gap-4">
+        <p className="text-sm text-white/80">
+          {content.length}/{maxLength}
+        </p>
 
         <button
-          type="submit"
-          disabled={loading || !content.trim()}
-          className="rounded-full bg-gradient-to-r from-[#C6426E] via-[#A13E7A] to-[#642B73] px-5 py-2.5 text-sm font-medium text-white transition hover:brightness-110 hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+          type="button"
+          onClick={postBlip}
+          disabled={isPosting || !content.trim()}
+          className="rounded-full bg-gradient-to-r from-[#C6426E] via-[#A13E7A] to-[#642B73] px-6 py-3 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading ? "Blipping..." : "Post blip"}
+          {isPosting ? "Posting..." : "Post blip"}
         </button>
       </div>
 
-      {error ? <p className="mt-3 text-sm text-rose-200">{error}</p> : null}
-    </form>
+      {errorMessage ? (
+        <p className="mt-4 text-sm text-red-100">{errorMessage}</p>
+      ) : null}
+    </div>
   );
 }
