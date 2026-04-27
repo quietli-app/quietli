@@ -1,26 +1,157 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --site-bg: linear-gradient(
+    to bottom,
+    #a69ee8 0%,
+    #9589dc 32%,
+    #8676cf 62%,
+    #a590a3 86%,
+    #b8a1a9 100%
+  );
+
+  --site-text: #f8fafc;
+  --nav-bg: rgba(255, 255, 255, 0.12);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html[data-theme="dark"] {
+  --site-bg: linear-gradient(to bottom right, #120814, #1a0e24, #08050d);
+  --site-text: #f8fafc;
+  --nav-bg: rgba(18, 10, 22, 0.65);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  margin: 0;
   font-family: Arial, Helvetica, sans-serif;
+  background: var(--site-bg);
+  background-attachment: fixed;
+  color: var(--site-text);
+  transition:
+    background 0.4s ease,
+    color 0.35s ease;
+}
+
+.profile-theme-page {
+  background: var(--profile-gradient);
+  transition: background 0.4s ease;
+}
+
+html[data-theme="dark"] .profile-theme-page {
+  background: linear-gradient(to bottom right, #120814, #1a0e24, #08050d);
+}
+
+.nav-bar {
+  background: var(--nav-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: background 0.35s ease;
+}
+
+.blip-card {
+  background: var(--blip-bg);
+  transition:
+    background 0.35s ease,
+    color 0.35s ease;
+}
+
+html[data-theme="dark"] .blip-card {
+  background: var(--blip-dark-bg);
+}
+
+html.embed-mode .nav-bar {
+  display: none !important;
+}
+
+html.embed-mode body {
+  background: transparent !important;
+}
+
+body:has(.embed-page) .nav-bar {
+  display: none;
+}
+
+@keyframes splashFade {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.splash-fade {
+  animation: splashFade 2.1s ease forwards;
+}
+
+.splash-fade-delay {
+  opacity: 0;
+  animation: splashFade 2.1s ease 0.6s forwards;
+}
+
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 1.8s ease,
+    transform 1.8s ease;
+}
+
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes floatBlip {
+  0% {
+    transform: translateX(-35vw);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 0.38;
+  }
+
+  30% {
+    opacity: 0.15;
+  }
+
+  50% {
+    opacity: 0.42;
+  }
+
+  70% {
+    opacity: 0.18;
+  }
+
+  90% {
+    opacity: 0.4;
+  }
+
+  100% {
+    transform: translateX(165vw);
+    opacity: 0;
+  }
+}
+
+.floating-blip {
+  animation-name: floatBlip;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+img {
+  display: block;
+  max-width: 100%;
 }
