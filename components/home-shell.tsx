@@ -110,12 +110,15 @@ export function HomeShell({ initialFeed }: { initialFeed: FeedItem[] }) {
       <div className="grid gap-4">
         {feed.map((blip) => (
           <BlipCard
-            key={blip.id}
-            content={blip.content}
-            createdAt={blip.createdAt}
-            username={blip.username}
-            avatarUrl={blip.avatarUrl}
-          />
+  key={blip.id}
+  id={blip.id}
+  content={blip.content}
+  createdAt={blip.createdAt}
+  username={blip.username}
+  avatarUrl={blip.avatarUrl}
+  gradientTheme={blip.gradientTheme}
+  canDelete={profile?.id === blip.userId}
+/>
         ))}
       </div>
     </main>
