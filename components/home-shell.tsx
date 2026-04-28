@@ -20,6 +20,7 @@ type FeedItem = {
   username: string;
   avatarUrl: string | null;
   gradientTheme?: string | null;
+  profileVisibility?: string | null;
 };
 
 type RawBlip = {
@@ -32,11 +33,13 @@ type RawBlip = {
         username: string;
         avatar_url: string | null;
         gradient_theme: string | null;
+        profile_visibility: string | null;
       }
     | {
         username: string;
         avatar_url: string | null;
         gradient_theme: string | null;
+        profile_visibility: string | null;
       }[]
     | null;
 };
@@ -48,9 +51,6 @@ export function HomeShell() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
-
-  // Logged-in users should land on Following by default.
-  // Logged-out users will be shown World during initialLoad.
   const [feedView, setFeedView] = useState<FeedView>("following");
 
   async function getFollowingIds(currentUserId: string) {
@@ -96,7 +96,7 @@ export function HomeShell() {
         user_id,
         content,
         created_at,
-        profiles!inner(username, avatar_url, gradient_theme)
+        profiles!inner(username, avatar_url, gradient_theme, profile_visibility)
       `
       )
       .order("created_at", { ascending: false })
@@ -115,7 +115,7 @@ export function HomeShell() {
       return;
     }
 
-    const formattedFeed: FeedItem[] =
+    let formattedFeed: FeedItem[] =
       (data as RawBlip[] | null)?.map((blip) => {
         const profileData = Array.isArray(blip.profiles)
           ? blip.profiles[0]
@@ -129,8 +129,15 @@ export function HomeShell() {
           username: profileData?.username ?? "unknown",
           avatarUrl: profileData?.avatar_url ?? null,
           gradientTheme: profileData?.gradient_theme ?? "blush",
+          profileVisibility: profileData?.profile_visibility ?? "public",
         };
       }) ?? [];
+
+    if (view === "world") {
+      formattedFeed = formattedFeed.filter(
+        (blip) => blip.profileVisibility !== "private"
+      );
+    }
 
     setFeed(formattedFeed);
     setLoadingFeed(false);
@@ -151,7 +158,6 @@ export function HomeShell() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      // Logged-out visitors see World.
       if (!user) {
         setProfile(null);
         setAuthChecked(true);
@@ -175,7 +181,6 @@ export function HomeShell() {
         return;
       }
 
-      // Logged-in users see Following by default.
       setProfile(data);
       setAuthChecked(true);
       setFeedView("following");
@@ -220,7 +225,7 @@ export function HomeShell() {
                 : "text-white/80 hover:bg-white/10"
             }`}
           >
-            World
+            World View
           </button>
         </div>
 
@@ -230,7 +235,7 @@ export function HomeShell() {
           </p>
         ) : feedView === "world" ? (
           <p className="text-sm text-white/70">
-            The latest blips drifting through Quietli.
+            The latest public blips drifting through Quietli.
           </p>
         ) : null}
       </div>
@@ -262,7 +267,7 @@ export function HomeShell() {
             </>
           ) : (
             <>
-              <h2 className="text-2xl font-bold">No blips yet.</h2>
+              <h2 className="text-2xl font-bold">No public blips yet.</h2>
 
               <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
                 Quiet out here. Be the first to toss a thought into the world.

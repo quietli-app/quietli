@@ -9,6 +9,7 @@ import { GradientThemePicker } from "@/components/gradient-theme-picker";
 import { EmbedCodeBox } from "@/components/embed-code-box";
 import { ProfileNavTheme } from "@/components/profile-nav-theme";
 import { FollowButton } from "@/components/follow-button";
+import { ProfilePrivacyToggle } from "@/components/profile-privacy-toggle";
 import { profileBackgroundThemes } from "@/lib/gradient-themes";
 
 export default async function ProfilePage({
@@ -31,7 +32,7 @@ export default async function ProfilePage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, avatar_url, bio, gradient_theme")
+    .select("id, username, avatar_url, bio, gradient_theme, profile_visibility")
     .eq("username", username)
     .single();
 
@@ -47,12 +48,6 @@ export default async function ProfilePage({
   const profileBackground =
     profileBackgroundThemes[activeTheme] ?? profileBackgroundThemes.blush;
 
-  const { data: blips } = await supabase
-    .from("blips")
-    .select("id, user_id, content, created_at")
-    .eq("user_id", profile.id)
-    .order("created_at", { ascending: false });
-
   let initiallyFollowing = false;
 
   if (user && !isOwnProfile) {
@@ -65,6 +60,17 @@ export default async function ProfilePage({
 
     initiallyFollowing = Boolean(follow);
   }
+
+  const canViewBlips =
+    profile.profile_visibility === "public" || isOwnProfile || initiallyFollowing;
+
+  const { data: blips } = canViewBlips
+    ? await supabase
+        .from("blips")
+        .select("id, user_id, content, created_at")
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: false })
+    : { data: [] };
 
   const accentColor = "#ffffff";
 
@@ -167,9 +173,17 @@ export default async function ProfilePage({
               </div>
 
               <div>
-                <h1 className="text-4xl font-bold text-white">
-                  @{profile.username}
-                </h1>
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="text-4xl font-bold text-white">
+                    @{profile.username}
+                  </h1>
+
+                  {profile.profile_visibility === "private" ? (
+                    <span className="rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-white/75">
+                      Private
+                    </span>
+                  ) : null}
+                </div>
 
                 <p className="text-slate-100">
                   {profile.bio || "A stream of passing thoughts."}
@@ -187,6 +201,11 @@ export default async function ProfilePage({
                   currentBio={profile.bio}
                 />
 
+                <ProfilePrivacyToggle
+                  userId={profile.id}
+                  currentVisibility={profile.profile_visibility}
+                />
+
                 <GradientThemePicker
                   userId={profile.id}
                   currentTheme={profile.gradient_theme}
@@ -199,20 +218,39 @@ export default async function ProfilePage({
             ) : null}
           </section>
 
-          <div className="grid gap-4">
-            {blips?.map((blip) => (
-              <BlipCard
-                key={blip.id}
-                id={blip.id}
-                content={blip.content}
-                createdAt={blip.created_at}
-                username={profile.username}
-                avatarUrl={profile.avatar_url}
-                gradientTheme={profile.gradient_theme}
-                canDelete={showOwnerControls && user?.id === blip.user_id}
-              />
-            ))}
-          </div>
+          {!canViewBlips ? (
+            <div className="rounded-[2rem] border border-white/20 bg-white/20 p-8 text-center text-white backdrop-blur-xl">
+              <h2 className="text-2xl font-bold">This profile is private.</h2>
+
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
+                Follow @{profile.username} to see their blips when they allow
+                followers to view their quiet corner.
+              </p>
+            </div>
+          ) : blips && blips.length > 0 ? (
+            <div className="grid gap-4">
+              {blips.map((blip) => (
+                <BlipCard
+                  key={blip.id}
+                  id={blip.id}
+                  content={blip.content}
+                  createdAt={blip.created_at}
+                  username={profile.username}
+                  avatarUrl={profile.avatar_url}
+                  gradientTheme={profile.gradient_theme}
+                  canDelete={showOwnerControls && user?.id === blip.user_id}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[2rem] border border-white/20 bg-white/20 p-8 text-center text-white backdrop-blur-xl">
+              <h2 className="text-2xl font-bold">No blips yet.</h2>
+
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
+                This quiet corner is still empty.
+              </p>
+            </div>
+          )}
         </div>
       </main>
     </>
