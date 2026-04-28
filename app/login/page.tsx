@@ -1,52 +1,48 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "../../lib/supabase/client";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
+type AuthMode = "signin" | "signup";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"login" | "signup">("login");
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
   const router = useRouter();
   const supabase = createClient();
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-    setError(null);
+  const [mode, setMode] = useState<AuthMode>("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-    if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+  const [username, setUsername] = useState("");
+  const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-      setLoading(false);
+  function cleanUsername(value: string) {
+    return value
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "")
+      .slice(0, 24);
+  }
 
-      if (error) {
-        setError(error.message);
-        return;
-      }
+  async function handleSignIn(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-      setMessage("Account created. Check your email if confirmation is required, then log in.");
-      return;
-    }
+    setIsSubmitting(true);
+    setMessage("");
+    setErrorMessage("");
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    setLoading(false);
+    setIsSubmitting(false);
 
     if (error) {
-      setError(error.message);
+      setErrorMessage(error.message);
       return;
     }
 
@@ -54,70 +50,210 @@ export default function LoginPage() {
     router.refresh();
   }
 
+  async function handleSignUp(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setIsSubmitting(true);
+    setMessage("");
+    setErrorMessage("");
+
+    const finalUsername = cleanUsername(username);
+
+    if (!finalUsername || finalUsername.length < 3) {
+      setErrorMessage("Please choose a username with at least 3 characters.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setErrorMessage("Please choose a password with at least 6 characters.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("username", finalUsername)
+      .maybeSingle();
+
+    if (existingProfile) {
+      setErrorMessage("That username is already taken.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: {
+          username: finalUsername,
+        },
+      },
+    });
+
+    setIsSubmitting(false);
+
+    if (error) {
+      setErrorMessage(error.message);
+      return;
+    }
+
+    setMessage(
+      "Almost there. Check your email for a Quietli confirmation link, then come back and sign in."
+    );
+  }
+
+  const isSignUp = mode === "signup";
+
   return (
-    <main className="mx-auto flex min-h-[80vh] max-w-5xl items-center px-4">
-      <div className="w-full max-w-xl rounded-[2rem] border border-white/20 bg-white/20 p-8 backdrop-blur-xl">
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
-          {mode === "login" ? "Log in to Quietli" : "Create your Quietli account"}
-        </h1>
+    <main className="flex min-h-screen items-center justify-center px-4 py-16">
+      <div className="w-full max-w-md rounded-[2rem] border border-white/20 bg-white/20 p-6 text-white shadow-2xl backdrop-blur-xl">
+        <div className="mb-8 text-center">
+          <Link href="/" className="text-sm font-medium text-white/75">
+            ← Back to Quietli
+          </Link>
 
-        <p className="mt-2 text-slate-100">
-          {mode === "login"
-            ? "Use your email and password to return to your blips."
-            : "Create an account so your blips belong to your profile."}
-        </p>
+          <h1 className="mt-5 text-4xl font-bold">
+            {isSignUp ? "Join Quietli" : "Welcome back"}
+          </h1>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="w-full rounded-[1.25rem] border border-white/30 bg-white/60 px-4 py-3 text-[#642B73] outline-none placeholder:text-[#642B73]/60"
-            required
-          />
+          <p className="mt-3 text-sm leading-6 text-white/75">
+            {isSignUp
+              ? "Create your account, choose your username, and start posting quiet little blips."
+              : "Sign in to post blips, edit your profile, and manage your embed."}
+          </p>
+        </div>
 
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="w-full rounded-[1.25rem] border border-white/30 bg-white/60 px-4 py-3 text-[#642B73] outline-none placeholder:text-[#642B73]/60"
-            required
-            minLength={6}
-          />
+        <div className="mb-6 grid grid-cols-2 gap-2 rounded-full bg-white/15 p-1">
+          <button
+            type="button"
+            onClick={() => {
+              setMode("signin");
+              setMessage("");
+              setErrorMessage("");
+            }}
+            className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+              !isSignUp
+                ? "bg-white text-[#642B73]"
+                : "text-white hover:bg-white/10"
+            }`}
+          >
+            Sign in
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMode("signup");
+              setMessage("");
+              setErrorMessage("");
+            }}
+            className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+              isSignUp
+                ? "bg-white text-[#642B73]"
+                : "text-white hover:bg-white/10"
+            }`}
+          >
+            Sign up
+          </button>
+        </div>
+
+        <form
+          onSubmit={isSignUp ? handleSignUp : handleSignIn}
+          className="grid gap-4"
+        >
+          {isSignUp ? (
+            <div>
+              <label
+                htmlFor="username"
+                className="mb-2 block text-sm font-bold text-white"
+              >
+                Username
+              </label>
+
+              <input
+                id="username"
+                value={username}
+                onChange={(event) =>
+                  setUsername(cleanUsername(event.target.value))
+                }
+                placeholder="quietwallflower"
+                className="w-full rounded-2xl border border-white/30 bg-white/65 px-4 py-3 text-[#642B73] outline-none placeholder:text-[#8f6a99]"
+              />
+
+              <p className="mt-2 text-xs text-white/60">
+                Letters, numbers, and underscores only.
+              </p>
+            </div>
+          ) : null}
+
+          <div>
+            <label
+              htmlFor="email"
+              className="mb-2 block text-sm font-bold text-white"
+            >
+              Email
+            </label>
+
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              required
+              className="w-full rounded-2xl border border-white/30 bg-white/65 px-4 py-3 text-[#642B73] outline-none placeholder:text-[#8f6a99]"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="password"
+              className="mb-2 block text-sm font-bold text-white"
+            >
+              Password
+            </label>
+
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="••••••••"
+              required
+              className="w-full rounded-2xl border border-white/30 bg-white/65 px-4 py-3 text-[#642B73] outline-none placeholder:text-[#8f6a99]"
+            />
+          </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full rounded-full bg-gradient-to-r from-[#C6426E] via-[#A13E7A] to-[#642B73] px-5 py-3 font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isSubmitting}
+            className="mt-2 rounded-full bg-gradient-to-r from-[#C6426E] via-[#A13E7A] to-[#642B73] px-6 py-3 font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading
-              ? mode === "login"
-                ? "Logging in..."
-                : "Creating account..."
-              : mode === "login"
-                ? "Log in"
-                : "Create account"}
+            {isSubmitting
+              ? isSignUp
+                ? "Creating account..."
+                : "Signing in..."
+              : isSignUp
+                ? "Create account"
+                : "Sign in"}
           </button>
         </form>
 
-        <button
-          type="button"
-          onClick={() => {
-            setError(null);
-            setMessage(null);
-            setMode(mode === "login" ? "signup" : "login");
-          }}
-          className="mt-5 text-sm font-medium text-white underline underline-offset-4"
-        >
-          {mode === "login"
-            ? "Need an account? Create one"
-            : "Already have an account? Log in"}
-        </button>
+        {message ? (
+          <p className="mt-5 rounded-2xl border border-emerald-100/30 bg-emerald-100/15 p-4 text-sm leading-6 text-emerald-50">
+            {message}
+          </p>
+        ) : null}
 
-        {message ? <p className="mt-4 text-sm text-emerald-100">{message}</p> : null}
-        {error ? <p className="mt-4 text-sm text-rose-100">{error}</p> : null}
+        {errorMessage ? (
+          <p className="mt-5 rounded-2xl border border-red-100/30 bg-red-100/15 p-4 text-sm leading-6 text-red-50">
+            {errorMessage}
+          </p>
+        ) : null}
       </div>
     </main>
   );
