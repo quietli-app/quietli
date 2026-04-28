@@ -85,26 +85,26 @@ export function HomeShell() {
       .eq("follower_id", currentUserId);
 
     if (error) {
-      console.error("Error loading follows:", error);
+      console.error("Error loading following list:", error);
       return [];
     }
 
     return data?.map((follow) => follow.following_id) ?? [];
   }
 
-  async function loadFeed(view: FeedView = feedView) {
+  async function loadFeed(view: FeedView = feedView, currentProfile = profile) {
     setLoadingFeed(true);
 
     let followingIds: string[] = [];
 
     if (view === "following") {
-      if (!profile?.id) {
+      if (!currentProfile?.id) {
         setFeed([]);
         setLoadingFeed(false);
         return;
       }
 
-      followingIds = await getFollowingIds(profile.id);
+      followingIds = await getFollowingIds(currentProfile.id);
 
       if (followingIds.length === 0) {
         setFeed([]);
@@ -162,27 +162,49 @@ export function HomeShell() {
   }
 
   async function refreshFeed() {
-    await loadFeed(feedView);
+    await loadFeed(feedView, profile);
   }
 
   async function changeFeedView(view: FeedView) {
     setFeedView(view);
-    await loadFeed(view);
+    await loadFeed(view, profile);
   }
 
   useEffect(() => {
     async function initialLoad() {
-      await loadProfile();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setProfile(null);
+        setAuthChecked(true);
+        await loadFeed("world", null);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .eq("id", user.id)
+        .single();
+
+      if (error || !data) {
+        console.error("Error loading profile:", error);
+        setProfile(null);
+        setAuthChecked(true);
+        await loadFeed("world", null);
+        return;
+      }
+
+      setProfile(data);
+      setAuthChecked(true);
+      await loadFeed("world", data);
     }
 
     initialLoad();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (authChecked) {
-      loadFeed(feedView);
-    }
-  }, [authChecked, profile?.id]);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -240,6 +262,7 @@ export function HomeShell() {
               <h2 className="text-2xl font-bold">
                 You’re not following anyone yet.
               </h2>
+
               <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
                 Visit someone’s profile and tap Follow. Their blips will start
                 showing up here.
@@ -248,6 +271,7 @@ export function HomeShell() {
           ) : (
             <>
               <h2 className="text-2xl font-bold">No blips yet.</h2>
+
               <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
                 Quiet out here. Be the first to toss a thought into the world.
               </p>
