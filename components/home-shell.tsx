@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { BlipComposer } from "@/components/blip-composer";
 import { BlipCard } from "@/components/blip-card";
 
-type FeedView = "world" | "following";
+type FeedView = "following" | "world";
 
 type UserProfile = {
   id: string;
@@ -48,35 +48,10 @@ export function HomeShell() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
-  const [feedView, setFeedView] = useState<FeedView>("world");
 
-  async function loadProfile() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      setProfile(null);
-      setAuthChecked(true);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, username")
-      .eq("id", user.id)
-      .single();
-
-    if (error || !data) {
-      console.error("Error loading profile:", error);
-      setProfile(null);
-      setAuthChecked(true);
-      return;
-    }
-
-    setProfile(data);
-    setAuthChecked(true);
-  }
+  // Logged-in users should land on Following by default.
+  // Logged-out users will be shown World during initialLoad.
+  const [feedView, setFeedView] = useState<FeedView>("following");
 
   async function getFollowingIds(currentUserId: string) {
     const { data, error } = await supabase
@@ -92,7 +67,7 @@ export function HomeShell() {
     return data?.map((follow) => follow.following_id) ?? [];
   }
 
-  async function loadFeed(view: FeedView = feedView, currentProfile = profile) {
+  async function loadFeed(view: FeedView, currentProfile: UserProfile | null) {
     setLoadingFeed(true);
 
     let followingIds: string[] = [];
@@ -176,9 +151,11 @@ export function HomeShell() {
         data: { user },
       } = await supabase.auth.getUser();
 
+      // Logged-out visitors see World.
       if (!user) {
         setProfile(null);
         setAuthChecked(true);
+        setFeedView("world");
         await loadFeed("world", null);
         return;
       }
@@ -193,13 +170,16 @@ export function HomeShell() {
         console.error("Error loading profile:", error);
         setProfile(null);
         setAuthChecked(true);
+        setFeedView("world");
         await loadFeed("world", null);
         return;
       }
 
+      // Logged-in users see Following by default.
       setProfile(data);
       setAuthChecked(true);
-      await loadFeed("world", data);
+      setFeedView("following");
+      await loadFeed("following", data);
     }
 
     initialLoad();
@@ -220,18 +200,6 @@ export function HomeShell() {
         <div className="rounded-full border border-white/20 bg-white/15 p-1 backdrop-blur-xl">
           <button
             type="button"
-            onClick={() => changeFeedView("world")}
-            className={`rounded-full px-5 py-2 text-sm font-bold transition ${
-              feedView === "world"
-                ? "bg-white text-[#642B73]"
-                : "text-white/80 hover:bg-white/10"
-            }`}
-          >
-            World
-          </button>
-
-          <button
-            type="button"
             onClick={() => changeFeedView("following")}
             disabled={!profile}
             className={`rounded-full px-5 py-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
@@ -242,11 +210,27 @@ export function HomeShell() {
           >
             Following
           </button>
+
+          <button
+            type="button"
+            onClick={() => changeFeedView("world")}
+            className={`rounded-full px-5 py-2 text-sm font-bold transition ${
+              feedView === "world"
+                ? "bg-white text-[#642B73]"
+                : "text-white/80 hover:bg-white/10"
+            }`}
+          >
+            World
+          </button>
         </div>
 
         {feedView === "following" && profile ? (
           <p className="text-sm text-white/70">
             Blips from the quiet corners you follow.
+          </p>
+        ) : feedView === "world" ? (
+          <p className="text-sm text-white/70">
+            The latest blips drifting through Quietli.
           </p>
         ) : null}
       </div>
@@ -267,6 +251,14 @@ export function HomeShell() {
                 Visit someone’s profile and tap Follow. Their blips will start
                 showing up here.
               </p>
+
+              <button
+                type="button"
+                onClick={() => changeFeedView("world")}
+                className="mt-5 rounded-full bg-white px-5 py-2 text-sm font-bold text-[#642B73] transition hover:bg-white/90"
+              >
+                View World
+              </button>
             </>
           ) : (
             <>
