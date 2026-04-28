@@ -57,3 +57,23 @@ export const profileBackgroundThemes: Record<string, string> = {
   mint:
     "linear-gradient(to bottom right, #064e3b, #134e4a, #083344)",
 };
+
+export const navBackgroundThemes: Record<string, string> = {
+  blush:
+    "linear-gradient(135deg, rgba(166,158,232,0.34), rgba(134,118,207,0.26), rgba(184,161,169,0.24))",
+
+  plum:
+    "linear-gradient(135deg, rgba(75,29,94,0.42), rgba(55,20,74,0.34), rgba(30,15,44,0.32))",
+
+  sunset:
+    "linear-gradient(135deg, rgba(90,30,15,0.38), rgba(107,24,59,0.34), rgba(46,16,101,0.32))",
+
+  lavender:
+    "linear-gradient(135deg, rgba(59,26,117,0.36), rgba(91,17,101,0.32), rgba(122,21,56,0.28))",
+
+  ocean:
+    "linear-gradient(135deg, rgba(11,60,73,0.38), rgba(30,58,138,0.34), rgba(30,27,75,0.32))",
+
+  mint:
+    "linear-gradient(135deg, rgba(6,78,59,0.38), rgba(19,78,74,0.34), rgba(8,51,68,0.32))",
+};
