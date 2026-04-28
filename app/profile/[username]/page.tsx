@@ -7,10 +7,7 @@ import { ProfileEditor } from "@/components/profile-editor";
 import { GradientThemePicker } from "@/components/gradient-theme-picker";
 import { EmbedCodeBox } from "@/components/embed-code-box";
 import { ProfileNavTheme } from "@/components/profile-nav-theme";
-import {
-  navBackgroundThemes,
-  profileBackgroundThemes,
-} from "@/lib/gradient-themes";
+import { profileBackgroundThemes } from "@/lib/gradient-themes";
 
 export default async function ProfilePage({
   params,
@@ -41,9 +38,6 @@ export default async function ProfilePage({
   const profileBackground =
     profileBackgroundThemes[activeTheme] ?? profileBackgroundThemes.blush;
 
-  const navBackground =
-    navBackgroundThemes[activeTheme] ?? navBackgroundThemes.blush;
-
   const { data: blips } = await supabase
     .from("blips")
     .select("id, user_id, content, created_at")
@@ -54,7 +48,10 @@ export default async function ProfilePage({
 
   return (
     <>
-      <ProfileNavTheme navBackground={navBackground} />
+      <ProfileNavTheme
+        siteBackground={profileBackground}
+        navBackground="rgba(255, 255, 255, 0.10)"
+      />
 
       <main
         className="profile-theme-page min-h-screen px-4 py-10"
