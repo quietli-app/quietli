@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BlipCard } from "@/components/blip-card";
@@ -11,10 +12,16 @@ import { profileBackgroundThemes } from "@/lib/gradient-themes";
 
 export default async function ProfilePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ username: string }>;
+  searchParams: Promise<{ preview?: string }>;
 }) {
   const { username } = await params;
+  const { preview } = await searchParams;
+
+  const isPublicPreview = preview === "public";
+
   const supabase = await createClient();
 
   const {
@@ -32,6 +39,7 @@ export default async function ProfilePage({
   }
 
   const isOwnProfile = user?.id === profile.id;
+  const showOwnerControls = isOwnProfile && !isPublicPreview;
 
   const activeTheme = profile.gradient_theme ?? "blush";
 
@@ -62,8 +70,28 @@ export default async function ProfilePage({
         }
       >
         <div className="mx-auto max-w-5xl">
-          <section className="mb-8 rounded-[2rem] border border-white/20 bg-white/20 p-6 backdrop-blur-xl">
-            <div className="flex items-center gap-5">
+          <section className="relative mb-8 rounded-[2rem] border border-white/20 bg-white/20 p-6 backdrop-blur-xl">
+            {isOwnProfile ? (
+              <div className="absolute right-5 top-5">
+                {isPublicPreview ? (
+                  <Link
+                    href={`/profile/${profile.username}`}
+                    className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30"
+                  >
+                    Back to editor
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/profile/${profile.username}?preview=public`}
+                    className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30"
+                  >
+                    Public preview
+                  </Link>
+                )}
+              </div>
+            ) : null}
+
+            <div className="flex items-center gap-5 pr-36">
               <div
                 style={{
                   padding: "3px",
@@ -122,7 +150,7 @@ export default async function ProfilePage({
               </div>
             </div>
 
-            {isOwnProfile ? (
+            {showOwnerControls ? (
               <div className="mt-6 grid gap-4">
                 <AvatarUpload userId={profile.id} />
 
@@ -154,7 +182,7 @@ export default async function ProfilePage({
                 username={profile.username}
                 avatarUrl={profile.avatar_url}
                 gradientTheme={profile.gradient_theme}
-                canDelete={user?.id === blip.user_id}
+                canDelete={showOwnerControls && user?.id === blip.user_id}
               />
             ))}
           </div>
