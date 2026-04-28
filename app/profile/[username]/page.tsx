@@ -8,6 +8,7 @@ import { ProfileEditor } from "@/components/profile-editor";
 import { GradientThemePicker } from "@/components/gradient-theme-picker";
 import { EmbedCodeBox } from "@/components/embed-code-box";
 import { ProfileNavTheme } from "@/components/profile-nav-theme";
+import { FollowButton } from "@/components/follow-button";
 import { profileBackgroundThemes } from "@/lib/gradient-themes";
 
 export default async function ProfilePage({
@@ -52,6 +53,19 @@ export default async function ProfilePage({
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false });
 
+  let initiallyFollowing = false;
+
+  if (user && !isOwnProfile) {
+    const { data: follow } = await supabase
+      .from("follows")
+      .select("id")
+      .eq("follower_id", user.id)
+      .eq("following_id", profile.id)
+      .maybeSingle();
+
+    initiallyFollowing = Boolean(follow);
+  }
+
   const accentColor = "#ffffff";
 
   return (
@@ -71,9 +85,9 @@ export default async function ProfilePage({
       >
         <div className="mx-auto max-w-5xl">
           <section className="relative mb-8 rounded-[2rem] border border-white/20 bg-white/20 p-6 backdrop-blur-xl">
-            {isOwnProfile ? (
-              <div className="absolute right-5 top-5">
-                {isPublicPreview ? (
+            <div className="absolute right-5 top-5">
+              {isOwnProfile ? (
+                isPublicPreview ? (
                   <Link
                     href={`/profile/${profile.username}`}
                     className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30"
@@ -87,11 +101,24 @@ export default async function ProfilePage({
                   >
                     Public preview
                   </Link>
-                )}
-              </div>
-            ) : null}
+                )
+              ) : user ? (
+                <FollowButton
+                  currentUserId={user.id}
+                  profileUserId={profile.id}
+                  initiallyFollowing={initiallyFollowing}
+                />
+              ) : (
+                <Link
+                  href="/login"
+                  className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30"
+                >
+                  Sign in to follow
+                </Link>
+              )}
+            </div>
 
-            <div className="flex items-center gap-5 pr-36">
+            <div className="flex items-center gap-5 pr-40">
               <div
                 style={{
                   padding: "3px",

@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import { BlipComposer } from "@/components/blip-composer";
 import { BlipCard } from "@/components/blip-card";
 
+type FeedView = "world" | "following";
+
 type UserProfile = {
   id: string;
   username: string;
@@ -46,6 +48,7 @@ export function HomeShell() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
+  const [feedView, setFeedView] = useState<FeedView>("world");
 
   async function loadProfile() {
     const {
@@ -75,10 +78,42 @@ export function HomeShell() {
     setAuthChecked(true);
   }
 
-  async function loadFeed() {
+  async function getFollowingIds(currentUserId: string) {
+    const { data, error } = await supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", currentUserId);
+
+    if (error) {
+      console.error("Error loading follows:", error);
+      return [];
+    }
+
+    return data?.map((follow) => follow.following_id) ?? [];
+  }
+
+  async function loadFeed(view: FeedView = feedView) {
     setLoadingFeed(true);
 
-    const { data, error } = await supabase
+    let followingIds: string[] = [];
+
+    if (view === "following") {
+      if (!profile?.id) {
+        setFeed([]);
+        setLoadingFeed(false);
+        return;
+      }
+
+      followingIds = await getFollowingIds(profile.id);
+
+      if (followingIds.length === 0) {
+        setFeed([]);
+        setLoadingFeed(false);
+        return;
+      }
+    }
+
+    let query = supabase
       .from("blips")
       .select(
         `
@@ -91,6 +126,12 @@ export function HomeShell() {
       )
       .order("created_at", { ascending: false })
       .limit(50);
+
+    if (view === "following") {
+      query = query.in("user_id", followingIds);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("Error loading feed:", error);
@@ -121,13 +162,27 @@ export function HomeShell() {
   }
 
   async function refreshFeed() {
-    await loadFeed();
+    await loadFeed(feedView);
+  }
+
+  async function changeFeedView(view: FeedView) {
+    setFeedView(view);
+    await loadFeed(view);
   }
 
   useEffect(() => {
-    loadProfile();
-    loadFeed();
+    async function initialLoad() {
+      await loadProfile();
+    }
+
+    initialLoad();
   }, []);
+
+  useEffect(() => {
+    if (authChecked) {
+      loadFeed(feedView);
+    }
+  }, [authChecked, profile?.id]);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -139,9 +194,65 @@ export function HomeShell() {
         </div>
       )}
 
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="rounded-full border border-white/20 bg-white/15 p-1 backdrop-blur-xl">
+          <button
+            type="button"
+            onClick={() => changeFeedView("world")}
+            className={`rounded-full px-5 py-2 text-sm font-bold transition ${
+              feedView === "world"
+                ? "bg-white text-[#642B73]"
+                : "text-white/80 hover:bg-white/10"
+            }`}
+          >
+            World
+          </button>
+
+          <button
+            type="button"
+            onClick={() => changeFeedView("following")}
+            disabled={!profile}
+            className={`rounded-full px-5 py-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+              feedView === "following"
+                ? "bg-white text-[#642B73]"
+                : "text-white/80 hover:bg-white/10"
+            }`}
+          >
+            Following
+          </button>
+        </div>
+
+        {feedView === "following" && profile ? (
+          <p className="text-sm text-white/70">
+            Blips from the quiet corners you follow.
+          </p>
+        ) : null}
+      </div>
+
       {loadingFeed ? (
         <div className="rounded-[2rem] border border-white/20 bg-white/20 p-5 text-white/80 backdrop-blur-xl">
           Loading blips...
+        </div>
+      ) : feed.length === 0 ? (
+        <div className="rounded-[2rem] border border-white/20 bg-white/20 p-8 text-center text-white backdrop-blur-xl">
+          {feedView === "following" ? (
+            <>
+              <h2 className="text-2xl font-bold">
+                You’re not following anyone yet.
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
+                Visit someone’s profile and tap Follow. Their blips will start
+                showing up here.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold">No blips yet.</h2>
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
+                Quiet out here. Be the first to toss a thought into the world.
+              </p>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid gap-4">
