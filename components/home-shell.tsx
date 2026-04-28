@@ -197,7 +197,7 @@ export function HomeShell() {
       )}
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="rounded-full border border-white/20 bg-white/15 p-1 backdrop-blur-xl">
+        <div className="flex gap-2 rounded-full border border-white/20 bg-white/15 p-1 backdrop-blur-xl">
           <button
             type="button"
             onClick={() => changeFeedView("following")}
