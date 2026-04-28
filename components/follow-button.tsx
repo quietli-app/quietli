@@ -70,16 +70,15 @@ export function FollowButton({
     router.refresh();
   }
 
-  const buttonText =
-    isLoading
-      ? "One sec..."
-      : status === "accepted"
-        ? "Following"
-        : status === "pending"
-          ? "Requested"
-          : isPrivateProfile
-            ? "Request follow"
-            : "Follow";
+  const buttonText = isLoading
+    ? "One sec..."
+    : status === "accepted"
+      ? "Unfollow"
+      : status === "pending"
+        ? "Cancel request"
+        : isPrivateProfile
+          ? "Request follow"
+          : "Follow";
 
   return (
     <button
