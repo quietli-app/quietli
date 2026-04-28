@@ -58,7 +58,7 @@ export default function LoginPage() {
     <main className="mx-auto flex min-h-[80vh] max-w-5xl items-center px-4">
       <div className="w-full max-w-xl rounded-[2rem] border border-white/20 bg-white/20 p-8 backdrop-blur-xl">
         <h1 className="text-3xl font-semibold tracking-tight text-white">
-          {mode === "login" ? "Log in to Brain Blip" : "Create your Brain Blip account"}
+          {mode === "login" ? "Log in to Quietli" : "Create your Quietli account"}
         </h1>
 
         <p className="mt-2 text-slate-100">

@@ -62,7 +62,7 @@ export function ProfileEditor({
     >
       <p className="mb-2 text-xl font-bold text-white">Profile settings</p>
       <p className="mb-4 text-base text-slate-100">
-        Update how you appear on Brain Blip.
+        Update how you appear on Quietli.
       </p>
 
       <label className="mb-2 block text-sm font-bold text-white">

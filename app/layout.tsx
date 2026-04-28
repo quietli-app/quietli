@@ -4,8 +4,8 @@ import { TopNav } from "@/components/top-nav";
 import { ThemeInitializer } from "@/components/theme-initializer";
 
 export const metadata: Metadata = {
-  title: "Brain Blip",
-  description: "A non-social social feed for passing thoughts.",
+  title: "Quietli",
+  description: "Social media for wallflowers.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
