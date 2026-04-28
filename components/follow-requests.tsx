@@ -62,12 +62,18 @@ export function FollowRequests({ requests }: FollowRequestsProps) {
   }
 
   return (
-    <div className="rounded-[1.5rem] border border-white/20 bg-white/20 p-5 backdrop-blur-xl">
-      <p className="mb-2 text-xl font-bold text-white">Follow requests</p>
+    <div className="relative rounded-[1.5rem] border border-white/20 bg-white/20 p-5 backdrop-blur-xl">
+      <div className="absolute right-5 top-5 flex h-7 min-w-7 items-center justify-center rounded-full bg-red-500 px-2 text-xs font-extrabold text-white shadow-lg shadow-red-950/20">
+        {requests.length}
+      </div>
 
-      <p className="mb-4 text-base leading-7 text-slate-100">
-        These people asked to follow your private Quietli page.
-      </p>
+      <div className="pr-12">
+        <p className="mb-2 text-xl font-bold text-white">Follow requests</p>
+
+        <p className="mb-4 text-base leading-7 text-slate-100">
+          These people asked to follow your private Quietli page.
+        </p>
+      </div>
 
       <div className="grid gap-3">
         {requests.map((request) => (
@@ -98,7 +104,7 @@ export function FollowRequests({ requests }: FollowRequestsProps) {
                 type="button"
                 onClick={() => approveRequest(request.id)}
                 disabled={loadingId === request.id}
-                className="rounded-full bg-white px-4 py-2 text-sm font-bold text-[#642B73] transition hover:bg-white/90 disabled:opacity-60"
+                className="rounded-full bg-white px-4 py-2 text-sm font-bold text-[#642B73] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Approve
               </button>
@@ -107,7 +113,7 @@ export function FollowRequests({ requests }: FollowRequestsProps) {
                 type="button"
                 onClick={() => denyRequest(request.id)}
                 disabled={loadingId === request.id}
-                className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-bold text-white transition hover:bg-white/30 disabled:opacity-60"
+                className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-bold text-white transition hover:bg-white/30 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Deny
               </button>
