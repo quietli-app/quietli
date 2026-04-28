@@ -63,7 +63,7 @@ export function FollowRequests({ requests }: FollowRequestsProps) {
 
   return (
     <div className="relative rounded-[1.5rem] border border-white/20 bg-white/20 p-5 backdrop-blur-xl">
-      <div className="absolute right-5 top-5 flex h-7 min-w-7 items-center justify-center rounded-full bg-[#d46b73] px-2 text-xs font-extrabold text-white">
+      <div className="absolute right-5 top-5 flex h-7 min-w-7 items-center justify-center rounded-full bg-[#e25561] px-2 text-xs font-extrabold text-white">
         {requests.length}
       </div>
 
