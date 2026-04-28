@@ -9,8 +9,11 @@ import { GradientThemePicker } from "@/components/gradient-theme-picker";
 import { EmbedCodeBox } from "@/components/embed-code-box";
 import { ProfileNavTheme } from "@/components/profile-nav-theme";
 import { FollowButton } from "@/components/follow-button";
+import { FollowRequests } from "@/components/follow-requests";
 import { ProfilePrivacyToggle } from "@/components/profile-privacy-toggle";
 import { profileBackgroundThemes } from "@/lib/gradient-themes";
+
+type FollowStatus = "none" | "pending" | "accepted";
 
 export default async function ProfilePage({
   params,
@@ -48,21 +51,25 @@ export default async function ProfilePage({
   const profileBackground =
     profileBackgroundThemes[activeTheme] ?? profileBackgroundThemes.blush;
 
-  let initiallyFollowing = false;
+  let followStatus: FollowStatus = "none";
 
   if (user && !isOwnProfile) {
     const { data: follow } = await supabase
       .from("follows")
-      .select("id")
+      .select("status")
       .eq("follower_id", user.id)
       .eq("following_id", profile.id)
       .maybeSingle();
 
-    initiallyFollowing = Boolean(follow);
+    if (follow?.status === "accepted" || follow?.status === "pending") {
+      followStatus = follow.status;
+    }
   }
 
   const canViewBlips =
-    profile.profile_visibility === "public" || isOwnProfile || initiallyFollowing;
+    profile.profile_visibility === "public" ||
+    isOwnProfile ||
+    followStatus === "accepted";
 
   const { data: blips } = canViewBlips
     ? await supabase
@@ -71,6 +78,47 @@ export default async function ProfilePage({
         .eq("user_id", profile.id)
         .order("created_at", { ascending: false })
     : { data: [] };
+
+  let followRequests:
+    | {
+        id: string;
+        followerId: string;
+        username: string;
+        avatarUrl: string | null;
+      }[]
+    = [];
+
+  if (showOwnerControls) {
+    const { data: pendingRequests } = await supabase
+      .from("follows")
+      .select("id, follower_id")
+      .eq("following_id", profile.id)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+
+    const followerIds = pendingRequests?.map((request) => request.follower_id) ?? [];
+
+    if (followerIds.length > 0) {
+      const { data: requestProfiles } = await supabase
+        .from("profiles")
+        .select("id, username, avatar_url")
+        .in("id", followerIds);
+
+      followRequests =
+        pendingRequests?.map((request) => {
+          const requestProfile = requestProfiles?.find(
+            (item) => item.id === request.follower_id
+          );
+
+          return {
+            id: request.id,
+            followerId: request.follower_id,
+            username: requestProfile?.username ?? "unknown",
+            avatarUrl: requestProfile?.avatar_url ?? null,
+          };
+        }) ?? [];
+    }
+  }
 
   const accentColor = "#ffffff";
 
@@ -112,7 +160,8 @@ export default async function ProfilePage({
                 <FollowButton
                   currentUserId={user.id}
                   profileUserId={profile.id}
-                  initiallyFollowing={initiallyFollowing}
+                  initialStatus={followStatus}
+                  profileVisibility={profile.profile_visibility}
                 />
               ) : (
                 <Link
@@ -206,6 +255,8 @@ export default async function ProfilePage({
                   currentVisibility={profile.profile_visibility}
                 />
 
+                <FollowRequests requests={followRequests} />
+
                 <GradientThemePicker
                   userId={profile.id}
                   currentTheme={profile.gradient_theme}
@@ -223,8 +274,8 @@ export default async function ProfilePage({
               <h2 className="text-2xl font-bold">This profile is private.</h2>
 
               <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
-                Follow @{profile.username} to see their blips when they allow
-                followers to view their quiet corner.
+                Request to follow @{profile.username} to see their blips if they
+                approve your request.
               </p>
             </div>
           ) : blips && blips.length > 0 ? (

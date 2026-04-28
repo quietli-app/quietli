@@ -57,7 +57,8 @@ export function HomeShell() {
     const { data, error } = await supabase
       .from("follows")
       .select("following_id")
-      .eq("follower_id", currentUserId);
+      .eq("follower_id", currentUserId)
+      .eq("status", "accepted");
 
     if (error) {
       console.error("Error loading following list:", error);
