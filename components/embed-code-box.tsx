@@ -9,7 +9,7 @@ type EmbedCodeBoxProps = {
 type EmbedMode = "latest" | "feed";
 type EmbedHeight = 100 | 200 | 300 | 420 | 600;
 
-const latestHeightOptions: EmbedHeight[] = [100, 200, 300, 420, 600];
+const latestHeightOptions: EmbedHeight[] = [100, 200];
 const feedHeightOptions: EmbedHeight[] = [300, 420, 600];
 
 export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
