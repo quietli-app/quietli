@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AccountSettingsForm } from "@/components/account-settings-form";
 import { AccountDataTools } from "@/components/account-data-tools";
+import { AccountPlanCard } from "@/components/account-plan-card";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -17,13 +18,17 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("username")
+    .select("username, plan")
     .eq("id", user.id)
     .single();
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
       <AccountSettingsForm email={user.email ?? null} />
+
+      <section className="mt-5">
+        <AccountPlanCard plan={profile?.plan ?? "free"} />
+      </section>
 
       <section className="mt-5">
         <AccountDataTools userId={user.id} email={user.email ?? null} />
@@ -47,6 +52,13 @@ export default async function SettingsPage() {
             className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-normal text-white backdrop-blur-md transition hover:bg-white/30"
           >
             Discover
+          </Link>
+
+          <Link
+            href="/plus"
+            className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-normal text-white backdrop-blur-md transition hover:bg-white/30"
+          >
+            Plus
           </Link>
 
           <Link
