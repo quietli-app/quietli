@@ -160,12 +160,12 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
         onKeyDown={handleKeyDown}
         maxLength={MAX_LENGTH}
         placeholder="What floated through your brain?"
-        className="min-h-32 w-full resize-none rounded-[1.5rem] border border-white/20 bg-white/50 p-4 text-lg font-normal text-[#642B73] outline-none placeholder:font-light placeholder:text-[#8f6a99]/60"
+        className="min-h-32 w-full resize-none rounded-[1.5rem] border border-white/20 bg-white/50 p-4 text-base font-light leading-7 tracking-[-0.01em] text-[#642B73] outline-none placeholder:text-base placeholder:font-light placeholder:tracking-[-0.01em] placeholder:text-[#8f6a99]/65"
       />
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <p
-          className={`text-sm font-normal ${
+          className={`text-sm font-light ${
             charactersLeft < 20 ? "text-white" : "text-white/65"
           }`}
         >
