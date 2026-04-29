@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
@@ -149,6 +150,8 @@ function AvatarBubble({
 }
 
 export default function QuietliMobileHome() {
+  const router = useRouter();
+
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
 
@@ -576,7 +579,10 @@ export default function QuietliMobileHome() {
           }
         >
           <View style={styles.mobileHeader}>
-            <View style={styles.mobileHeaderProfile}>
+            <Pressable
+              style={styles.mobileHeaderProfile}
+              onPress={() => router.push(`/profile/${currentUsername}`)}
+            >
               <AvatarBubble
                 username={currentUsername}
                 avatarUrl={profile?.avatar_url ?? null}
@@ -587,7 +593,7 @@ export default function QuietliMobileHome() {
                 <Text style={styles.logoText}>Quietli</Text>
                 <Text style={styles.headerSubtext}>@{currentUsername}</Text>
               </View>
-            </View>
+            </Pressable>
 
             <Pressable style={styles.signOutButton} onPress={signOut}>
               <Text style={styles.signOutButtonText}>Sign out</Text>
@@ -616,7 +622,8 @@ export default function QuietliMobileHome() {
               <Pressable
                 style={[
                   styles.postButton,
-                  (isSubmitting || cooldownSeconds > 0) && styles.disabledButton,
+                  (isSubmitting || cooldownSeconds > 0) &&
+                    styles.disabledButton,
                 ]}
                 onPress={postBlip}
                 disabled={isSubmitting || cooldownSeconds > 0}
@@ -719,7 +726,10 @@ export default function QuietliMobileHome() {
                     { backgroundColor: getBlipCardColor(blip.gradientTheme) },
                   ]}
                 >
-                  <View style={styles.blipHeader}>
+                  <Pressable
+                    style={styles.blipHeader}
+                    onPress={() => router.push(`/profile/${blip.username}`)}
+                  >
                     <AvatarBubble
                       username={blip.username}
                       avatarUrl={blip.avatarUrl}
@@ -731,7 +741,7 @@ export default function QuietliMobileHome() {
                         {formatDate(blip.createdAt)}
                       </Text>
                     </View>
-                  </View>
+                  </Pressable>
 
                   <Text style={styles.blipContent}>{blip.content}</Text>
                 </View>
