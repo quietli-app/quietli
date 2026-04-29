@@ -52,6 +52,25 @@ function EmbedPageResetStyles() {
           * {
             box-sizing: border-box;
           }
+
+          .quietli-embed-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.55) rgba(255,255,255,0.14);
+          }
+
+          .quietli-embed-scroll::-webkit-scrollbar {
+            width: 10px;
+          }
+
+          .quietli-embed-scroll::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.14);
+            border-radius: 999px;
+          }
+
+          .quietli-embed-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.55);
+            border-radius: 999px;
+          }
         `,
       }}
     />
@@ -102,7 +121,7 @@ export default async function EmbedPage({
     );
   }
 
-  const blipLimit = embedVariant === "latest" ? 1 : 5;
+  const blipLimit = embedVariant === "latest" ? 1 : 20;
 
   const { data: blips } = await supabase
     .from("blips")
@@ -214,54 +233,60 @@ export default async function EmbedPage({
 
       <main className="fixed inset-0 overflow-hidden bg-transparent font-sans">
         <div
-          className="relative h-full w-full overflow-hidden rounded-[24px] border border-white/25 p-4"
+          className="relative h-full w-full overflow-hidden rounded-[24px] border border-white/25"
           style={{ background: cardBackground }}
         >
-          <div className="mb-4 flex items-center gap-3 pr-16">
-            <div className="relative h-14 w-14 flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/25">
-              {profile.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.username}
-                  className="absolute inset-0 h-full w-full rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center rounded-full text-lg font-medium text-white/90">
-                  {profile.username.slice(0, 1).toUpperCase()}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="sticky top-0 z-10 border-b border-white/18 bg-white/10 p-4 backdrop-blur-md">
+              <div className="flex items-center gap-3 pr-16">
+                <div className="relative h-14 w-14 flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/25">
+                  {profile.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile.username}
+                      className="absolute inset-0 h-full w-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded-full text-lg font-medium text-white/90">
+                      {profile.username.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="min-w-0">
-              <p className="truncate text-xl font-medium text-white">
-                @{profile.username}
-              </p>
+                <div className="min-w-0">
+                  <p className="truncate text-xl font-medium text-white">
+                    @{profile.username}
+                  </p>
 
-              <p className="truncate text-sm font-normal text-white/72">
-                {profile.bio || "A stream of passing thoughts."}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-3 overflow-hidden">
-            {blips && blips.length > 0 ? (
-              blips.map((blip) => (
-                <div
-                  key={blip.id}
-                  className="rounded-[1.25rem] border border-white/25 bg-white/18 p-4 backdrop-blur-md"
-                >
-                  <p className="line-clamp-3 text-base font-normal leading-7 text-white/92">
-                    {blip.content}
+                  <p className="truncate text-sm font-normal text-white/72">
+                    {profile.bio || "A stream of passing thoughts."}
                   </p>
                 </div>
-              ))
-            ) : (
-              <div className="rounded-[1.25rem] border border-white/25 bg-white/18 p-4 backdrop-blur-md">
-                <p className="text-base font-normal text-white/92">
-                  No blips yet.
-                </p>
               </div>
-            )}
+            </div>
+
+            <div className="quietli-embed-scroll h-full overflow-y-auto px-4 pb-20 pt-4">
+              <div className="grid gap-3">
+                {blips && blips.length > 0 ? (
+                  blips.map((blip) => (
+                    <div
+                      key={blip.id}
+                      className="rounded-[1.25rem] border border-white/25 bg-white/18 p-4 backdrop-blur-md"
+                    >
+                      <p className="text-base font-normal leading-7 text-white/92">
+                        {blip.content}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-[1.25rem] border border-white/25 bg-white/18 p-4 backdrop-blur-md">
+                    <p className="text-base font-normal text-white/92">
+                      No blips yet.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           <a
@@ -269,7 +294,7 @@ export default async function EmbedPage({
             target="_blank"
             rel="noreferrer"
             aria-label={`Open @${profile.username} on Quietli`}
-            className="absolute bottom-4 right-4 h-12 w-12 object-contain opacity-85 transition hover:opacity-100"
+            className="absolute bottom-4 right-4 z-20 h-12 w-12 object-contain opacity-85 transition hover:opacity-100"
           >
             <img
               src="/quietli-q.png"

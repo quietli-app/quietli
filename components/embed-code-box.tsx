@@ -26,7 +26,9 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
     return `${window.location.origin}/embed/${username}?variant=${mode}&height=${activeHeight}`;
   }, [username, mode, activeHeight]);
 
-  const embedCode = `<iframe src="${embedUrl}" width="100%" height="${activeHeight}" style="border:0;border-radius:24px;overflow:hidden;display:block;" scrolling="no" title="Quietli ${
+  const embedCode = `<iframe src="${embedUrl}" width="100%" height="${activeHeight}" style="border:0;border-radius:24px;overflow:hidden;display:block;" ${
+    mode === "latest" ? `scrolling="no"` : ``
+  } title="Quietli ${
     mode === "latest" ? "latest blip" : "blip feed"
   }"></iframe>`;
 
@@ -137,12 +139,12 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
             title="Quietli embed preview"
             width="100%"
             height={activeHeight}
-            scrolling="no"
+            scrolling={mode === "latest" ? "no" : "yes"}
             className="block w-full border-0"
             style={{
               height: activeHeight,
               border: 0,
-              overflow: "hidden",
+              overflow: mode === "latest" ? "hidden" : "auto",
               display: "block",
             }}
           />
@@ -152,7 +154,7 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
       <div className="mt-5 rounded-[1.25rem] border border-white/15 bg-white/15 p-4">
         <p className="mb-2 text-sm font-normal text-white">Embed code</p>
 
-        <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-[1rem] bg-white/15 p-4 text-xs font-normal leading-6 text-white/75">
+        <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-[1rem] border border-white/10 bg-[#2b355f]/35 p-4 text-xs font-normal leading-6 text-white/80">
           {embedCode}
         </pre>
       </div>
