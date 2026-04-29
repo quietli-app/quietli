@@ -19,8 +19,8 @@ type Profile = {
   avatar_url: string | null;
   gradient_theme: string | null;
   profile_visibility: string | null;
-  profile_link_label?: string | null;
-  profile_link_url?: string | null;
+  profile_link_label: string | null;
+  profile_link_url: string | null;
 };
 
 type Blip = {
@@ -54,7 +54,7 @@ function formatDate(value: string) {
 function AvatarBubble({
   username,
   avatarUrl,
-  size = 82,
+  size = 88,
 }: {
   username: string;
   avatarUrl: string | null;
@@ -220,7 +220,7 @@ export default function MobileProfileScreen() {
         <AvatarBubble
           username={profile.username}
           avatarUrl={profile.avatar_url}
-          size={86}
+          size={90}
         />
 
         <Text style={styles.username}>@{profile.username}</Text>
@@ -235,6 +235,7 @@ export default function MobileProfileScreen() {
       {isPrivate ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyTitle}>This profile is private.</Text>
+
           <Text style={styles.emptyText}>
             Follow requests and private profile access will get a fuller native
             mobile flow soon.
@@ -243,6 +244,7 @@ export default function MobileProfileScreen() {
       ) : blips.length === 0 ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyTitle}>No blips yet.</Text>
+
           <Text style={styles.emptyText}>
             This quiet corner is still waiting for its first blip.
           </Text>
