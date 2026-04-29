@@ -12,11 +12,13 @@ import { useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 
+type ProfileVisibility = "public" | "private";
+
 type Profile = {
   id: string;
   username: string | null;
   bio: string | null;
-  profile_visibility: string | null;
+  profile_visibility: ProfileVisibility | null;
   plan: string | null;
 };
 
@@ -29,8 +31,12 @@ export default function MobileSettingsScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
 
   const [bio, setBio] = useState("");
+  const [profileVisibility, setProfileVisibility] =
+    useState<ProfileVisibility>("public");
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingBio, setIsSavingBio] = useState(false);
+  const [isSavingVisibility, setIsSavingVisibility] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -61,6 +67,9 @@ export default function MobileSettingsScreen() {
 
       setProfile(loadedProfile);
       setBio(loadedProfile?.bio ?? "");
+      setProfileVisibility(
+        loadedProfile?.profile_visibility === "private" ? "private" : "public"
+      );
       setIsLoading(false);
     }
 
@@ -111,6 +120,50 @@ export default function MobileSettingsScreen() {
     setMessage("Bio saved.");
   }
 
+  async function saveVisibility(nextVisibility: ProfileVisibility) {
+    if (!session?.user?.id) {
+      setMessage("Please sign in again to update your profile visibility.");
+      return;
+    }
+
+    if (nextVisibility === profileVisibility) return;
+
+    setIsSavingVisibility(true);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        profile_visibility: nextVisibility,
+      })
+      .eq("id", session.user.id);
+
+    setIsSavingVisibility(false);
+
+    if (error) {
+      console.error("Error saving mobile profile visibility:", error);
+      setMessage("Something went wrong saving your profile visibility.");
+      return;
+    }
+
+    setProfileVisibility(nextVisibility);
+
+    setProfile((current) =>
+      current
+        ? {
+            ...current,
+            profile_visibility: nextVisibility,
+          }
+        : current
+    );
+
+    setMessage(
+      nextVisibility === "private"
+        ? "Your profile is now private. New followers will need approval."
+        : "Your profile is now public."
+    );
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     router.replace("/" as never);
@@ -144,6 +197,7 @@ export default function MobileSettingsScreen() {
   }
 
   const charactersLeft = BIO_MAX_LENGTH - bio.length;
+  const isPrivate = profileVisibility === "private";
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -160,8 +214,8 @@ export default function MobileSettingsScreen() {
         <Text style={styles.title}>Account settings.</Text>
 
         <Text style={styles.bodyText}>
-          Start with your bio. Keep it soft, simple, weird, mysterious, or
-          completely normal. Quietli supports all vibes.
+          Edit your bio, choose how visible your quiet corner should be, and keep
+          your profile feeling like yours.
         </Text>
       </View>
 
@@ -178,7 +232,9 @@ export default function MobileSettingsScreen() {
 
       <View style={styles.card}>
         <Text style={styles.cardLabel}>Edit bio</Text>
-        <Text style={styles.cardTitle}>@{profile?.username || "quietli_user"}</Text>
+        <Text style={styles.cardTitle}>
+          @{profile?.username || "quietli_user"}
+        </Text>
 
         <TextInput
           value={bio}
@@ -211,10 +267,65 @@ export default function MobileSettingsScreen() {
       </View>
 
       <View style={styles.card}>
+        <Text style={styles.cardLabel}>Profile visibility</Text>
+        <Text style={styles.cardTitle}>
+          {isPrivate ? "Private profile" : "Public profile"}
+        </Text>
+
+        <Text style={styles.cardText}>
+          {isPrivate
+            ? "Your blips are hidden from public view. New followers will need to send a request before they can see your private profile."
+            : "Your profile and public blips can appear in World View and Discover."}
+        </Text>
+
+        <View style={styles.visibilityToggle}>
+          <Pressable
+            style={[
+              styles.visibilityOption,
+              !isPrivate && styles.visibilityOptionActive,
+            ]}
+            disabled={isSavingVisibility}
+            onPress={() => saveVisibility("public")}
+          >
+            <Text
+              style={[
+                styles.visibilityOptionText,
+                !isPrivate && styles.visibilityOptionTextActive,
+              ]}
+            >
+              Public
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={[
+              styles.visibilityOption,
+              isPrivate && styles.visibilityOptionActive,
+            ]}
+            disabled={isSavingVisibility}
+            onPress={() => saveVisibility("private")}
+          >
+            <Text
+              style={[
+                styles.visibilityOptionText,
+                isPrivate && styles.visibilityOptionTextActive,
+              ]}
+            >
+              Private
+            </Text>
+          </Pressable>
+        </View>
+
+        {isSavingVisibility ? (
+          <Text style={styles.savingText}>Saving visibility...</Text>
+        ) : null}
+      </View>
+
+      <View style={styles.card}>
         <Text style={styles.cardLabel}>Profile</Text>
 
         <Text style={styles.cardText}>
-          Visibility: {profile?.profile_visibility || "public"}
+          Visibility: {profileVisibility || "public"}
         </Text>
 
         <Text style={styles.cardText}>
@@ -239,8 +350,8 @@ export default function MobileSettingsScreen() {
       <View style={styles.card}>
         <Text style={styles.cardLabel}>Coming next</Text>
         <Text style={styles.cardText}>
-          Next we’ll add profile visibility controls, profile links, theme
-          picking, avatar upload, and account/data tools.
+          Next we’ll add profile links, theme picking, avatar upload, and
+          account/data tools.
         </Text>
       </View>
 
@@ -423,6 +534,40 @@ const styles = StyleSheet.create({
     color: "#642B73",
     fontSize: 14,
     fontWeight: "400",
+  },
+  visibilityToggle: {
+    flexDirection: "row",
+    gap: 8,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderColor: "rgba(255,255,255,0.2)",
+    borderRadius: 999,
+    borderWidth: 1,
+    marginTop: 16,
+    padding: 4,
+  },
+  visibilityOption: {
+    alignItems: "center",
+    borderRadius: 999,
+    flex: 1,
+    paddingVertical: 10,
+  },
+  visibilityOptionActive: {
+    backgroundColor: "#ffffff",
+  },
+  visibilityOptionText: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 14,
+    fontWeight: "300",
+  },
+  visibilityOptionTextActive: {
+    color: "#642B73",
+    fontWeight: "400",
+  },
+  savingText: {
+    color: "rgba(255,255,255,0.68)",
+    fontSize: 13,
+    fontWeight: "300",
+    marginTop: 10,
   },
   disabledButton: {
     opacity: 0.55,
