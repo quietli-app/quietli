@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
 type Profile = {
@@ -28,6 +29,8 @@ type Blip = {
   content: string;
   created_at: string;
 };
+
+type FollowStatus = "none" | "pending" | "accepted";
 
 const themeBackgrounds: Record<string, string> = {
   blush: "#C6426E",
@@ -102,11 +105,49 @@ export default function MobileProfileScreen() {
     ? params.username[0]
     : params.username;
 
+  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [blips, setBlips] = useState<Blip[]>([]);
+  const [followStatus, setFollowStatus] = useState<FollowStatus>("none");
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [followMessage, setFollowMessage] = useState("");
+
+  async function getCurrentSession() {
+    const {
+      data: { session: currentSession },
+    } = await supabase.auth.getSession();
+
+    setSession(currentSession);
+    return currentSession;
+  }
+
+  async function loadFollowStatus(currentUserId: string, targetUserId: string) {
+    const { data, error } = await supabase
+      .from("follows")
+      .select("status")
+      .eq("follower_id", currentUserId)
+      .eq("following_id", targetUserId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error loading mobile follow status:", error);
+      setFollowStatus("none");
+      return "none" as FollowStatus;
+    }
+
+    const status =
+      data?.status === "accepted" || data?.status === "pending"
+        ? data.status
+        : "none";
+
+    setFollowStatus(status);
+    return status as FollowStatus;
+  }
 
   async function loadProfile() {
     if (!username) {
@@ -116,6 +157,9 @@ export default function MobileProfileScreen() {
     }
 
     setMessage("");
+    setFollowMessage("");
+
+    const currentSession = await getCurrentSession();
 
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
@@ -138,9 +182,30 @@ export default function MobileProfileScreen() {
       return;
     }
 
-    setProfile(profileData as Profile);
+    const typedProfile = profileData as Profile;
+    const currentUserId = currentSession?.user?.id ?? null;
+    const ownProfile = currentUserId === typedProfile.id;
 
-    if (profileData.profile_visibility === "private") {
+    setProfile(typedProfile);
+    setIsOwnProfile(ownProfile);
+
+    let currentFollowStatus: FollowStatus = "none";
+
+    if (currentUserId && !ownProfile) {
+      currentFollowStatus = await loadFollowStatus(
+        currentUserId,
+        typedProfile.id
+      );
+    } else {
+      setFollowStatus("none");
+    }
+
+    const canViewBlips =
+      typedProfile.profile_visibility !== "private" ||
+      ownProfile ||
+      currentFollowStatus === "accepted";
+
+    if (!canViewBlips) {
       setBlips([]);
       setIsLoading(false);
       return;
@@ -149,7 +214,7 @@ export default function MobileProfileScreen() {
     const { data: blipData, error: blipError } = await supabase
       .from("blips")
       .select("id, content, created_at")
-      .eq("user_id", profileData.id)
+      .eq("user_id", typedProfile.id)
       .order("created_at", { ascending: false })
       .limit(30);
 
@@ -168,6 +233,79 @@ export default function MobileProfileScreen() {
     setIsRefreshing(true);
     await loadProfile();
     setIsRefreshing(false);
+  }
+
+  async function followOrRequest() {
+    if (!session?.user?.id) {
+      setFollowMessage("Please sign in to follow people.");
+      return;
+    }
+
+    if (!profile || isOwnProfile) return;
+
+    setIsFollowLoading(true);
+    setFollowMessage("");
+
+    const nextStatus =
+      profile.profile_visibility === "private" ? "pending" : "accepted";
+
+    const { error } = await supabase.from("follows").upsert(
+      {
+        follower_id: session.user.id,
+        following_id: profile.id,
+        status: nextStatus,
+      },
+      {
+        onConflict: "follower_id,following_id",
+      }
+    );
+
+    setIsFollowLoading(false);
+
+    if (error) {
+      console.error("Error following profile on mobile:", error);
+      setFollowMessage("Something went wrong. Try again in a moment.");
+      return;
+    }
+
+    setFollowStatus(nextStatus);
+
+    if (nextStatus === "pending") {
+      setFollowMessage("Follow request sent.");
+    } else {
+      setFollowMessage("You’re now following this profile.");
+      await loadProfile();
+    }
+  }
+
+  async function unfollowOrCancelRequest() {
+    if (!session?.user?.id || !profile || isOwnProfile) return;
+
+    setIsFollowLoading(true);
+    setFollowMessage("");
+
+    const { error } = await supabase
+      .from("follows")
+      .delete()
+      .eq("follower_id", session.user.id)
+      .eq("following_id", profile.id);
+
+    setIsFollowLoading(false);
+
+    if (error) {
+      console.error("Error unfollowing profile on mobile:", error);
+      setFollowMessage("Something went wrong. Try again in a moment.");
+      return;
+    }
+
+    setFollowStatus("none");
+    setFollowMessage(
+      profile.profile_visibility === "private"
+        ? "Follow request canceled."
+        : "You unfollowed this profile."
+    );
+
+    await loadProfile();
   }
 
   useEffect(() => {
@@ -199,6 +337,16 @@ export default function MobileProfileScreen() {
 
   const profileColor = getProfileColor(profile.gradient_theme);
   const isPrivate = profile.profile_visibility === "private";
+  const canViewBlips = !isPrivate || isOwnProfile || followStatus === "accepted";
+
+  const followButtonLabel =
+    followStatus === "accepted"
+      ? "Unfollow"
+      : followStatus === "pending"
+        ? "Requested"
+        : isPrivate
+          ? "Request follow"
+          : "Follow";
 
   return (
     <ScrollView
@@ -230,15 +378,57 @@ export default function MobileProfileScreen() {
         {profile.profile_link_label && profile.profile_link_url ? (
           <Text style={styles.profileLink}>{profile.profile_link_label}</Text>
         ) : null}
+
+        {!isOwnProfile ? (
+          <View style={styles.followArea}>
+            <Pressable
+              style={[
+                styles.followButton,
+                followStatus === "accepted" && styles.followButtonMuted,
+                followStatus === "pending" && styles.followButtonMuted,
+                isFollowLoading && styles.disabledButton,
+              ]}
+              disabled={isFollowLoading}
+              onPress={
+                followStatus === "accepted" || followStatus === "pending"
+                  ? unfollowOrCancelRequest
+                  : followOrRequest
+              }
+            >
+              <Text
+                style={[
+                  styles.followButtonText,
+                  followStatus === "accepted" && styles.followButtonMutedText,
+                  followStatus === "pending" && styles.followButtonMutedText,
+                ]}
+              >
+                {isFollowLoading ? "Working..." : followButtonLabel}
+              </Text>
+            </Pressable>
+
+            {followStatus === "pending" ? (
+              <Text style={styles.followHint}>
+                Your request is waiting for approval.
+              </Text>
+            ) : null}
+
+            {followMessage ? (
+              <Text style={styles.followMessage}>{followMessage}</Text>
+            ) : null}
+          </View>
+        ) : (
+          <Text style={styles.ownProfileHint}>This is your profile.</Text>
+        )}
       </View>
 
-      {isPrivate ? (
+      {!canViewBlips ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyTitle}>This profile is private.</Text>
 
           <Text style={styles.emptyText}>
-            Follow requests and private profile access will get a fuller native
-            mobile flow soon.
+            {followStatus === "pending"
+              ? "Your follow request is pending. If they approve it, their blips will appear here."
+              : "Send a follow request to see this profile’s blips if they approve you."}
           </Text>
         </View>
       ) : blips.length === 0 ? (
@@ -365,6 +555,57 @@ const styles = StyleSheet.create({
     fontWeight: "300",
     marginTop: 14,
     textDecorationLine: "underline",
+  },
+  followArea: {
+    alignItems: "center",
+    marginTop: 18,
+    width: "100%",
+  },
+  followButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderRadius: 999,
+    paddingHorizontal: 22,
+    paddingVertical: 11,
+  },
+  followButtonMuted: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+    backgroundColor: "rgba(255,255,255,0.16)",
+  },
+  followButtonText: {
+    color: "#642B73",
+    fontSize: 14,
+    fontWeight: "400",
+  },
+  followButtonMutedText: {
+    color: "#ffffff",
+    fontWeight: "300",
+  },
+  followHint: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 13,
+    fontWeight: "300",
+    lineHeight: 19,
+    marginTop: 10,
+    textAlign: "center",
+  },
+  followMessage: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 13,
+    fontWeight: "300",
+    lineHeight: 19,
+    marginTop: 10,
+    textAlign: "center",
+  },
+  ownProfileHint: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 13,
+    fontWeight: "300",
+    marginTop: 14,
+  },
+  disabledButton: {
+    opacity: 0.55,
   },
   blipList: {
     gap: 14,
