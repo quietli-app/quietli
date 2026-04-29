@@ -21,11 +21,6 @@ export function Footer() {
             Contact
           </Link>
         </div>
-
-        <p className="mt-3 text-xs font-light leading-5 text-white/40">
-          A quiet place for small thoughts, soft observations, and low-stakes
-          little blips.
-        </p>
       </div>
     </footer>
   );
