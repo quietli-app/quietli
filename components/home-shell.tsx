@@ -82,14 +82,34 @@ export function HomeShell() {
     return data?.map((mute) => mute.muted_id) ?? [];
   }
 
+  async function getBlockedUserIds(currentUserId: string) {
+    const { data, error } = await supabase
+      .from("blocks")
+      .select("blocker_id, blocked_id")
+      .or(`blocker_id.eq.${currentUserId},blocked_id.eq.${currentUserId}`);
+
+    if (error) {
+      console.error("Error loading blocked users:", error);
+      return [];
+    }
+
+    return (
+      data?.map((block) =>
+        block.blocker_id === currentUserId ? block.blocked_id : block.blocker_id
+      ) ?? []
+    );
+  }
+
   async function loadFeed(view: FeedView, currentProfile: UserProfile | null) {
     setLoadingFeed(true);
 
     let followingIds: string[] = [];
     let mutedIds: string[] = [];
+    let blockedUserIds: string[] = [];
 
     if (currentProfile?.id) {
       mutedIds = await getMutedIds(currentProfile.id);
+      blockedUserIds = await getBlockedUserIds(currentProfile.id);
     }
 
     if (view === "following") {
@@ -128,6 +148,10 @@ export function HomeShell() {
 
     if (mutedIds.length > 0) {
       query = query.not("user_id", "in", `(${mutedIds.join(",")})`);
+    }
+
+    if (blockedUserIds.length > 0) {
+      query = query.not("user_id", "in", `(${blockedUserIds.join(",")})`);
     }
 
     const { data, error } = await query;

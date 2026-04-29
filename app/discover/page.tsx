@@ -46,6 +46,20 @@ export default async function DiscoverPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  let blockedUserIds: string[] = [];
+
+  if (user) {
+    const { data: blocks } = await supabase
+      .from("blocks")
+      .select("blocker_id, blocked_id")
+      .or(`blocker_id.eq.${user.id},blocked_id.eq.${user.id}`);
+
+    blockedUserIds =
+      blocks?.map((block) =>
+        block.blocker_id === user.id ? block.blocked_id : block.blocker_id
+      ) ?? [];
+  }
+
   const { data: blips } = await supabase
     .from("blips")
     .select(
@@ -69,6 +83,7 @@ export default async function DiscoverPage() {
     if (!profileData) return;
     if (profileData.profile_visibility === "private") return;
     if (user?.id === blip.user_id) return;
+    if (blockedUserIds.includes(blip.user_id)) return;
     if (profileMap.has(blip.user_id)) return;
 
     profileMap.set(blip.user_id, {

@@ -10,6 +10,7 @@ import { EmbedCodeBox } from "@/components/embed-code-box";
 import { ProfileNavTheme } from "@/components/profile-nav-theme";
 import { FollowButton } from "@/components/follow-button";
 import { MuteButton } from "@/components/mute-button";
+import { BlockButton } from "@/components/block-button";
 import { FollowRequests } from "@/components/follow-requests";
 import { FollowersManager } from "@/components/followers-manager";
 import { ProfilePrivacyToggle } from "@/components/profile-privacy-toggle";
@@ -54,6 +55,9 @@ export default async function ProfilePage({
     profileBackgroundThemes[activeTheme] ?? profileBackgroundThemes.blush;
 
   let followStatus: FollowStatus = "none";
+  let initiallyMuted = false;
+  let initiallyBlocked = false;
+  let blockedByProfileOwner = false;
 
   if (user && !isOwnProfile) {
     const { data: follow } = await supabase
@@ -66,11 +70,7 @@ export default async function ProfilePage({
     if (follow?.status === "accepted" || follow?.status === "pending") {
       followStatus = follow.status;
     }
-  }
 
-  let initiallyMuted = false;
-
-  if (user && !isOwnProfile) {
     const { data: mute } = await supabase
       .from("mutes")
       .select("id")
@@ -79,12 +79,33 @@ export default async function ProfilePage({
       .maybeSingle();
 
     initiallyMuted = Boolean(mute);
+
+    const { data: blockMadeByViewer } = await supabase
+      .from("blocks")
+      .select("id")
+      .eq("blocker_id", user.id)
+      .eq("blocked_id", profile.id)
+      .maybeSingle();
+
+    initiallyBlocked = Boolean(blockMadeByViewer);
+
+    const { data: blockMadeByProfileOwner } = await supabase
+      .from("blocks")
+      .select("id")
+      .eq("blocker_id", profile.id)
+      .eq("blocked_id", user.id)
+      .maybeSingle();
+
+    blockedByProfileOwner = Boolean(blockMadeByProfileOwner);
   }
 
+  const hasBlockBetweenUsers = initiallyBlocked || blockedByProfileOwner;
+
   const canViewBlips =
-    profile.profile_visibility === "public" ||
-    isOwnProfile ||
-    followStatus === "accepted";
+    !hasBlockBetweenUsers &&
+    (profile.profile_visibility === "public" ||
+      isOwnProfile ||
+      followStatus === "accepted");
 
   const { data: blips } = canViewBlips
     ? await supabase
@@ -213,19 +234,33 @@ export default async function ProfilePage({
                   </Link>
                 )
               ) : user ? (
-                <div className="flex flex-wrap gap-2">
-                  <FollowButton
-                    currentUserId={user.id}
-                    profileUserId={profile.id}
-                    initialStatus={followStatus}
-                    profileVisibility={profile.profile_visibility}
-                  />
+                <div className="flex flex-wrap justify-end gap-2">
+                  {!blockedByProfileOwner ? (
+                    <>
+                      {!initiallyBlocked ? (
+                        <>
+                          <FollowButton
+                            currentUserId={user.id}
+                            profileUserId={profile.id}
+                            initialStatus={followStatus}
+                            profileVisibility={profile.profile_visibility}
+                          />
 
-                  <MuteButton
-                    currentUserId={user.id}
-                    profileUserId={profile.id}
-                    initiallyMuted={initiallyMuted}
-                  />
+                          <MuteButton
+                            currentUserId={user.id}
+                            profileUserId={profile.id}
+                            initiallyMuted={initiallyMuted}
+                          />
+                        </>
+                      ) : null}
+
+                      <BlockButton
+                        currentUserId={user.id}
+                        profileUserId={profile.id}
+                        initiallyBlocked={initiallyBlocked}
+                      />
+                    </>
+                  ) : null}
                 </div>
               ) : (
                 <Link
@@ -335,7 +370,23 @@ export default async function ProfilePage({
             ) : null}
           </section>
 
-          {!canViewBlips ? (
+          {blockedByProfileOwner ? (
+            <div className="rounded-[2rem] border border-white/20 bg-white/20 p-8 text-center text-white backdrop-blur-xl">
+              <h2 className="text-2xl font-bold">This profile is unavailable.</h2>
+
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
+                You cannot view this Quietli page.
+              </p>
+            </div>
+          ) : initiallyBlocked ? (
+            <div className="rounded-[2rem] border border-white/20 bg-white/20 p-8 text-center text-white backdrop-blur-xl">
+              <h2 className="text-2xl font-bold">You blocked this user.</h2>
+
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
+                Unblock them if you want to view or follow this profile again.
+              </p>
+            </div>
+          ) : !canViewBlips ? (
             <div className="rounded-[2rem] border border-white/20 bg-white/20 p-8 text-center text-white backdrop-blur-xl">
               <h2 className="text-2xl font-bold">This profile is private.</h2>
 
