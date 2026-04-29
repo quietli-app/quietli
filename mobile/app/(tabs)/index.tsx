@@ -13,9 +13,11 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
+import { getMobileGradientTheme } from "../../lib/mobile-gradient-themes";
 
 type AuthMode = "signin" | "signup";
 type FeedView = "following" | "world";
@@ -73,14 +75,6 @@ const COOLDOWN_SECONDS = 10;
 const HOURLY_LIMIT_MESSAGE =
   "Hey buddy, are you ok? Maybe you need to chill on the blips for a minute... Have a tea, maybe meditate for a bit? Lets put the blips down for a little bit and come back to it when you're more relaxed.";
 
-const themeBackgrounds: Record<string, string> = {
-  blush: "#C6426E",
-  violet: "#642B73",
-  sky: "#76D7EA",
-  mint: "#7DD8C5",
-  sunset: "#F59E8B",
-};
-
 function cleanUsername(value: string) {
   return value
     .toLowerCase()
@@ -90,12 +84,6 @@ function cleanUsername(value: string) {
 
 function getProfileFromBlip(blip: RawBlip) {
   return Array.isArray(blip.profiles) ? blip.profiles[0] : blip.profiles;
-}
-
-function getBlipCardColor(theme?: string | null) {
-  if (!theme) return themeBackgrounds.blush;
-
-  return themeBackgrounds[theme] ?? themeBackgrounds.blush;
 }
 
 function formatDate(value: string) {
@@ -147,6 +135,39 @@ function AvatarBubble({
         </Text>
       )}
     </View>
+  );
+}
+
+function GradientBlipCard({
+  blip,
+  onOpenProfile,
+}: {
+  blip: FeedItem;
+  onOpenProfile: (username: string) => void;
+}) {
+  const gradient = getMobileGradientTheme(blip.gradientTheme);
+
+  return (
+    <LinearGradient
+      colors={gradient.colors}
+      start={gradient.start}
+      end={gradient.end}
+      style={styles.blipCard}
+    >
+      <Pressable
+        style={styles.blipHeader}
+        onPress={() => onOpenProfile(blip.username)}
+      >
+        <AvatarBubble username={blip.username} avatarUrl={blip.avatarUrl} />
+
+        <View style={styles.blipHeaderText}>
+          <Text style={styles.blipUsername}>@{blip.username}</Text>
+          <Text style={styles.blipDate}>{formatDate(blip.createdAt)}</Text>
+        </View>
+      </Pressable>
+
+      <Text style={styles.blipContent}>{blip.content}</Text>
+    </LinearGradient>
   );
 }
 
@@ -753,32 +774,11 @@ export default function QuietliMobileHome() {
             ) : (
               <View style={styles.feedList}>
                 {feed.map((blip) => (
-                  <View
+                  <GradientBlipCard
                     key={blip.id}
-                    style={[
-                      styles.blipCard,
-                      { backgroundColor: getBlipCardColor(blip.gradientTheme) },
-                    ]}
-                  >
-                    <Pressable
-                      style={styles.blipHeader}
-                      onPress={() => openProfile(blip.username)}
-                    >
-                      <AvatarBubble
-                        username={blip.username}
-                        avatarUrl={blip.avatarUrl}
-                      />
-
-                      <View style={styles.blipHeaderText}>
-                        <Text style={styles.blipUsername}>@{blip.username}</Text>
-                        <Text style={styles.blipDate}>
-                          {formatDate(blip.createdAt)}
-                        </Text>
-                      </View>
-                    </Pressable>
-
-                    <Text style={styles.blipContent}>{blip.content}</Text>
-                  </View>
+                    blip={blip}
+                    onOpenProfile={openProfile}
+                  />
                 ))}
               </View>
             )}
