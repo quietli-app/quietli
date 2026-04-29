@@ -39,9 +39,7 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
     return () => window.clearInterval(timer);
   }, [cooldownSeconds]);
 
-  async function postBlip(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  async function submitBlip() {
     const trimmedContent = content.trim();
 
     if (!trimmedContent) {
@@ -62,6 +60,8 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
       );
       return;
     }
+
+    if (isPosting) return;
 
     setIsPosting(true);
     setMessage("");
@@ -121,6 +121,24 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
     }
   }
 
+  async function postBlip(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitBlip();
+  }
+
+  async function handleKeyDown(
+    event: React.KeyboardEvent<HTMLTextAreaElement>
+  ) {
+    if (event.key !== "Enter") return;
+
+    if (event.shiftKey) {
+      return;
+    }
+
+    event.preventDefault();
+    await submitBlip();
+  }
+
   const charactersLeft = MAX_LENGTH - content.length;
 
   return (
@@ -139,9 +157,10 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
           setContent(event.target.value);
           setMessage("");
         }}
+        onKeyDown={handleKeyDown}
         maxLength={MAX_LENGTH}
         placeholder="What floated through your brain?"
-        className="min-h-32 w-full resize-none rounded-[1.5rem] border border-white/20 bg-white/50 p-4 text-lg font-normal text-[#642B73] outline-none placeholder:text-[#8f6a99]"
+        className="min-h-32 w-full resize-none rounded-[1.5rem] border border-white/20 bg-white/50 p-4 text-lg font-normal text-[#642B73] outline-none placeholder:font-light placeholder:text-[#8f6a99]/60"
       />
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
