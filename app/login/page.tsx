@@ -123,7 +123,7 @@ export default function LoginPage() {
           <p className="mt-3 text-sm leading-6 text-white/75">
             {isSignUp
               ? "Create your account, choose your username, and start posting quiet little blips."
-              : "Sign in to post blips, edit your profile, and manage your embed."}
+              : "Sign in to post blips, edit your profile, and manage your quiet corner."}
           </p>
         </div>
 
@@ -226,6 +226,17 @@ export default function LoginPage() {
               required
               className="w-full rounded-2xl border border-white/30 bg-white/65 px-4 py-3 text-[#642B73] outline-none placeholder:text-[#8f6a99]"
             />
+
+            {!isSignUp ? (
+              <div className="mt-2 text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm font-medium text-white/75 transition hover:text-white"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            ) : null}
           </div>
 
           <button
