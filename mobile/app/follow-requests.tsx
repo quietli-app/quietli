@@ -13,26 +13,20 @@ import { useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 
-type FollowRequest = {
+type RawFollowRequest = {
   id: string;
   follower_id: string;
   following_id: string;
   status: string;
   created_at: string | null;
-  profiles:
-    | {
-        username: string | null;
-        avatar_url: string | null;
-        bio: string | null;
-        gradient_theme: string | null;
-      }
-    | {
-        username: string | null;
-        avatar_url: string | null;
-        bio: string | null;
-        gradient_theme: string | null;
-      }[]
-    | null;
+};
+
+type RequesterProfile = {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  gradient_theme: string | null;
 };
 
 type RequestItem = {
@@ -43,12 +37,6 @@ type RequestItem = {
   bio: string | null;
   createdAt: string | null;
 };
-
-function getRequesterProfile(request: FollowRequest) {
-  return Array.isArray(request.profiles)
-    ? request.profiles[0]
-    : request.profiles;
-}
 
 function formatDate(value: string | null) {
   if (!value) return "Recently";
@@ -114,6 +102,13 @@ export default function MobileFollowRequestsScreen() {
   const [workingRequestId, setWorkingRequestId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
+  function openProfile(username: string) {
+    router.push({
+      pathname: "/profile/[username]",
+      params: { username },
+    } as never);
+  }
+
   async function loadRequests() {
     setMessage("");
 
@@ -129,43 +124,60 @@ export default function MobileFollowRequestsScreen() {
       return;
     }
 
-    const { data, error } = await supabase
+    const { data: followData, error: followError } = await supabase
       .from("follows")
-      .select(
-        `
-        id,
-        follower_id,
-        following_id,
-        status,
-        created_at,
-        profiles!follows_follower_id_fkey(username, avatar_url, bio, gradient_theme)
-      `
-      )
+      .select("id, follower_id, following_id, status, created_at")
       .eq("following_id", currentSession.user.id)
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error loading mobile follow requests:", error);
+    if (followError) {
+      console.error("Error loading mobile follow requests:", followError);
       setMessage("Something went wrong loading follow requests.");
       setRequests([]);
       setIsLoading(false);
       return;
     }
 
-    const formattedRequests =
-      (data as FollowRequest[] | null)?.map((request) => {
-        const requesterProfile = getRequesterProfile(request);
+    const rawRequests = (followData ?? []) as RawFollowRequest[];
+    const followerIds = rawRequests.map((request) => request.follower_id);
 
-        return {
-          id: request.id,
-          followerId: request.follower_id,
-          username: requesterProfile?.username ?? "unknown",
-          avatarUrl: requesterProfile?.avatar_url ?? null,
-          bio: requesterProfile?.bio ?? null,
-          createdAt: request.created_at,
-        };
-      }) ?? [];
+    if (followerIds.length === 0) {
+      setRequests([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, username, avatar_url, bio, gradient_theme")
+      .in("id", followerIds);
+
+    if (profileError) {
+      console.error("Error loading requester profiles:", profileError);
+      setMessage("Something went wrong loading requester profiles.");
+      setRequests([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const profiles = (profileData ?? []) as RequesterProfile[];
+    const profileById = new Map(
+      profiles.map((profile) => [profile.id, profile])
+    );
+
+    const formattedRequests = rawRequests.map((request) => {
+      const requesterProfile = profileById.get(request.follower_id);
+
+      return {
+        id: request.id,
+        followerId: request.follower_id,
+        username: requesterProfile?.username ?? "unknown",
+        avatarUrl: requesterProfile?.avatar_url ?? null,
+        bio: requesterProfile?.bio ?? null,
+        createdAt: request.created_at,
+      };
+    });
 
     setRequests(formattedRequests);
     setIsLoading(false);
@@ -294,12 +306,7 @@ export default function MobileFollowRequestsScreen() {
             <View key={request.id} style={styles.requestCard}>
               <Pressable
                 style={styles.requestProfile}
-                onPress={() =>
-                  router.push({
-                    pathname: "/profile/[username]",
-                    params: { username: request.username },
-                  } as never)
-                }
+                onPress={() => openProfile(request.username)}
               >
                 <AvatarBubble
                   username={request.username}
@@ -341,7 +348,9 @@ export default function MobileFollowRequestsScreen() {
                   disabled={workingRequestId === request.id}
                   onPress={() => denyRequest(request.id)}
                 >
-                  <Text style={styles.denyButtonText}>Deny</Text>
+                  <Text style={styles.denyButtonText}>
+                    {workingRequestId === request.id ? "Working..." : "Deny"}
+                  </Text>
                 </Pressable>
               </View>
             </View>
