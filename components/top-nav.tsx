@@ -78,6 +78,27 @@ export async function TopNav() {
             </Link>
           ) : null}
 
+          <Link
+            href="/privacy"
+            className="text-sm font-medium text-white/70 transition hover:text-white"
+          >
+            Privacy
+          </Link>
+
+          <Link
+            href="/terms"
+            className="text-sm font-medium text-white/70 transition hover:text-white"
+          >
+            Terms
+          </Link>
+
+          <Link
+            href="/contact"
+            className="text-sm font-medium text-white/70 transition hover:text-white"
+          >
+            Contact
+          </Link>
+
           {user ? (
             <form action={signOut}>
               <button
