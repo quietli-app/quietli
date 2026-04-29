@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -19,12 +20,18 @@ type Profile = {
   plan: string | null;
 };
 
+const BIO_MAX_LENGTH = 160;
+
 export default function MobileSettingsScreen() {
   const router = useRouter();
 
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+
+  const [bio, setBio] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingBio, setIsSavingBio] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     async function loadSettings() {
@@ -47,14 +54,62 @@ export default function MobileSettingsScreen() {
 
       if (error) {
         console.error("Error loading mobile settings profile:", error);
+        setMessage("Something went wrong loading your settings.");
       }
 
-      setProfile((data ?? null) as Profile | null);
+      const loadedProfile = (data ?? null) as Profile | null;
+
+      setProfile(loadedProfile);
+      setBio(loadedProfile?.bio ?? "");
       setIsLoading(false);
     }
 
     loadSettings();
   }, []);
+
+  async function saveBio() {
+    if (!session?.user?.id) {
+      setMessage("Please sign in again to update your bio.");
+      return;
+    }
+
+    const trimmedBio = bio.trim();
+
+    if (trimmedBio.length > BIO_MAX_LENGTH) {
+      setMessage(`Keep your bio under ${BIO_MAX_LENGTH} characters.`);
+      return;
+    }
+
+    setIsSavingBio(true);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        bio: trimmedBio || null,
+      })
+      .eq("id", session.user.id);
+
+    setIsSavingBio(false);
+
+    if (error) {
+      console.error("Error saving mobile bio:", error);
+      setMessage("Something went wrong saving your bio.");
+      return;
+    }
+
+    setProfile((current) =>
+      current
+        ? {
+            ...current,
+            bio: trimmedBio || null,
+          }
+        : current
+    );
+
+    setBio(trimmedBio);
+    setMessage("Bio saved.");
+  }
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -78,12 +133,17 @@ export default function MobileSettingsScreen() {
           Sign in again to manage your Quietli settings.
         </Text>
 
-        <Pressable style={styles.primaryButton} onPress={() => router.replace("/" as never)}>
+        <Pressable
+          style={styles.primaryButton}
+          onPress={() => router.replace("/" as never)}
+        >
           <Text style={styles.primaryButtonText}>Back to sign in</Text>
         </Pressable>
       </View>
     );
   }
+
+  const charactersLeft = BIO_MAX_LENGTH - bio.length;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -100,10 +160,16 @@ export default function MobileSettingsScreen() {
         <Text style={styles.title}>Account settings.</Text>
 
         <Text style={styles.bodyText}>
-          This is the first native mobile settings screen. More profile editing,
-          privacy controls, and account tools will be added here as the app grows.
+          Start with your bio. Keep it soft, simple, weird, mysterious, or
+          completely normal. Quietli supports all vibes.
         </Text>
       </View>
+
+      {message ? (
+        <View style={styles.messageCard}>
+          <Text style={styles.messageText}>{message}</Text>
+        </View>
+      ) : null}
 
       <View style={styles.card}>
         <Text style={styles.cardLabel}>Signed in as</Text>
@@ -111,14 +177,49 @@ export default function MobileSettingsScreen() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardLabel}>Profile</Text>
+        <Text style={styles.cardLabel}>Edit bio</Text>
         <Text style={styles.cardTitle}>@{profile?.username || "quietli_user"}</Text>
+
+        <TextInput
+          value={bio}
+          onChangeText={(value) => {
+            setBio(value.slice(0, BIO_MAX_LENGTH));
+            setMessage("");
+          }}
+          multiline
+          maxLength={BIO_MAX_LENGTH}
+          placeholder="Write a tiny profile bio..."
+          placeholderTextColor="rgba(100, 43, 115, 0.45)"
+          style={styles.bioInput}
+        />
+
+        <View style={styles.bioFooter}>
+          <Text style={styles.characterCount}>
+            {charactersLeft} characters left
+          </Text>
+
+          <Pressable
+            style={[styles.saveButton, isSavingBio && styles.disabledButton]}
+            disabled={isSavingBio}
+            onPress={saveBio}
+          >
+            <Text style={styles.saveButtonText}>
+              {isSavingBio ? "Saving..." : "Save bio"}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>Profile</Text>
 
         <Text style={styles.cardText}>
           Visibility: {profile?.profile_visibility || "public"}
         </Text>
 
-        <Text style={styles.cardText}>Plan: {profile?.plan === "plus" ? "Plus" : "Free"}</Text>
+        <Text style={styles.cardText}>
+          Plan: {profile?.plan === "plus" ? "Plus" : "Free"}
+        </Text>
 
         {profile?.username ? (
           <Pressable
@@ -136,10 +237,10 @@ export default function MobileSettingsScreen() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardLabel}>Mobile app progress</Text>
+        <Text style={styles.cardLabel}>Coming next</Text>
         <Text style={styles.cardText}>
-          Coming next: follow controls, richer mobile profile tools, profile editing,
-          privacy settings, and account/data controls.
+          Next we’ll add profile visibility controls, profile links, theme
+          picking, avatar upload, and account/data tools.
         </Text>
       </View>
 
@@ -248,6 +349,20 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     padding: 18,
   },
+  messageCard: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: 24,
+    marginBottom: 14,
+    padding: 14,
+  },
+  messageText: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 14,
+    fontWeight: "300",
+    lineHeight: 21,
+  },
   cardLabel: {
     color: "rgba(255,255,255,0.62)",
     fontSize: 12,
@@ -268,6 +383,49 @@ const styles = StyleSheet.create({
     fontWeight: "300",
     lineHeight: 23,
     marginTop: 8,
+  },
+  bioInput: {
+    minHeight: 110,
+    backgroundColor: "rgba(255,255,255,0.72)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+    borderRadius: 22,
+    color: "#642B73",
+    fontSize: 16,
+    fontWeight: "300",
+    lineHeight: 23,
+    marginTop: 14,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
+    textAlignVertical: "top",
+  },
+  bioFooter: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    marginTop: 14,
+  },
+  characterCount: {
+    color: "rgba(255,255,255,0.64)",
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "300",
+  },
+  saveButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  saveButtonText: {
+    color: "#642B73",
+    fontSize: 14,
+    fontWeight: "400",
+  },
+  disabledButton: {
+    opacity: 0.55,
   },
   secondaryButton: {
     alignItems: "center",
