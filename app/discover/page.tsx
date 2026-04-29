@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { gradientThemes } from "@/lib/gradient-themes";
+import { FollowButton } from "@/components/follow-button";
+
+type FollowStatus = "none" | "pending" | "accepted";
 
 type RawBlip = {
   user_id: string;
@@ -30,12 +33,18 @@ type DiscoverProfile = {
   avatarUrl: string | null;
   bio: string | null;
   gradientTheme: string | null;
+  profileVisibility: string | null;
   latestBlip: string;
   latestBlipAt: string;
+  followStatus: FollowStatus;
 };
 
 export default async function DiscoverPage() {
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { data: blips } = await supabase
     .from("blips")
@@ -48,7 +57,7 @@ export default async function DiscoverPage() {
     `
     )
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(120);
 
   const profileMap = new Map<string, DiscoverProfile>();
 
@@ -59,6 +68,7 @@ export default async function DiscoverPage() {
 
     if (!profileData) return;
     if (profileData.profile_visibility === "private") return;
+    if (user?.id === blip.user_id) return;
     if (profileMap.has(blip.user_id)) return;
 
     profileMap.set(blip.user_id, {
@@ -67,12 +77,40 @@ export default async function DiscoverPage() {
       avatarUrl: profileData.avatar_url,
       bio: profileData.bio,
       gradientTheme: profileData.gradient_theme,
+      profileVisibility: profileData.profile_visibility ?? "public",
       latestBlip: blip.content,
       latestBlipAt: blip.created_at,
+      followStatus: "none",
     });
   });
 
-  const profiles = Array.from(profileMap.values()).slice(0, 30);
+  let profiles = Array.from(profileMap.values()).slice(0, 30);
+
+  if (user && profiles.length > 0) {
+    const profileIds = profiles.map((profile) => profile.id);
+
+    const { data: follows } = await supabase
+      .from("follows")
+      .select("following_id, status")
+      .eq("follower_id", user.id)
+      .in("following_id", profileIds);
+
+    profiles = profiles.map((profile) => {
+      const follow = follows?.find(
+        (item) => item.following_id === profile.id
+      );
+
+      const followStatus =
+        follow?.status === "accepted" || follow?.status === "pending"
+          ? follow.status
+          : "none";
+
+      return {
+        ...profile,
+        followStatus,
+      };
+    });
+  }
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -106,50 +144,72 @@ export default async function DiscoverPage() {
               gradientThemes.blush;
 
             return (
-              <Link
+              <article
                 key={profile.id}
-                href={`/profile/${profile.username}`}
-                className="group overflow-hidden rounded-[2rem] border border-white/20 bg-white/15 p-4 text-white backdrop-blur-xl transition hover:bg-white/25"
+                className="overflow-hidden rounded-[2rem] border border-white/20 bg-white/15 p-4 text-white backdrop-blur-xl transition hover:bg-white/25"
               >
-                <div
-                  className="rounded-[1.6rem] p-5"
-                  style={{ background: cardBackground }}
-                >
-                  <div className="mb-5 flex items-center gap-4">
-                    <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-white/70 bg-white/30">
-                      {profile.avatarUrl ? (
-                        <img
-                          src={profile.avatarUrl}
-                          alt={profile.username}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xl font-bold text-[#2b0f2f]">
-                          {profile.username.slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
+                <Link href={`/profile/${profile.username}`} className="block">
+                  <div
+                    className="rounded-[1.6rem] p-5"
+                    style={{ background: cardBackground }}
+                  >
+                    <div className="mb-5 flex items-center gap-4">
+                      <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-white/70 bg-white/30">
+                        {profile.avatarUrl ? (
+                          <img
+                            src={profile.avatarUrl}
+                            alt={profile.username}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xl font-bold text-[#2b0f2f]">
+                            {profile.username.slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate text-xl font-bold text-[#2b0f2f]">
+                          @{profile.username}
+                        </p>
+
+                        <p className="truncate text-sm text-[#2b0f2f]/75">
+                          {profile.bio || "A stream of passing thoughts."}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="min-w-0">
-                      <p className="truncate text-xl font-bold text-[#2b0f2f]">
-                        @{profile.username}
-                      </p>
-
-                      <p className="truncate text-sm text-[#2b0f2f]/75">
-                        {profile.bio || "A stream of passing thoughts."}
-                      </p>
-                    </div>
+                    <p className="line-clamp-3 text-base leading-7 text-[#2b0f2f]">
+                      {profile.latestBlip}
+                    </p>
                   </div>
+                </Link>
 
-                  <p className="line-clamp-3 text-base leading-7 text-[#2b0f2f]">
-                    {profile.latestBlip}
-                  </p>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <Link
+                    href={`/profile/${profile.username}`}
+                    className="text-sm font-bold text-white/80 transition hover:text-white"
+                  >
+                    Visit profile →
+                  </Link>
+
+                  {user ? (
+                    <FollowButton
+                      currentUserId={user.id}
+                      profileUserId={profile.id}
+                      initialStatus={profile.followStatus}
+                      profileVisibility={profile.profileVisibility}
+                    />
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30"
+                    >
+                      Sign in to follow
+                    </Link>
+                  )}
                 </div>
-
-                <p className="mt-4 text-sm font-bold text-white/80 transition group-hover:text-white">
-                  Visit profile →
-                </p>
-              </Link>
+              </article>
             );
           })}
         </div>
