@@ -8,11 +8,20 @@ type BlipComposerProps = {
   onPosted?: () => void | Promise<void>;
 };
 
-const MAX_LENGTH = 240;
-const COOLDOWN_SECONDS = 30;
-const MAX_BLIPS_PER_HOUR = 20;
+type PostBlipResult = {
+  ok: boolean;
+  reason?: string;
+  message?: string;
+  seconds_remaining?: number;
+};
 
-export function BlipComposer({ userId, onPosted }: BlipComposerProps) {
+const MAX_LENGTH = 240;
+const COOLDOWN_SECONDS = 10;
+
+const HOURLY_LIMIT_MESSAGE =
+  "Hey buddy, are you ok? Maybe you need to chill on the blips for a minute... Have a tea, maybe meditate for a bit? Lets put the blips down for a little bit and come back to it when you're more relaxed.";
+
+export function BlipComposer({ onPosted }: BlipComposerProps) {
   const supabase = createClient();
 
   const [content, setContent] = useState("");
@@ -29,74 +38,6 @@ export function BlipComposer({ userId, onPosted }: BlipComposerProps) {
 
     return () => window.clearInterval(timer);
   }, [cooldownSeconds]);
-
-  async function getRecentBlipStatus() {
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-
-    const { count, error: countError } = await supabase
-      .from("blips")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .gt("created_at", oneHourAgo);
-
-    if (countError) {
-      console.error("Error checking hourly blip count:", countError);
-
-      return {
-        canPost: true,
-        reason: "",
-      };
-    }
-
-    if ((count ?? 0) >= MAX_BLIPS_PER_HOUR) {
-      return {
-        canPost: false,
-        reason:
-          "You’ve reached the current limit of 20 blips per hour. Give it a little time before posting again.",
-      };
-    }
-
-    const { data: latestBlip, error: latestError } = await supabase
-      .from("blips")
-      .select("created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (latestError) {
-      console.error("Error checking latest blip:", latestError);
-
-      return {
-        canPost: true,
-        reason: "",
-      };
-    }
-
-    if (latestBlip?.created_at) {
-      const lastPostTime = new Date(latestBlip.created_at).getTime();
-      const secondsSinceLastPost = Math.floor(
-        (Date.now() - lastPostTime) / 1000
-      );
-      const remainingSeconds = COOLDOWN_SECONDS - secondsSinceLastPost;
-
-      if (remainingSeconds > 0) {
-        setCooldownSeconds(remainingSeconds);
-
-        return {
-          canPost: false,
-          reason: `Give it ${remainingSeconds} more second${
-            remainingSeconds === 1 ? "" : "s"
-          } before posting another blip.`,
-        };
-      }
-    }
-
-    return {
-      canPost: true,
-      reason: "",
-    };
-  }
 
   async function postBlip(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -125,42 +66,55 @@ export function BlipComposer({ userId, onPosted }: BlipComposerProps) {
     setIsPosting(true);
     setMessage("");
 
-    const recentStatus = await getRecentBlipStatus();
-
-    if (!recentStatus.canPost) {
-      setMessage(recentStatus.reason);
-      setIsPosting(false);
-      return;
-    }
-
-    const { error } = await supabase.from("blips").insert({
-      user_id: userId,
-      content: trimmedContent,
+    const { data, error } = await supabase.rpc("post_blip", {
+      p_content: trimmedContent,
     });
 
     setIsPosting(false);
 
     if (error) {
       console.error("Error posting blip:", error);
+      setMessage("Something went wrong posting your blip.");
+      return;
+    }
 
-      if (
-        error.message.toLowerCase().includes("policy") ||
-        error.message.toLowerCase().includes("row-level security")
-      ) {
+    const result = data as PostBlipResult | null;
+
+    if (!result?.ok) {
+      if (result?.reason === "cooldown") {
+        const secondsRemaining =
+          typeof result.seconds_remaining === "number"
+            ? result.seconds_remaining
+            : COOLDOWN_SECONDS;
+
+        setCooldownSeconds(secondsRemaining);
         setMessage(
-          "Quietli is asking for a tiny pause before your next blip. Try again in a moment."
+          `Give it ${secondsRemaining} more second${
+            secondsRemaining === 1 ? "" : "s"
+          } before posting another blip.`
         );
-        setCooldownSeconds(COOLDOWN_SECONDS);
         return;
       }
 
-      setMessage("Something went wrong posting your blip.");
+      if (result?.reason === "hourly_limit") {
+        setMessage(HOURLY_LIMIT_MESSAGE);
+        return;
+      }
+
+      if (result?.reason === "possible_bot_spam") {
+        setMessage(
+          "Quietli noticed a suspiciously fast burst of posting attempts. Posting has been paused for review."
+        );
+        return;
+      }
+
+      setMessage(result?.message ?? "Something went wrong posting your blip.");
       return;
     }
 
     setContent("");
     setCooldownSeconds(COOLDOWN_SECONDS);
-    setMessage("Blip posted.");
+    setMessage(result.message ?? "Blip posted.");
 
     if (onPosted) {
       await onPosted();
