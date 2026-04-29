@@ -3,8 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { gradientThemes } from "@/lib/gradient-themes";
 
 type EmbedVariant = "latest" | "feed";
-
-type LatestEmbedHeight = 100 | 200 | 300;
+type EmbedHeight = 100 | 200 | 300 | 420 | 600;
 
 type Profile = {
   id: string;
@@ -21,9 +20,11 @@ type Blip = {
   created_at: string;
 };
 
-function getLatestHeight(value?: string): LatestEmbedHeight {
+function getEmbedHeight(value?: string): EmbedHeight {
   if (value === "200") return 200;
   if (value === "300") return 300;
+  if (value === "420") return 420;
+  if (value === "600") return 600;
   return 100;
 }
 
@@ -68,7 +69,7 @@ export default async function EmbedPage({
   const { variant, height } = await searchParams;
 
   const embedVariant: EmbedVariant = variant === "feed" ? "feed" : "latest";
-  const latestHeight = getLatestHeight(height);
+  const embedHeight = getEmbedHeight(height);
 
   const supabase = await createClient();
 
@@ -112,7 +113,9 @@ export default async function EmbedPage({
   if (embedVariant === "latest") {
     const latestBlip = blips?.[0];
 
-    const isCompact = latestHeight === 100;
+    const isCompact = embedHeight === 100;
+    const isMedium = embedHeight === 200 || embedHeight === 300;
+    const isTall = embedHeight === 420 || embedHeight === 600;
 
     return (
       <>
@@ -129,7 +132,7 @@ export default async function EmbedPage({
           >
             <div
               className={`flex min-w-0 ${
-                isCompact ? "items-center gap-4 pr-16" : "items-start gap-4 pr-16"
+                isCompact ? "items-center gap-4 pr-16" : "items-start gap-4 pr-20"
               }`}
             >
               <div
@@ -144,7 +147,7 @@ export default async function EmbedPage({
                     className="absolute inset-0 h-full w-full rounded-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-full text-lg font-semibold text-[#2b0f2f]">
+                  <div className="flex h-full w-full items-center justify-center rounded-full text-lg font-medium text-[#2b0f2f]">
                     {profile.username.slice(0, 1).toUpperCase()}
                   </div>
                 )}
@@ -152,7 +155,7 @@ export default async function EmbedPage({
 
               <div className="min-w-0">
                 <p
-                  className={`truncate font-semibold leading-5 text-[#2b0f2f] ${
+                  className={`truncate font-medium leading-5 text-[#2b0f2f] ${
                     isCompact ? "text-base" : "text-lg"
                   }`}
                 >
@@ -160,7 +163,7 @@ export default async function EmbedPage({
                 </p>
 
                 {!isCompact ? (
-                  <p className="mt-1 truncate text-sm font-medium text-[#2b0f2f]/70">
+                  <p className="mt-1 truncate text-sm font-normal text-[#2b0f2f]/70">
                     {profile.bio || "A stream of passing thoughts."}
                   </p>
                 ) : null}
@@ -168,8 +171,10 @@ export default async function EmbedPage({
                 <p
                   className={`text-[#2b0f2f] ${
                     isCompact
-                      ? "mt-1 line-clamp-2 text-lg font-medium leading-6"
-                      : "mt-5 line-clamp-3 text-2xl font-medium leading-9"
+                      ? "mt-1 line-clamp-2 text-lg font-normal leading-6"
+                      : isMedium
+                        ? "mt-5 line-clamp-4 text-2xl font-normal leading-9"
+                        : "mt-8 line-clamp-6 text-3xl font-normal leading-[3rem]"
                   }`}
                 >
                   {latestBlip?.content ?? "No blips yet."}
@@ -177,8 +182,12 @@ export default async function EmbedPage({
               </div>
             </div>
 
+            {isTall ? (
+              <div className="pointer-events-none absolute inset-0 rounded-[24px] border border-white/20" />
+            ) : null}
+
             <img
-              src="/logo-v3.png"
+              src="/quietli-q.png"
               alt="Quietli"
               className={`absolute object-contain opacity-90 ${
                 isCompact
@@ -198,10 +207,10 @@ export default async function EmbedPage({
 
       <main className="fixed inset-0 overflow-hidden bg-transparent font-sans">
         <div
-          className="h-full w-full overflow-hidden rounded-[24px] p-4"
+          className="relative h-full w-full overflow-hidden rounded-[24px] p-4"
           style={{ background: cardBackground }}
         >
-          <div className="mb-4 flex items-center gap-3">
+          <div className="mb-4 flex items-center gap-3 pr-16">
             <div className="relative h-14 w-14 flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/30">
               {profile.avatar_url ? (
                 <img
@@ -210,38 +219,38 @@ export default async function EmbedPage({
                   className="absolute inset-0 h-full w-full rounded-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center rounded-full text-lg font-semibold text-[#2b0f2f]">
+                <div className="flex h-full w-full items-center justify-center rounded-full text-lg font-medium text-[#2b0f2f]">
                   {profile.username.slice(0, 1).toUpperCase()}
                 </div>
               )}
             </div>
 
             <div className="min-w-0">
-              <p className="truncate text-xl font-semibold text-[#2b0f2f]">
+              <p className="truncate text-xl font-medium text-[#2b0f2f]">
                 @{profile.username}
               </p>
 
-              <p className="truncate text-sm font-medium text-[#2b0f2f]/75">
+              <p className="truncate text-sm font-normal text-[#2b0f2f]/75">
                 {profile.bio || "A stream of passing thoughts."}
               </p>
             </div>
           </div>
 
-          <div className="grid max-h-[310px] gap-3 overflow-hidden">
+          <div className="grid gap-3 overflow-hidden">
             {blips && blips.length > 0 ? (
               blips.map((blip) => (
                 <div
                   key={blip.id}
                   className="rounded-[1.25rem] border border-white/25 bg-white/25 p-4"
                 >
-                  <p className="line-clamp-3 text-base font-medium leading-7 text-[#2b0f2f]">
+                  <p className="line-clamp-3 text-base font-normal leading-7 text-[#2b0f2f]">
                     {blip.content}
                   </p>
                 </div>
               ))
             ) : (
               <div className="rounded-[1.25rem] border border-white/25 bg-white/25 p-4">
-                <p className="text-base font-medium text-[#2b0f2f]">
+                <p className="text-base font-normal text-[#2b0f2f]">
                   No blips yet.
                 </p>
               </div>
@@ -249,9 +258,9 @@ export default async function EmbedPage({
           </div>
 
           <img
-            src="/logo-v3.png"
+            src="/quietli-q.png"
             alt="Quietli"
-            className="absolute bottom-4 right-4 h-12 w-12 object-contain opacity-80"
+            className="absolute bottom-4 right-4 h-12 w-12 object-contain opacity-85"
           />
         </div>
       </main>
