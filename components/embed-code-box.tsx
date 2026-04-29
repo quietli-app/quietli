@@ -26,7 +26,9 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
     return `${window.location.origin}/embed/${username}?variant=${mode}&height=${activeHeight}`;
   }, [username, mode, activeHeight]);
 
-  const embedCode = `<iframe src="${embedUrl}" width="100%" height="${activeHeight}" style="border:0;border-radius:24px;overflow:hidden;display:block;" scrolling="no" title="Quietli ${mode === "latest" ? "latest blip" : "blip feed"}"></iframe>`;
+  const embedCode = `<iframe src="${embedUrl}" width="100%" height="${activeHeight}" style="border:0;border-radius:24px;overflow:hidden;display:block;" scrolling="no" title="Quietli ${
+    mode === "latest" ? "latest blip" : "blip feed"
+  }"></iframe>`;
 
   async function copyEmbedCode() {
     setMessage("");
@@ -41,13 +43,14 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
     }
   }
 
-  const heightOptions = mode === "latest" ? latestHeightOptions : feedHeightOptions;
+  const heightOptions =
+    mode === "latest" ? latestHeightOptions : feedHeightOptions;
 
   return (
     <div className="rounded-[1.5rem] border border-white/20 bg-white/20 p-5 backdrop-blur-xl">
-      <p className="mb-2 text-xl font-bold text-white">Embed your blips</p>
+      <p className="mb-2 text-xl font-semibold text-white">Embed your blips</p>
 
-      <p className="mb-5 text-base leading-7 text-slate-100">
+      <p className="mb-5 text-base font-normal leading-7 text-slate-100">
         Add your latest blip or your Quietli feed to a website, blog, portfolio,
         or little corner of the internet.
       </p>
@@ -58,7 +61,7 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
             <button
               type="button"
               onClick={() => setMode("latest")}
-              className={`rounded-full px-5 py-2 text-sm font-bold transition ${
+              className={`rounded-full px-5 py-2 text-sm font-normal transition ${
                 mode === "latest"
                   ? "bg-white text-[#642B73]"
                   : "text-white/80 hover:bg-white/10"
@@ -70,7 +73,7 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
             <button
               type="button"
               onClick={() => setMode("feed")}
-              className={`rounded-full px-5 py-2 text-sm font-bold transition ${
+              className={`rounded-full px-5 py-2 text-sm font-normal transition ${
                 mode === "feed"
                   ? "bg-white text-[#642B73]"
                   : "text-white/80 hover:bg-white/10"
@@ -83,7 +86,7 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
           <button
             type="button"
             onClick={copyEmbedCode}
-            className="rounded-full bg-gradient-to-r from-[#C6426E] via-[#A13E7A] to-[#642B73] px-5 py-3 text-sm font-bold text-white transition hover:brightness-110"
+            className="rounded-full bg-gradient-to-r from-[#C6426E] via-[#A13E7A] to-[#642B73] px-5 py-3 text-sm font-normal text-white transition hover:brightness-110"
           >
             Copy embed code
           </button>
@@ -92,14 +95,14 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
             href={embedUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-sm font-bold text-white underline decoration-white/50 underline-offset-4 transition hover:decoration-white"
+            className="text-sm font-normal text-white underline decoration-white/50 underline-offset-4 transition hover:decoration-white"
           >
             Preview embed
           </a>
         </div>
 
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <p className="mr-2 text-sm font-bold text-white/75">
+          <p className="mr-2 text-sm font-normal text-white/75">
             Preview height
           </p>
 
@@ -114,7 +117,7 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
                   setFeedHeight(height);
                 }
               }}
-              className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+              className={`rounded-full px-4 py-2 text-sm font-normal transition ${
                 activeHeight === height
                   ? "bg-white text-[#642B73]"
                   : "border border-white/25 bg-white/15 text-white hover:bg-white/25"
@@ -147,9 +150,9 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
       </div>
 
       <div className="mt-5 rounded-[1.25rem] border border-white/15 bg-white/15 p-4">
-        <p className="mb-2 text-sm font-bold text-white">Embed code</p>
+        <p className="mb-2 text-sm font-normal text-white">Embed code</p>
 
-        <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-[1rem] bg-white/15 p-4 text-xs leading-6 text-white/75">
+        <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-[1rem] bg-white/15 p-4 text-xs font-normal leading-6 text-white/75">
           {embedCode}
         </pre>
       </div>
