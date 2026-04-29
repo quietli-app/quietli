@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
@@ -171,8 +172,11 @@ export default function QuietliMobileHome() {
   const [composerMessage, setComposerMessage] = useState("");
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [authMessage, setAuthMessage] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   function openProfile(profileUsername: string) {
+    setIsMenuOpen(false);
+
     router.push({
       pathname: "/profile/[username]",
       params: { username: profileUsername },
@@ -180,7 +184,13 @@ export default function QuietliMobileHome() {
   }
 
   function openDiscover() {
+    setIsMenuOpen(false);
     router.push("/explore" as never);
+  }
+
+  function openSettings() {
+    setIsMenuOpen(false);
+    router.push("/settings" as never);
   }
 
   useEffect(() => {
@@ -464,6 +474,7 @@ export default function QuietliMobileHome() {
   }
 
   async function signOut() {
+    setIsMenuOpen(false);
     await supabase.auth.signOut();
     setProfile(null);
     setFeed([]);
@@ -577,199 +588,233 @@ export default function QuietliMobileHome() {
     const currentUsername = profile?.username || "quietli_user";
 
     return (
-      <KeyboardAvoidingView
-        style={styles.keyboardScreen}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          style={styles.screen}
-          contentContainerStyle={styles.feedContent}
-          keyboardShouldPersistTaps="handled"
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={refreshFeed} />
-          }
+      <>
+        <KeyboardAvoidingView
+          style={styles.keyboardScreen}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <View style={styles.mobileHeader}>
-            <Pressable
-              style={styles.mobileHeaderProfile}
-              onPress={() => openProfile(currentUsername)}
-            >
-              <AvatarBubble
-                username={currentUsername}
-                avatarUrl={profile?.avatar_url ?? null}
-                size={46}
+          <ScrollView
+            style={styles.screen}
+            contentContainerStyle={styles.feedContent}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} onRefresh={refreshFeed} />
+            }
+          >
+            <View style={styles.mobileHeader}>
+              <Pressable
+                style={styles.mobileHeaderProfile}
+                onPress={() => openProfile(currentUsername)}
+              >
+                <AvatarBubble
+                  username={currentUsername}
+                  avatarUrl={profile?.avatar_url ?? null}
+                  size={46}
+                />
+
+                <View>
+                  <Text style={styles.logoText}>Quietli</Text>
+                  <Text style={styles.headerSubtext}>@{currentUsername}</Text>
+                </View>
+              </Pressable>
+
+              <Pressable
+                style={styles.menuButton}
+                onPress={() => setIsMenuOpen(true)}
+              >
+                <Text style={styles.menuButtonText}>Menu</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.composerCard}>
+              <TextInput
+                value={composerText}
+                onChangeText={(value) => {
+                  setComposerText(value);
+                  setComposerMessage("");
+                }}
+                multiline
+                maxLength={MAX_LENGTH}
+                placeholder="What floated through your brain?"
+                placeholderTextColor="rgba(100, 43, 115, 0.45)"
+                style={styles.composerInput}
               />
 
-              <View>
-                <Text style={styles.logoText}>Quietli</Text>
-                <Text style={styles.headerSubtext}>@{currentUsername}</Text>
-              </View>
-            </Pressable>
-
-            <View style={styles.headerActions}>
-              <Pressable
-                style={styles.headerActionButton}
-                onPress={openDiscover}
-              >
-                <Text style={styles.headerActionButtonText}>Discover</Text>
-              </Pressable>
-
-              <Pressable style={styles.signOutButton} onPress={signOut}>
-                <Text style={styles.signOutButtonText}>Sign out</Text>
-              </Pressable>
-            </View>
-          </View>
-
-          <View style={styles.composerCard}>
-            <TextInput
-              value={composerText}
-              onChangeText={(value) => {
-                setComposerText(value);
-                setComposerMessage("");
-              }}
-              multiline
-              maxLength={MAX_LENGTH}
-              placeholder="What floated through your brain?"
-              placeholderTextColor="rgba(100, 43, 115, 0.45)"
-              style={styles.composerInput}
-            />
-
-            <View style={styles.composerFooter}>
-              <Text style={styles.characterCount}>
-                {charactersLeft} characters left
-              </Text>
-
-              <Pressable
-                style={[
-                  styles.postButton,
-                  (isSubmitting || cooldownSeconds > 0) &&
-                    styles.disabledButton,
-                ]}
-                onPress={postBlip}
-                disabled={isSubmitting || cooldownSeconds > 0}
-              >
-                <Text style={styles.postButtonText}>
-                  {isSubmitting
-                    ? "Posting..."
-                    : cooldownSeconds > 0
-                      ? `Pause ${cooldownSeconds}s`
-                      : "Post blip"}
+              <View style={styles.composerFooter}>
+                <Text style={styles.characterCount}>
+                  {charactersLeft} characters left
                 </Text>
-              </Pressable>
-            </View>
 
-            {composerMessage ? (
-              <Text style={styles.composerMessage}>{composerMessage}</Text>
-            ) : null}
-          </View>
-
-          <View style={styles.feedToggleRow}>
-            <View style={styles.feedToggle}>
-              <Pressable
-                style={[
-                  styles.feedToggleButton,
-                  feedView === "following" && styles.feedToggleButtonActive,
-                ]}
-                onPress={() => changeFeedView("following")}
-              >
-                <Text
-                  style={[
-                    styles.feedToggleButtonText,
-                    feedView === "following" &&
-                      styles.feedToggleButtonTextActive,
-                  ]}
-                >
-                  Following
-                </Text>
-              </Pressable>
-
-              <Pressable
-                style={[
-                  styles.feedToggleButton,
-                  feedView === "world" && styles.feedToggleButtonActive,
-                ]}
-                onPress={() => changeFeedView("world")}
-              >
-                <Text
-                  style={[
-                    styles.feedToggleButtonText,
-                    feedView === "world" && styles.feedToggleButtonTextActive,
-                  ]}
-                >
-                  World View
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-
-          <Text style={styles.feedHint}>
-            {feedView === "following"
-              ? "Blips from the quiet corners you follow."
-              : "The latest public blips drifting through Quietli."}
-          </Text>
-
-          {isLoadingFeed ? (
-            <View style={styles.emptyCard}>
-              <ActivityIndicator color="#ffffff" />
-              <Text style={styles.emptyText}>Loading blips...</Text>
-            </View>
-          ) : feed.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyTitle}>
-                {feedView === "following"
-                  ? "You’re not following anyone yet."
-                  : "No public blips yet."}
-              </Text>
-
-              <Text style={styles.emptyText}>
-                {feedView === "following"
-                  ? "Switch to World View to discover public blips."
-                  : "Quiet out here. Be the first to toss a thought into the world."}
-              </Text>
-
-              {feedView === "following" ? (
                 <Pressable
-                  style={styles.secondaryButton}
-                  onPress={() => changeFeedView("world")}
+                  style={[
+                    styles.postButton,
+                    (isSubmitting || cooldownSeconds > 0) &&
+                      styles.disabledButton,
+                  ]}
+                  onPress={postBlip}
+                  disabled={isSubmitting || cooldownSeconds > 0}
                 >
-                  <Text style={styles.secondaryButtonText}>View World</Text>
+                  <Text style={styles.postButtonText}>
+                    {isSubmitting
+                      ? "Posting..."
+                      : cooldownSeconds > 0
+                        ? `Pause ${cooldownSeconds}s`
+                        : "Post blip"}
+                  </Text>
                 </Pressable>
+              </View>
+
+              {composerMessage ? (
+                <Text style={styles.composerMessage}>{composerMessage}</Text>
               ) : null}
             </View>
-          ) : (
-            <View style={styles.feedList}>
-              {feed.map((blip) => (
-                <View
-                  key={blip.id}
+
+            <View style={styles.feedToggleRow}>
+              <View style={styles.feedToggle}>
+                <Pressable
                   style={[
-                    styles.blipCard,
-                    { backgroundColor: getBlipCardColor(blip.gradientTheme) },
+                    styles.feedToggleButton,
+                    feedView === "following" && styles.feedToggleButtonActive,
                   ]}
+                  onPress={() => changeFeedView("following")}
                 >
-                  <Pressable
-                    style={styles.blipHeader}
-                    onPress={() => openProfile(blip.username)}
+                  <Text
+                    style={[
+                      styles.feedToggleButtonText,
+                      feedView === "following" &&
+                        styles.feedToggleButtonTextActive,
+                    ]}
                   >
-                    <AvatarBubble
-                      username={blip.username}
-                      avatarUrl={blip.avatarUrl}
-                    />
+                    Following
+                  </Text>
+                </Pressable>
 
-                    <View style={styles.blipHeaderText}>
-                      <Text style={styles.blipUsername}>@{blip.username}</Text>
-                      <Text style={styles.blipDate}>
-                        {formatDate(blip.createdAt)}
-                      </Text>
-                    </View>
-                  </Pressable>
-
-                  <Text style={styles.blipContent}>{blip.content}</Text>
-                </View>
-              ))}
+                <Pressable
+                  style={[
+                    styles.feedToggleButton,
+                    feedView === "world" && styles.feedToggleButtonActive,
+                  ]}
+                  onPress={() => changeFeedView("world")}
+                >
+                  <Text
+                    style={[
+                      styles.feedToggleButtonText,
+                      feedView === "world" && styles.feedToggleButtonTextActive,
+                    ]}
+                  >
+                    World View
+                  </Text>
+                </Pressable>
+              </View>
             </View>
-          )}
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+            <Text style={styles.feedHint}>
+              {feedView === "following"
+                ? "Blips from the quiet corners you follow."
+                : "The latest public blips drifting through Quietli."}
+            </Text>
+
+            {isLoadingFeed ? (
+              <View style={styles.emptyCard}>
+                <ActivityIndicator color="#ffffff" />
+                <Text style={styles.emptyText}>Loading blips...</Text>
+              </View>
+            ) : feed.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyTitle}>
+                  {feedView === "following"
+                    ? "You’re not following anyone yet."
+                    : "No public blips yet."}
+                </Text>
+
+                <Text style={styles.emptyText}>
+                  {feedView === "following"
+                    ? "Switch to World View to discover public blips."
+                    : "Quiet out here. Be the first to toss a thought into the world."}
+                </Text>
+
+                {feedView === "following" ? (
+                  <Pressable
+                    style={styles.secondaryButton}
+                    onPress={() => changeFeedView("world")}
+                  >
+                    <Text style={styles.secondaryButtonText}>View World</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : (
+              <View style={styles.feedList}>
+                {feed.map((blip) => (
+                  <View
+                    key={blip.id}
+                    style={[
+                      styles.blipCard,
+                      { backgroundColor: getBlipCardColor(blip.gradientTheme) },
+                    ]}
+                  >
+                    <Pressable
+                      style={styles.blipHeader}
+                      onPress={() => openProfile(blip.username)}
+                    >
+                      <AvatarBubble
+                        username={blip.username}
+                        avatarUrl={blip.avatarUrl}
+                      />
+
+                      <View style={styles.blipHeaderText}>
+                        <Text style={styles.blipUsername}>@{blip.username}</Text>
+                        <Text style={styles.blipDate}>
+                          {formatDate(blip.createdAt)}
+                        </Text>
+                      </View>
+                    </Pressable>
+
+                    <Text style={styles.blipContent}>{blip.content}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </ScrollView>
+        </KeyboardAvoidingView>
+
+        <Modal visible={isMenuOpen} transparent animationType="fade">
+          <Pressable
+            style={styles.menuOverlay}
+            onPress={() => setIsMenuOpen(false)}
+          >
+            <Pressable style={styles.menuCard}>
+              <Text style={styles.menuKicker}>Quietli</Text>
+              <Text style={styles.menuTitle}>Menu</Text>
+
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => openProfile(currentUsername)}
+              >
+                <Text style={styles.menuItemText}>My profile</Text>
+              </Pressable>
+
+              <Pressable style={styles.menuItem} onPress={openDiscover}>
+                <Text style={styles.menuItemText}>Discover</Text>
+              </Pressable>
+
+              <Pressable style={styles.menuItem} onPress={openSettings}>
+                <Text style={styles.menuItemText}>Settings</Text>
+              </Pressable>
+
+              <Pressable style={styles.menuItemDanger} onPress={signOut}>
+                <Text style={styles.menuItemDangerText}>Sign out</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.menuClose}
+                onPress={() => setIsMenuOpen(false)}
+              >
+                <Text style={styles.menuCloseText}>Close</Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      </>
     );
   }
 
@@ -957,20 +1002,15 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     gap: 10,
   },
-  headerActions: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-  },
-  headerActionButton: {
+  menuButton: {
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.3)",
     backgroundColor: "rgba(255,255,255,0.16)",
     borderRadius: 999,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
   },
-  headerActionButtonText: {
+  menuButtonText: {
     color: "#ffffff",
     fontSize: 13,
     fontWeight: "300",
@@ -1067,19 +1107,6 @@ const styles = StyleSheet.create({
     color: "#642B73",
     fontSize: 15,
     fontWeight: "500",
-  },
-  signOutButton: {
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.3)",
-    backgroundColor: "rgba(255,255,255,0.16)",
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  signOutButtonText: {
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "300",
   },
   secondaryButton: {
     alignItems: "center",
@@ -1268,5 +1295,74 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     marginTop: 10,
     textAlign: "center",
+  },
+  menuOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(18, 5, 28, 0.55)",
+    padding: 18,
+  },
+  menuCard: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "#642B73",
+    borderRadius: 30,
+    padding: 18,
+  },
+  menuKicker: {
+    color: "rgba(255,255,255,0.62)",
+    fontSize: 12,
+    fontWeight: "300",
+    letterSpacing: 1.5,
+    marginBottom: 6,
+    textTransform: "uppercase",
+  },
+  menuTitle: {
+    color: "#ffffff",
+    fontSize: 28,
+    fontWeight: "500",
+    marginBottom: 16,
+  },
+  menuItem: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: 20,
+    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  menuItemText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "300",
+  },
+  menuItemDanger: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 20,
+    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  menuItemDangerText: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 16,
+    fontWeight: "300",
+  },
+  menuClose: {
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+    backgroundColor: "#ffffff",
+    borderRadius: 999,
+    marginTop: 4,
+    paddingVertical: 12,
+  },
+  menuCloseText: {
+    color: "#642B73",
+    fontSize: 15,
+    fontWeight: "400",
   },
 });
