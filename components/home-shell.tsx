@@ -68,10 +68,29 @@ export function HomeShell() {
     return data?.map((follow) => follow.following_id) ?? [];
   }
 
+  async function getMutedIds(currentUserId: string) {
+    const { data, error } = await supabase
+      .from("mutes")
+      .select("muted_id")
+      .eq("muter_id", currentUserId);
+
+    if (error) {
+      console.error("Error loading muted users:", error);
+      return [];
+    }
+
+    return data?.map((mute) => mute.muted_id) ?? [];
+  }
+
   async function loadFeed(view: FeedView, currentProfile: UserProfile | null) {
     setLoadingFeed(true);
 
     let followingIds: string[] = [];
+    let mutedIds: string[] = [];
+
+    if (currentProfile?.id) {
+      mutedIds = await getMutedIds(currentProfile.id);
+    }
 
     if (view === "following") {
       if (!currentProfile?.id) {
@@ -105,6 +124,10 @@ export function HomeShell() {
 
     if (view === "following") {
       query = query.in("user_id", followingIds);
+    }
+
+    if (mutedIds.length > 0) {
+      query = query.not("user_id", "in", `(${mutedIds.join(",")})`);
     }
 
     const { data, error } = await query;
