@@ -39,7 +39,9 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
     return () => window.clearInterval(timer);
   }, [cooldownSeconds]);
 
-  async function submitBlip() {
+  async function postBlip(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
     const trimmedContent = content.trim();
 
     if (!trimmedContent) {
@@ -60,8 +62,6 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
       );
       return;
     }
-
-    if (isPosting) return;
 
     setIsPosting(true);
     setMessage("");
@@ -121,24 +121,6 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
     }
   }
 
-  async function postBlip(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    await submitBlip();
-  }
-
-  async function handleKeyDown(
-    event: React.KeyboardEvent<HTMLTextAreaElement>
-  ) {
-    if (event.key !== "Enter") return;
-
-    if (event.shiftKey) {
-      return;
-    }
-
-    event.preventDefault();
-    await submitBlip();
-  }
-
   const charactersLeft = MAX_LENGTH - content.length;
 
   return (
@@ -157,10 +139,9 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
           setContent(event.target.value);
           setMessage("");
         }}
-        onKeyDown={handleKeyDown}
         maxLength={MAX_LENGTH}
         placeholder="What floated through your brain?"
-        className="min-h-32 w-full resize-none rounded-[1.5rem] border border-white/20 bg-white/50 p-4 text-lg font-light text-[#642B73] outline-none placeholder:font-light placeholder:text-[#8f6a99]/75"
+        className="min-h-32 w-full resize-none rounded-[1.5rem] border border-white/20 bg-white/50 p-4 text-lg font-normal text-[#642B73] outline-none placeholder:text-[#8f6a99]"
       />
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -184,10 +165,6 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
               : "Post blip"}
         </button>
       </div>
-
-      <p className="mt-3 text-xs font-light text-white/50">
-        Press Enter to post. Press Shift + Enter for a new line.
-      </p>
 
       {message ? (
         <p className="mt-4 rounded-2xl border border-white/20 bg-white/15 p-3 text-sm font-normal leading-6 text-white/85">
