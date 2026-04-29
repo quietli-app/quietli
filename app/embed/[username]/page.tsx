@@ -83,6 +83,8 @@ export default async function EmbedPage({
     notFound();
   }
 
+  const profileUrl = `https://quietli.io/profile/${profile.username}`;
+
   const cardBackground =
     gradientThemes[profile.gradient_theme ?? "blush"] ?? gradientThemes.blush;
 
@@ -131,7 +133,9 @@ export default async function EmbedPage({
           >
             <div
               className={`flex min-w-0 ${
-                isCompact ? "items-center gap-4 pr-16" : "items-start gap-4 pr-20"
+                isCompact
+                  ? "items-center gap-4 pr-16"
+                  : "items-start gap-4 pr-20"
               }`}
             >
               <div
@@ -181,15 +185,23 @@ export default async function EmbedPage({
               </div>
             </div>
 
-            <img
-              src="/quietli-q.png"
-              alt="Quietli"
-              className={`absolute object-contain opacity-90 ${
+            <a
+              href={profileUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`Open @${profile.username} on Quietli`}
+              className={`absolute object-contain opacity-90 transition hover:opacity-100 ${
                 isCompact
                   ? "bottom-3 right-4 h-10 w-10"
                   : "bottom-5 right-5 h-14 w-14"
               }`}
-            />
+            >
+              <img
+                src="/quietli-q.png"
+                alt="Quietli"
+                className="h-full w-full object-contain"
+              />
+            </a>
           </div>
         </main>
       </>
@@ -252,11 +264,19 @@ export default async function EmbedPage({
             )}
           </div>
 
-          <img
-            src="/quietli-q.png"
-            alt="Quietli"
-            className="absolute bottom-4 right-4 h-12 w-12 object-contain opacity-85"
-          />
+          <a
+            href={profileUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Open @${profile.username} on Quietli`}
+            className="absolute bottom-4 right-4 h-12 w-12 object-contain opacity-85 transition hover:opacity-100"
+          >
+            <img
+              src="/quietli-q.png"
+              alt="Quietli"
+              className="h-full w-full object-contain"
+            />
+          </a>
         </div>
       </main>
     </>
