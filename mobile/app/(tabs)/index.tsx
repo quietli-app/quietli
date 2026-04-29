@@ -188,6 +188,11 @@ export default function QuietliMobileHome() {
     router.push("/explore" as never);
   }
 
+  function openFollowRequests() {
+    setIsMenuOpen(false);
+    router.push("/follow-requests" as never);
+  }
+
   function openSettings() {
     setIsMenuOpen(false);
     router.push("/settings" as never);
@@ -598,7 +603,10 @@ export default function QuietliMobileHome() {
             contentContainerStyle={styles.feedContent}
             keyboardShouldPersistTaps="handled"
             refreshControl={
-              <RefreshControl refreshing={isRefreshing} onRefresh={refreshFeed} />
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={refreshFeed}
+              />
             }
           >
             <View style={styles.mobileHeader}>
@@ -795,6 +803,10 @@ export default function QuietliMobileHome() {
 
               <Pressable style={styles.menuItem} onPress={openDiscover}>
                 <Text style={styles.menuItemText}>Discover</Text>
+              </Pressable>
+
+              <Pressable style={styles.menuItem} onPress={openFollowRequests}>
+                <Text style={styles.menuItemText}>Follow requests</Text>
               </Pressable>
 
               <Pressable style={styles.menuItem} onPress={openSettings}>
