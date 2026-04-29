@@ -55,7 +55,7 @@ export function BlipCard({
           href={`/profile/${username}`}
           className="flex min-w-0 items-center gap-3"
         >
-          <div className="relative h-14 w-14 flex-none overflow-hidden rounded-full border-4 border-white/75 bg-white/25 ring-1 ring-white/25">
+          <div className="relative h-14 w-14 flex-none overflow-hidden rounded-full border-4 border-white/90 bg-white/25">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
