@@ -38,14 +38,21 @@ export async function TopNav() {
           <Image
             src="/logo-v3.png"
             alt="Quietli logo"
-            width={70}
-            height={70}
+            width={58}
+            height={58}
             className="rounded-md -translate-y-[1px]"
             priority
           />
         </Link>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <Link
+            href="/discover"
+            className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30"
+          >
+            Discover
+          </Link>
+
           {username ? (
             <Link
               href={`/profile/${username}`}
