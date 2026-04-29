@@ -5,6 +5,7 @@ import { BlipCard } from "@/components/blip-card";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ProfileEditor } from "@/components/profile-editor";
+import { ProfileLinkEditor } from "@/components/profile-link-editor";
 import { GradientThemePicker } from "@/components/gradient-theme-picker";
 import { EmbedCodeBox } from "@/components/embed-code-box";
 import { ProfileNavTheme } from "@/components/profile-nav-theme";
@@ -38,7 +39,9 @@ export default async function ProfilePage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, avatar_url, bio, gradient_theme, profile_visibility")
+    .select(
+      "id, username, avatar_url, bio, gradient_theme, profile_visibility, profile_link_label, profile_link_url"
+    )
     .eq("username", username)
     .single();
 
@@ -198,6 +201,8 @@ export default async function ProfilePage({
   }
 
   const accentColor = "#ffffff";
+  const hasProfileLink =
+    Boolean(profile.profile_link_label) && Boolean(profile.profile_link_url);
 
   return (
     <>
@@ -336,6 +341,17 @@ export default async function ProfilePage({
                 <p className="text-slate-100">
                   {profile.bio || "A stream of passing thoughts."}
                 </p>
+
+                {hasProfileLink && !hasBlockBetweenUsers ? (
+                  <a
+                    href={profile.profile_link_url ?? "#"}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-4 inline-flex rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-bold text-white backdrop-blur-md transition hover:bg-white/30"
+                  >
+                    {profile.profile_link_label}
+                  </a>
+                ) : null}
               </div>
             </div>
 
@@ -347,6 +363,12 @@ export default async function ProfilePage({
                   userId={profile.id}
                   currentUsername={profile.username}
                   currentBio={profile.bio}
+                />
+
+                <ProfileLinkEditor
+                  userId={profile.id}
+                  currentLabel={profile.profile_link_label}
+                  currentUrl={profile.profile_link_url}
                 />
 
                 <ProfilePrivacyToggle
