@@ -13,6 +13,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 
 type ProfileVisibility = "public" | "private";
+type GradientTheme = "blush" | "violet" | "sky" | "mint" | "sunset";
 
 type Profile = {
   id: string;
@@ -21,12 +22,51 @@ type Profile = {
   profile_visibility: ProfileVisibility | null;
   profile_link_label: string | null;
   profile_link_url: string | null;
+  gradient_theme: GradientTheme | null;
   plan: string | null;
 };
 
 const BIO_MAX_LENGTH = 160;
 const LINK_LABEL_MAX_LENGTH = 40;
 const LINK_URL_MAX_LENGTH = 220;
+
+const themeOptions: {
+  id: GradientTheme;
+  label: string;
+  description: string;
+  color: string;
+}[] = [
+  {
+    id: "blush",
+    label: "Blush",
+    description: "Warm pink Quietli classic.",
+    color: "#C6426E",
+  },
+  {
+    id: "violet",
+    label: "Violet",
+    description: "Deep purple and cozy.",
+    color: "#642B73",
+  },
+  {
+    id: "sky",
+    label: "Sky",
+    description: "Soft blue and airy.",
+    color: "#76D7EA",
+  },
+  {
+    id: "mint",
+    label: "Mint",
+    description: "Fresh, calm, and green.",
+    color: "#7DD8C5",
+  },
+  {
+    id: "sunset",
+    label: "Sunset",
+    description: "Peachy, warm, and glowy.",
+    color: "#F59E8B",
+  },
+];
 
 function normalizeUrl(value: string) {
   const trimmed = value.trim();
@@ -63,11 +103,13 @@ export default function MobileSettingsScreen() {
 
   const [profileLinkLabel, setProfileLinkLabel] = useState("");
   const [profileLinkUrl, setProfileLinkUrl] = useState("");
+  const [gradientTheme, setGradientTheme] = useState<GradientTheme>("blush");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingBio, setIsSavingBio] = useState(false);
   const [isSavingVisibility, setIsSavingVisibility] = useState(false);
   const [isSavingProfileLink, setIsSavingProfileLink] = useState(false);
+  const [isSavingTheme, setIsSavingTheme] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -86,7 +128,7 @@ export default function MobileSettingsScreen() {
       const { data, error } = await supabase
         .from("profiles")
         .select(
-          "id, username, bio, profile_visibility, profile_link_label, profile_link_url, plan"
+          "id, username, bio, profile_visibility, profile_link_label, profile_link_url, gradient_theme, plan"
         )
         .eq("id", currentSession.user.id)
         .maybeSingle();
@@ -105,6 +147,7 @@ export default function MobileSettingsScreen() {
       );
       setProfileLinkLabel(loadedProfile?.profile_link_label ?? "");
       setProfileLinkUrl(loadedProfile?.profile_link_url ?? "");
+      setGradientTheme(loadedProfile?.gradient_theme ?? "blush");
       setIsLoading(false);
     }
 
@@ -209,7 +252,9 @@ export default function MobileSettingsScreen() {
     const normalizedUrl = normalizeUrl(profileLinkUrl);
 
     if (trimmedLabel.length > LINK_LABEL_MAX_LENGTH) {
-      setMessage(`Keep your link label under ${LINK_LABEL_MAX_LENGTH} characters.`);
+      setMessage(
+        `Keep your link label under ${LINK_LABEL_MAX_LENGTH} characters.`
+      );
       return;
     }
 
@@ -262,6 +307,45 @@ export default function MobileSettingsScreen() {
     setMessage(trimmedLabel ? "Profile link saved." : "Profile link cleared.");
   }
 
+  async function saveTheme(nextTheme: GradientTheme) {
+    if (!session?.user?.id) {
+      setMessage("Please sign in again to update your theme.");
+      return;
+    }
+
+    setGradientTheme(nextTheme);
+    setIsSavingTheme(true);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        gradient_theme: nextTheme,
+      })
+      .eq("id", session.user.id);
+
+    setIsSavingTheme(false);
+
+    if (error) {
+      console.error("Error saving mobile theme:", error);
+      setMessage("Something went wrong saving your theme.");
+      return;
+    }
+
+    const selectedTheme = themeOptions.find((theme) => theme.id === nextTheme);
+
+    setProfile((current) =>
+      current
+        ? {
+            ...current,
+            gradient_theme: nextTheme,
+          }
+        : current
+    );
+
+    setMessage(`${selectedTheme?.label ?? "Theme"} theme saved.`);
+  }
+
   function clearProfileLinkFields() {
     setProfileLinkLabel("");
     setProfileLinkUrl("");
@@ -304,6 +388,8 @@ export default function MobileSettingsScreen() {
   const linkLabelCharactersLeft = LINK_LABEL_MAX_LENGTH - profileLinkLabel.length;
   const linkUrlCharactersLeft = LINK_URL_MAX_LENGTH - profileLinkUrl.length;
   const isPrivate = profileVisibility === "private";
+  const activeTheme =
+    themeOptions.find((theme) => theme.id === gradientTheme) ?? themeOptions[0];
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -320,8 +406,8 @@ export default function MobileSettingsScreen() {
         <Text style={styles.title}>Account settings.</Text>
 
         <Text style={styles.bodyText}>
-          Edit your bio, choose how visible your quiet corner should be, and add
-          one link to your profile.
+          Edit your bio, choose how visible your quiet corner should be, add one
+          link, and pick a profile theme.
         </Text>
       </View>
 
@@ -498,6 +584,80 @@ export default function MobileSettingsScreen() {
       </View>
 
       <View style={styles.card}>
+        <Text style={styles.cardLabel}>Theme</Text>
+        <Text style={styles.cardTitle}>{activeTheme.label}</Text>
+
+        <Text style={styles.cardText}>
+          Pick the color mood for your profile and blip cards.
+        </Text>
+
+        <View
+          style={[
+            styles.themePreview,
+            {
+              backgroundColor: activeTheme.color,
+            },
+          ]}
+        >
+          <Text style={styles.themePreviewText}>
+            @{profile?.username || "quietli_user"}
+          </Text>
+
+          <Text style={styles.themePreviewSubtext}>
+            This is how your quiet corner feels.
+          </Text>
+        </View>
+
+        <View style={styles.themeGrid}>
+          {themeOptions.map((theme) => {
+            const isActive = theme.id === gradientTheme;
+
+            return (
+              <Pressable
+                key={theme.id}
+                style={[
+                  styles.themeOption,
+                  isActive && styles.themeOptionActive,
+                ]}
+                disabled={isSavingTheme}
+                onPress={() => saveTheme(theme.id)}
+              >
+                <View
+                  style={[
+                    styles.themeSwatch,
+                    {
+                      backgroundColor: theme.color,
+                    },
+                  ]}
+                />
+
+                <View style={styles.themeTextWrap}>
+                  <Text
+                    style={[
+                      styles.themeLabel,
+                      isActive && styles.themeLabelActive,
+                    ]}
+                  >
+                    {theme.label}
+                  </Text>
+
+                  <Text style={styles.themeDescription}>
+                    {theme.description}
+                  </Text>
+                </View>
+
+                {isActive ? <Text style={styles.themeActiveText}>✓</Text> : null}
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {isSavingTheme ? (
+          <Text style={styles.savingText}>Saving theme...</Text>
+        ) : null}
+      </View>
+
+      <View style={styles.card}>
         <Text style={styles.cardLabel}>Profile</Text>
 
         <Text style={styles.cardText}>
@@ -509,12 +669,12 @@ export default function MobileSettingsScreen() {
         </Text>
 
         {profile?.profile_link_label && profile?.profile_link_url ? (
-          <Text style={styles.cardText}>
-            Link: {profile.profile_link_label}
-          </Text>
+          <Text style={styles.cardText}>Link: {profile.profile_link_label}</Text>
         ) : (
           <Text style={styles.cardText}>Link: none</Text>
         )}
+
+        <Text style={styles.cardText}>Theme: {activeTheme.label}</Text>
 
         {profile?.username ? (
           <Pressable
@@ -534,7 +694,8 @@ export default function MobileSettingsScreen() {
       <View style={styles.card}>
         <Text style={styles.cardLabel}>Coming next</Text>
         <Text style={styles.cardText}>
-          Next we’ll add theme picking, avatar upload, and account/data tools.
+          Next we can add avatar upload, account/data tools, or a follow request
+          badge in the mobile menu.
         </Text>
       </View>
 
@@ -789,6 +950,74 @@ const styles = StyleSheet.create({
   visibilityOptionTextActive: {
     color: "#642B73",
     fontWeight: "400",
+  },
+  themePreview: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.24)",
+    borderRadius: 26,
+    marginTop: 16,
+    padding: 18,
+  },
+  themePreviewText: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "400",
+  },
+  themePreviewSubtext: {
+    color: "rgba(255,255,255,0.76)",
+    fontSize: 14,
+    fontWeight: "300",
+    lineHeight: 21,
+    marginTop: 6,
+  },
+  themeGrid: {
+    gap: 10,
+    marginTop: 16,
+  },
+  themeOption: {
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 22,
+    flexDirection: "row",
+    gap: 12,
+    padding: 12,
+  },
+  themeOptionActive: {
+    borderColor: "rgba(255,255,255,0.72)",
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
+  themeSwatch: {
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.78)",
+    borderRadius: 18,
+    height: 36,
+    width: 36,
+  },
+  themeTextWrap: {
+    flex: 1,
+  },
+  themeLabel: {
+    color: "rgba(255,255,255,0.86)",
+    fontSize: 15,
+    fontWeight: "300",
+  },
+  themeLabelActive: {
+    color: "#ffffff",
+    fontWeight: "500",
+  },
+  themeDescription: {
+    color: "rgba(255,255,255,0.62)",
+    fontSize: 12,
+    fontWeight: "300",
+    lineHeight: 17,
+    marginTop: 2,
+  },
+  themeActiveText: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "500",
   },
   savingText: {
     color: "rgba(255,255,255,0.68)",
