@@ -244,7 +244,7 @@ export function HomeShell() {
       {authChecked && profile ? (
         <BlipComposer userId={profile.id} onPosted={refreshFeed} />
       ) : (
-        <div className="mb-8 rounded-[2rem] border border-white/20 bg-white/20 p-5 text-lg text-white/90 backdrop-blur-xl">
+        <div className="mb-8 rounded-[2rem] border border-white/20 bg-white/20 p-5 text-lg font-normal text-white/90 backdrop-blur-xl">
           Sign in to post a blip.
         </div>
       )}
@@ -255,7 +255,7 @@ export function HomeShell() {
             type="button"
             onClick={() => changeFeedView("following")}
             disabled={!profile}
-            className={`rounded-full px-5 py-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+            className={`rounded-full px-5 py-2 text-sm font-normal transition disabled:cursor-not-allowed disabled:opacity-50 ${
               feedView === "following"
                 ? "bg-white text-[#642B73]"
                 : "text-white/80 hover:bg-white/10"
@@ -267,7 +267,7 @@ export function HomeShell() {
           <button
             type="button"
             onClick={() => changeFeedView("world")}
-            className={`rounded-full px-5 py-2 text-sm font-bold transition ${
+            className={`rounded-full px-5 py-2 text-sm font-normal transition ${
               feedView === "world"
                 ? "bg-white text-[#642B73]"
                 : "text-white/80 hover:bg-white/10"
@@ -278,29 +278,29 @@ export function HomeShell() {
         </div>
 
         {feedView === "following" && profile ? (
-          <p className="text-sm text-white/70">
+          <p className="text-sm font-normal text-white/70">
             Blips from the quiet corners you follow.
           </p>
         ) : feedView === "world" ? (
-          <p className="text-sm text-white/70">
+          <p className="text-sm font-normal text-white/70">
             The latest public blips drifting through Quietli.
           </p>
         ) : null}
       </div>
 
       {loadingFeed ? (
-        <div className="rounded-[2rem] border border-white/20 bg-white/20 p-5 text-white/80 backdrop-blur-xl">
+        <div className="rounded-[2rem] border border-white/20 bg-white/20 p-5 font-normal text-white/80 backdrop-blur-xl">
           Loading blips...
         </div>
       ) : feed.length === 0 ? (
-        <div className="rounded-[2rem] border border-white/20 bg-white/20 p-8 text-center text-white backdrop-blur-xl">
+        <div className="rounded-[2rem] border border-white/20 bg-white/20 p-8 text-center font-normal text-white backdrop-blur-xl">
           {feedView === "following" ? (
             <>
-              <h2 className="text-2xl font-bold">
+              <h2 className="text-2xl font-semibold">
                 You’re not following anyone yet.
               </h2>
 
-              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
+              <p className="mx-auto mt-3 max-w-xl text-sm font-normal leading-6 text-white/75">
                 Visit someone’s profile and tap Follow. Their blips will start
                 showing up here.
               </p>
@@ -308,16 +308,16 @@ export function HomeShell() {
               <button
                 type="button"
                 onClick={() => changeFeedView("world")}
-                className="mt-5 rounded-full bg-white px-5 py-2 text-sm font-bold text-[#642B73] transition hover:bg-white/90"
+                className="mt-5 rounded-full bg-white px-5 py-2 text-sm font-normal text-[#642B73] transition hover:bg-white/90"
               >
                 View World
               </button>
             </>
           ) : (
             <>
-              <h2 className="text-2xl font-bold">No public blips yet.</h2>
+              <h2 className="text-2xl font-semibold">No public blips yet.</h2>
 
-              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
+              <p className="mx-auto mt-3 max-w-xl text-sm font-normal leading-6 text-white/75">
                 Quiet out here. Be the first to toss a thought into the world.
               </p>
             </>

@@ -187,12 +187,12 @@ export function BlipComposer({ userId, onPosted }: BlipComposerProps) {
         }}
         maxLength={MAX_LENGTH}
         placeholder="What floated through your brain?"
-        className="min-h-32 w-full resize-none rounded-[1.5rem] border border-white/20 bg-white/50 p-4 text-lg font-semibold text-[#642B73] outline-none placeholder:text-[#8f6a99]"
+        className="min-h-32 w-full resize-none rounded-[1.5rem] border border-white/20 bg-white/50 p-4 text-lg font-normal text-[#642B73] outline-none placeholder:text-[#8f6a99]"
       />
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <p
-          className={`text-sm ${
+          className={`text-sm font-normal ${
             charactersLeft < 20 ? "text-white" : "text-white/65"
           }`}
         >
@@ -202,7 +202,7 @@ export function BlipComposer({ userId, onPosted }: BlipComposerProps) {
         <button
           type="submit"
           disabled={isPosting || cooldownSeconds > 0}
-          className="rounded-full bg-white px-5 py-2 text-sm font-bold text-[#642B73] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-full bg-white px-5 py-2 text-sm font-normal text-[#642B73] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isPosting
             ? "Posting..."
@@ -213,7 +213,7 @@ export function BlipComposer({ userId, onPosted }: BlipComposerProps) {
       </div>
 
       {message ? (
-        <p className="mt-4 rounded-2xl border border-white/20 bg-white/15 p-3 text-sm leading-6 text-white/85">
+        <p className="mt-4 rounded-2xl border border-white/20 bg-white/15 p-3 text-sm font-normal leading-6 text-white/85">
           {message}
         </p>
       ) : null}
