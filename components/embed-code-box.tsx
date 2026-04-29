@@ -6,20 +6,25 @@ type EmbedCodeBoxProps = {
   username: string;
 };
 
+type LatestEmbedHeight = 100 | 200 | 300;
+
+const latestHeightOptions: LatestEmbedHeight[] = [100, 200, 300];
+
 export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
   const [message, setMessage] = useState("");
+  const [latestHeight, setLatestHeight] = useState<LatestEmbedHeight>(100);
 
   const latestEmbedUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
-    return `${window.location.origin}/embed/${username}?variant=latest`;
-  }, [username]);
+    return `${window.location.origin}/embed/${username}?variant=latest&height=${latestHeight}`;
+  }, [username, latestHeight]);
 
   const feedEmbedUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
     return `${window.location.origin}/embed/${username}?variant=feed`;
   }, [username]);
 
-  const latestEmbedCode = `<iframe src="${latestEmbedUrl}" width="100%" height="100" style="border:0;border-radius:24px;overflow:hidden;display:block;" scrolling="no" title="Quietli latest blip"></iframe>`;
+  const latestEmbedCode = `<iframe src="${latestEmbedUrl}" width="100%" height="${latestHeight}" style="border:0;border-radius:24px;overflow:hidden;display:block;" scrolling="no" title="Quietli latest blip"></iframe>`;
 
   const feedEmbedCode = `<iframe src="${feedEmbedUrl}" width="100%" height="420" style="border:0;border-radius:24px;overflow:hidden;display:block;" title="Quietli feed"></iframe>`;
 
@@ -66,15 +71,40 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
             </a>
           </div>
 
-          <div className="h-[100px] overflow-hidden rounded-[1.5rem] border border-white/25 bg-white/20">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <p className="mr-2 text-sm font-bold text-white/75">
+              Preview height
+            </p>
+
+            {latestHeightOptions.map((height) => (
+              <button
+                key={height}
+                type="button"
+                onClick={() => setLatestHeight(height)}
+                className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+                  latestHeight === height
+                    ? "bg-white text-[#642B73]"
+                    : "border border-white/25 bg-white/15 text-white hover:bg-white/25"
+                }`}
+              >
+                {height}px
+              </button>
+            ))}
+          </div>
+
+          <div
+            className="overflow-hidden rounded-[1.5rem] border border-white/25 bg-white/20"
+            style={{ height: latestHeight }}
+          >
             <iframe
               src={latestEmbedUrl}
               title="Quietli latest blip embed preview"
               width="100%"
-              height="100"
+              height={latestHeight}
               scrolling="no"
-              className="block h-[100px] w-full border-0"
+              className="block w-full border-0"
               style={{
+                height: latestHeight,
                 border: 0,
                 overflow: "hidden",
                 display: "block",
@@ -120,10 +150,20 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
         </section>
 
         <div className="rounded-[1.25rem] border border-white/15 bg-white/15 p-4">
-          <p className="mb-2 text-sm font-bold text-white">Latest blip code</p>
+          <p className="mb-2 text-sm font-bold text-white">
+            Latest blip embed code
+          </p>
 
           <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-[1rem] bg-white/15 p-4 text-xs leading-6 text-white/75">
             {latestEmbedCode}
+          </pre>
+        </div>
+
+        <div className="rounded-[1.25rem] border border-white/15 bg-white/15 p-4">
+          <p className="mb-2 text-sm font-bold text-white">Feed embed code</p>
+
+          <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-[1rem] bg-white/15 p-4 text-xs leading-6 text-white/75">
+            {feedEmbedCode}
           </pre>
         </div>
       </div>
