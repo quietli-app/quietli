@@ -85,6 +85,13 @@ export default function MobileDiscoverScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [message, setMessage] = useState("");
 
+  function openProfile(username: string) {
+    router.push({
+      pathname: "/profile/[username]",
+      params: { username },
+    } as never);
+  }
+
   async function loadProfiles() {
     setMessage("");
 
@@ -176,7 +183,7 @@ export default function MobileDiscoverScreen() {
                 styles.profileCard,
                 { backgroundColor: getProfileColor(profile.gradient_theme) },
               ]}
-              onPress={() => router.push(`/profile/${profile.username}`)}
+              onPress={() => openProfile(profile.username)}
             >
               <AvatarBubble
                 username={profile.username}

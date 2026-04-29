@@ -172,6 +172,17 @@ export default function QuietliMobileHome() {
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [authMessage, setAuthMessage] = useState("");
 
+  function openProfile(profileUsername: string) {
+    router.push({
+      pathname: "/profile/[username]",
+      params: { username: profileUsername },
+    } as never);
+  }
+
+  function openDiscover() {
+    router.push("/explore" as never);
+  }
+
   useEffect(() => {
     if (cooldownSeconds <= 0) return;
 
@@ -581,7 +592,7 @@ export default function QuietliMobileHome() {
           <View style={styles.mobileHeader}>
             <Pressable
               style={styles.mobileHeaderProfile}
-              onPress={() => router.push(`/profile/${currentUsername}`)}
+              onPress={() => openProfile(currentUsername)}
             >
               <AvatarBubble
                 username={currentUsername}
@@ -598,7 +609,7 @@ export default function QuietliMobileHome() {
             <View style={styles.headerActions}>
               <Pressable
                 style={styles.headerActionButton}
-                onPress={() => router.push("/explore")}
+                onPress={openDiscover}
               >
                 <Text style={styles.headerActionButtonText}>Discover</Text>
               </Pressable>
@@ -737,7 +748,7 @@ export default function QuietliMobileHome() {
                 >
                   <Pressable
                     style={styles.blipHeader}
-                    onPress={() => router.push(`/profile/${blip.username}`)}
+                    onPress={() => openProfile(blip.username)}
                   >
                     <AvatarBubble
                       username={blip.username}
