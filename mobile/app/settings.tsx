@@ -19,10 +19,37 @@ type Profile = {
   username: string | null;
   bio: string | null;
   profile_visibility: ProfileVisibility | null;
+  profile_link_label: string | null;
+  profile_link_url: string | null;
   plan: string | null;
 };
 
 const BIO_MAX_LENGTH = 160;
+const LINK_LABEL_MAX_LENGTH = 40;
+const LINK_URL_MAX_LENGTH = 220;
+
+function normalizeUrl(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) return "";
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
+}
+
+function isValidUrl(value: string) {
+  if (!value) return true;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 export default function MobileSettingsScreen() {
   const router = useRouter();
@@ -34,9 +61,13 @@ export default function MobileSettingsScreen() {
   const [profileVisibility, setProfileVisibility] =
     useState<ProfileVisibility>("public");
 
+  const [profileLinkLabel, setProfileLinkLabel] = useState("");
+  const [profileLinkUrl, setProfileLinkUrl] = useState("");
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingBio, setIsSavingBio] = useState(false);
   const [isSavingVisibility, setIsSavingVisibility] = useState(false);
+  const [isSavingProfileLink, setIsSavingProfileLink] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -54,7 +85,9 @@ export default function MobileSettingsScreen() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, username, bio, profile_visibility, plan")
+        .select(
+          "id, username, bio, profile_visibility, profile_link_label, profile_link_url, plan"
+        )
         .eq("id", currentSession.user.id)
         .maybeSingle();
 
@@ -70,6 +103,8 @@ export default function MobileSettingsScreen() {
       setProfileVisibility(
         loadedProfile?.profile_visibility === "private" ? "private" : "public"
       );
+      setProfileLinkLabel(loadedProfile?.profile_link_label ?? "");
+      setProfileLinkUrl(loadedProfile?.profile_link_url ?? "");
       setIsLoading(false);
     }
 
@@ -164,6 +199,75 @@ export default function MobileSettingsScreen() {
     );
   }
 
+  async function saveProfileLink() {
+    if (!session?.user?.id) {
+      setMessage("Please sign in again to update your profile link.");
+      return;
+    }
+
+    const trimmedLabel = profileLinkLabel.trim();
+    const normalizedUrl = normalizeUrl(profileLinkUrl);
+
+    if (trimmedLabel.length > LINK_LABEL_MAX_LENGTH) {
+      setMessage(`Keep your link label under ${LINK_LABEL_MAX_LENGTH} characters.`);
+      return;
+    }
+
+    if (normalizedUrl.length > LINK_URL_MAX_LENGTH) {
+      setMessage(`Keep your link URL under ${LINK_URL_MAX_LENGTH} characters.`);
+      return;
+    }
+
+    if ((trimmedLabel && !normalizedUrl) || (!trimmedLabel && normalizedUrl)) {
+      setMessage("Please include both a link label and a URL, or clear both.");
+      return;
+    }
+
+    if (!isValidUrl(normalizedUrl)) {
+      setMessage("Please enter a valid URL, like https://example.com.");
+      return;
+    }
+
+    setIsSavingProfileLink(true);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        profile_link_label: trimmedLabel || null,
+        profile_link_url: normalizedUrl || null,
+      })
+      .eq("id", session.user.id);
+
+    setIsSavingProfileLink(false);
+
+    if (error) {
+      console.error("Error saving mobile profile link:", error);
+      setMessage("Something went wrong saving your profile link.");
+      return;
+    }
+
+    setProfile((current) =>
+      current
+        ? {
+            ...current,
+            profile_link_label: trimmedLabel || null,
+            profile_link_url: normalizedUrl || null,
+          }
+        : current
+    );
+
+    setProfileLinkLabel(trimmedLabel);
+    setProfileLinkUrl(normalizedUrl);
+    setMessage(trimmedLabel ? "Profile link saved." : "Profile link cleared.");
+  }
+
+  function clearProfileLinkFields() {
+    setProfileLinkLabel("");
+    setProfileLinkUrl("");
+    setMessage("");
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     router.replace("/" as never);
@@ -197,6 +301,8 @@ export default function MobileSettingsScreen() {
   }
 
   const charactersLeft = BIO_MAX_LENGTH - bio.length;
+  const linkLabelCharactersLeft = LINK_LABEL_MAX_LENGTH - profileLinkLabel.length;
+  const linkUrlCharactersLeft = LINK_URL_MAX_LENGTH - profileLinkUrl.length;
   const isPrivate = profileVisibility === "private";
 
   return (
@@ -214,8 +320,8 @@ export default function MobileSettingsScreen() {
         <Text style={styles.title}>Account settings.</Text>
 
         <Text style={styles.bodyText}>
-          Edit your bio, choose how visible your quiet corner should be, and keep
-          your profile feeling like yours.
+          Edit your bio, choose how visible your quiet corner should be, and add
+          one link to your profile.
         </Text>
       </View>
 
@@ -322,6 +428,76 @@ export default function MobileSettingsScreen() {
       </View>
 
       <View style={styles.card}>
+        <Text style={styles.cardLabel}>Profile link</Text>
+        <Text style={styles.cardTitle}>Add one link</Text>
+
+        <Text style={styles.cardText}>
+          Free profiles can have one link. Later, Quietli Plus can expand this
+          into multiple links and richer profile extras.
+        </Text>
+
+        <Text style={styles.inputLabel}>Link label</Text>
+        <TextInput
+          value={profileLinkLabel}
+          onChangeText={(value) => {
+            setProfileLinkLabel(value.slice(0, LINK_LABEL_MAX_LENGTH));
+            setMessage("");
+          }}
+          maxLength={LINK_LABEL_MAX_LENGTH}
+          placeholder="My website"
+          placeholderTextColor="rgba(100, 43, 115, 0.45)"
+          style={styles.textInput}
+        />
+
+        <Text style={styles.inputHint}>
+          {linkLabelCharactersLeft} label characters left
+        </Text>
+
+        <Text style={styles.inputLabel}>Link URL</Text>
+        <TextInput
+          value={profileLinkUrl}
+          onChangeText={(value) => {
+            setProfileLinkUrl(value.slice(0, LINK_URL_MAX_LENGTH));
+            setMessage("");
+          }}
+          maxLength={LINK_URL_MAX_LENGTH}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+          placeholder="https://example.com"
+          placeholderTextColor="rgba(100, 43, 115, 0.45)"
+          style={styles.textInput}
+        />
+
+        <Text style={styles.inputHint}>
+          {linkUrlCharactersLeft} URL characters left
+        </Text>
+
+        <View style={styles.linkButtonRow}>
+          <Pressable
+            style={[
+              styles.saveButton,
+              isSavingProfileLink && styles.disabledButton,
+            ]}
+            disabled={isSavingProfileLink}
+            onPress={saveProfileLink}
+          >
+            <Text style={styles.saveButtonText}>
+              {isSavingProfileLink ? "Saving..." : "Save link"}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.clearButton}
+            disabled={isSavingProfileLink}
+            onPress={clearProfileLinkFields}
+          >
+            <Text style={styles.clearButtonText}>Clear</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.card}>
         <Text style={styles.cardLabel}>Profile</Text>
 
         <Text style={styles.cardText}>
@@ -331,6 +507,14 @@ export default function MobileSettingsScreen() {
         <Text style={styles.cardText}>
           Plan: {profile?.plan === "plus" ? "Plus" : "Free"}
         </Text>
+
+        {profile?.profile_link_label && profile?.profile_link_url ? (
+          <Text style={styles.cardText}>
+            Link: {profile.profile_link_label}
+          </Text>
+        ) : (
+          <Text style={styles.cardText}>Link: none</Text>
+        )}
 
         {profile?.username ? (
           <Pressable
@@ -350,8 +534,7 @@ export default function MobileSettingsScreen() {
       <View style={styles.card}>
         <Text style={styles.cardLabel}>Coming next</Text>
         <Text style={styles.cardText}>
-          Next we’ll add profile links, theme picking, avatar upload, and
-          account/data tools.
+          Next we’ll add theme picking, avatar upload, and account/data tools.
         </Text>
       </View>
 
@@ -510,6 +693,30 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     textAlignVertical: "top",
   },
+  textInput: {
+    backgroundColor: "rgba(255,255,255,0.72)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+    borderRadius: 18,
+    color: "#642B73",
+    fontSize: 16,
+    fontWeight: "300",
+    marginTop: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
+  },
+  inputLabel: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "300",
+    marginTop: 16,
+  },
+  inputHint: {
+    color: "rgba(255,255,255,0.58)",
+    fontSize: 12,
+    fontWeight: "300",
+    marginTop: 6,
+  },
   bioFooter: {
     alignItems: "center",
     flexDirection: "row",
@@ -534,6 +741,26 @@ const styles = StyleSheet.create({
     color: "#642B73",
     fontSize: 14,
     fontWeight: "400",
+  },
+  clearButton: {
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  clearButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "300",
+  },
+  linkButtonRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 16,
   },
   visibilityToggle: {
     flexDirection: "row",
