@@ -63,6 +63,15 @@ export async function TopNav() {
           ) : null}
 
           {user ? (
+            <Link
+              href="/settings"
+              className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30"
+            >
+              Settings
+            </Link>
+          ) : null}
+
+          {user ? (
             <form action={signOut}>
               <button
                 type="submit"
