@@ -154,15 +154,15 @@ export default async function DiscoverPage() {
                     style={{ background: cardBackground }}
                   >
                     <div className="mb-5 flex items-center gap-4">
-                      <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-white/70 bg-white/30">
+                      <div className="relative h-16 w-16 flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/30">
                         {profile.avatarUrl ? (
                           <img
                             src={profile.avatarUrl}
                             alt={profile.username}
-                            className="h-full w-full object-cover"
+                            className="absolute inset-0 h-full w-full rounded-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center text-xl font-bold text-[#2b0f2f]">
+                          <div className="flex h-full w-full items-center justify-center rounded-full text-xl font-bold text-[#2b0f2f]">
                             {profile.username.slice(0, 1).toUpperCase()}
                           </div>
                         )}
