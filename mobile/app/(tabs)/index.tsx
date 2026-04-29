@@ -974,13 +974,13 @@ const styles = StyleSheet.create({
   },
   screen: {
     flex: 1,
-    backgroundColor: "#642B73",
+    backgroundColor: "transparent",
   },
   loadingScreen: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#642B73",
+    backgroundColor: "transparent",
     padding: 24,
   },
   loadingText: {
@@ -1317,7 +1317,7 @@ const styles = StyleSheet.create({
   menuCard: {
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.22)",
-    backgroundColor: "#642B73",
+    backgroundColor: "transparent",
     borderRadius: 30,
     padding: 18,
   },
