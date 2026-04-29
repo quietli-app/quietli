@@ -595,9 +595,18 @@ export default function QuietliMobileHome() {
               </View>
             </Pressable>
 
-            <Pressable style={styles.signOutButton} onPress={signOut}>
-              <Text style={styles.signOutButtonText}>Sign out</Text>
-            </Pressable>
+            <View style={styles.headerActions}>
+              <Pressable
+                style={styles.headerActionButton}
+                onPress={() => router.push("/explore")}
+              >
+                <Text style={styles.headerActionButtonText}>Discover</Text>
+              </Pressable>
+
+              <Pressable style={styles.signOutButton} onPress={signOut}>
+                <Text style={styles.signOutButtonText}>Sign out</Text>
+              </Pressable>
+            </View>
           </View>
 
           <View style={styles.composerCard}>
@@ -934,7 +943,26 @@ const styles = StyleSheet.create({
   mobileHeaderProfile: {
     alignItems: "center",
     flexDirection: "row",
+    flexShrink: 1,
     gap: 10,
+  },
+  headerActions: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
+  headerActionButton: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  headerActionButtonText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "300",
   },
   logoText: {
     color: "#ffffff",
@@ -1034,7 +1062,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.3)",
     backgroundColor: "rgba(255,255,255,0.16)",
     borderRadius: 999,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 8,
   },
   signOutButtonText: {
