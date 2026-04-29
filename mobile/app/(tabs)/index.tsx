@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -103,6 +103,49 @@ function formatDate(value: string) {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+function AvatarBubble({
+  username,
+  avatarUrl,
+  size = 52,
+}: {
+  username: string;
+  avatarUrl: string | null;
+  size?: number;
+}) {
+  const borderRadius = size / 2;
+
+  return (
+    <View
+      style={[
+        styles.avatarCircle,
+        {
+          width: size,
+          height: size,
+          borderRadius,
+        },
+      ]}
+    >
+      {avatarUrl ? (
+        <Image
+          source={{ uri: avatarUrl }}
+          style={[
+            styles.avatarImage,
+            {
+              width: size,
+              height: size,
+              borderRadius,
+            },
+          ]}
+        />
+      ) : (
+        <Text style={styles.avatarInitial}>
+          {username.slice(0, 1).toUpperCase()}
+        </Text>
+      )}
+    </View>
+  );
 }
 
 export default function QuietliMobileHome() {
@@ -517,6 +560,7 @@ export default function QuietliMobileHome() {
 
   if (session) {
     const charactersLeft = MAX_LENGTH - composerText.length;
+    const currentUsername = profile?.username || "quietli_user";
 
     return (
       <KeyboardAvoidingView
@@ -532,11 +576,17 @@ export default function QuietliMobileHome() {
           }
         >
           <View style={styles.mobileHeader}>
-            <View>
-              <Text style={styles.logoText}>Quietli</Text>
-              <Text style={styles.headerSubtext}>
-                @{profile?.username || "quietli_user"}
-              </Text>
+            <View style={styles.mobileHeaderProfile}>
+              <AvatarBubble
+                username={currentUsername}
+                avatarUrl={profile?.avatar_url ?? null}
+                size={46}
+              />
+
+              <View>
+                <Text style={styles.logoText}>Quietli</Text>
+                <Text style={styles.headerSubtext}>@{currentUsername}</Text>
+              </View>
             </View>
 
             <Pressable style={styles.signOutButton} onPress={signOut}>
@@ -670,11 +720,10 @@ export default function QuietliMobileHome() {
                   ]}
                 >
                   <View style={styles.blipHeader}>
-                    <View style={styles.avatarCircle}>
-                      <Text style={styles.avatarInitial}>
-                        {blip.username.slice(0, 1).toUpperCase()}
-                      </Text>
-                    </View>
+                    <AvatarBubble
+                      username={blip.username}
+                      avatarUrl={blip.avatarUrl}
+                    />
 
                     <View style={styles.blipHeaderText}>
                       <Text style={styles.blipUsername}>@{blip.username}</Text>
@@ -871,6 +920,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 18,
     marginTop: 12,
+  },
+  mobileHeaderProfile: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
   },
   logoText: {
     color: "#ffffff",
@@ -1111,12 +1165,13 @@ const styles = StyleSheet.create({
   avatarCircle: {
     alignItems: "center",
     justifyContent: "center",
-    width: 52,
-    height: 52,
-    borderRadius: 26,
     borderWidth: 3,
     borderColor: "rgba(255,255,255,0.9)",
     backgroundColor: "rgba(255,255,255,0.18)",
+    overflow: "hidden",
+  },
+  avatarImage: {
+    resizeMode: "cover",
   },
   avatarInitial: {
     color: "#ffffff",
