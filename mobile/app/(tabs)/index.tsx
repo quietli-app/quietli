@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,12 +16,67 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
 type AuthMode = "signin" | "signup";
+type FeedView = "following" | "world";
 
 type Profile = {
   id: string;
   username: string | null;
   bio: string | null;
   avatar_url: string | null;
+  gradient_theme?: string | null;
+};
+
+type RawBlip = {
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  profiles:
+    | {
+        username: string;
+        avatar_url: string | null;
+        gradient_theme: string | null;
+        profile_visibility: string | null;
+      }
+    | {
+        username: string;
+        avatar_url: string | null;
+        gradient_theme: string | null;
+        profile_visibility: string | null;
+      }[]
+    | null;
+};
+
+type FeedItem = {
+  id: string;
+  userId: string;
+  content: string;
+  createdAt: string;
+  username: string;
+  avatarUrl: string | null;
+  gradientTheme: string | null;
+  profileVisibility: string | null;
+};
+
+type PostBlipResult = {
+  ok: boolean;
+  reason?: string;
+  message?: string;
+  seconds_remaining?: number;
+};
+
+const MAX_LENGTH = 240;
+const COOLDOWN_SECONDS = 10;
+
+const HOURLY_LIMIT_MESSAGE =
+  "Hey buddy, are you ok? Maybe you need to chill on the blips for a minute... Have a tea, maybe meditate for a bit? Lets put the blips down for a little bit and come back to it when you're more relaxed.";
+
+const themeBackgrounds: Record<string, string> = {
+  blush: "#C6426E",
+  violet: "#642B73",
+  sky: "#76D7EA",
+  mint: "#7DD8C5",
+  sunset: "#F59E8B",
 };
 
 function cleanUsername(value: string) {
@@ -28,6 +84,25 @@ function cleanUsername(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, "")
     .slice(0, 24);
+}
+
+function getProfileFromBlip(blip: RawBlip) {
+  return Array.isArray(blip.profiles) ? blip.profiles[0] : blip.profiles;
+}
+
+function getBlipCardColor(theme?: string | null) {
+  if (!theme) return themeBackgrounds.blush;
+
+  return themeBackgrounds[theme] ?? themeBackgrounds.blush;
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 export default function QuietliMobileHome() {
@@ -39,9 +114,27 @@ export default function QuietliMobileHome() {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
 
+  const [feedView, setFeedView] = useState<FeedView>("following");
+  const [feed, setFeed] = useState<FeedItem[]>([]);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
+  const [isLoadingFeed, setIsLoadingFeed] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState("");
+
+  const [composerText, setComposerText] = useState("");
+  const [composerMessage, setComposerMessage] = useState("");
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [authMessage, setAuthMessage] = useState("");
+
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+
+    const timer = setInterval(() => {
+      setCooldownSeconds((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [cooldownSeconds]);
 
   useEffect(() => {
     async function loadSession() {
@@ -53,7 +146,8 @@ export default function QuietliMobileHome() {
       setIsLoadingSession(false);
 
       if (currentSession?.user?.id) {
-        await loadProfile(currentSession.user.id);
+        const loadedProfile = await loadProfile(currentSession.user.id);
+        await loadFeed("following", loadedProfile);
       }
     }
 
@@ -65,9 +159,11 @@ export default function QuietliMobileHome() {
       setSession(nextSession);
 
       if (nextSession?.user?.id) {
-        await loadProfile(nextSession.user.id);
+        const loadedProfile = await loadProfile(nextSession.user.id);
+        await loadFeed("following", loadedProfile);
       } else {
         setProfile(null);
+        setFeed([]);
       }
     });
 
@@ -79,21 +175,169 @@ export default function QuietliMobileHome() {
   async function loadProfile(userId: string) {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, bio, avatar_url")
+      .select("id, username, bio, avatar_url, gradient_theme")
       .eq("id", userId)
       .maybeSingle();
 
     if (error) {
       console.error("Error loading mobile profile:", error);
-      return;
+      return null;
     }
 
     setProfile(data);
+    return data as Profile | null;
+  }
+
+  async function getFollowingIds(currentUserId: string) {
+    const { data, error } = await supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", currentUserId)
+      .eq("status", "accepted");
+
+    if (error) {
+      console.error("Error loading following list:", error);
+      return [];
+    }
+
+    return data?.map((follow) => follow.following_id) ?? [];
+  }
+
+  async function getMutedIds(currentUserId: string) {
+    const { data, error } = await supabase
+      .from("mutes")
+      .select("muted_id")
+      .eq("muter_id", currentUserId);
+
+    if (error) {
+      console.error("Error loading muted users:", error);
+      return [];
+    }
+
+    return data?.map((mute) => mute.muted_id) ?? [];
+  }
+
+  async function getBlockedUserIds(currentUserId: string) {
+    const { data, error } = await supabase
+      .from("blocks")
+      .select("blocker_id, blocked_id")
+      .or(`blocker_id.eq.${currentUserId},blocked_id.eq.${currentUserId}`);
+
+    if (error) {
+      console.error("Error loading blocked users:", error);
+      return [];
+    }
+
+    return (
+      data?.map((block) =>
+        block.blocker_id === currentUserId ? block.blocked_id : block.blocker_id
+      ) ?? []
+    );
+  }
+
+  async function loadFeed(view: FeedView, currentProfile: Profile | null) {
+    setIsLoadingFeed(true);
+
+    let followingIds: string[] = [];
+    let mutedIds: string[] = [];
+    let blockedUserIds: string[] = [];
+
+    if (currentProfile?.id) {
+      mutedIds = await getMutedIds(currentProfile.id);
+      blockedUserIds = await getBlockedUserIds(currentProfile.id);
+    }
+
+    if (view === "following") {
+      if (!currentProfile?.id) {
+        setFeed([]);
+        setIsLoadingFeed(false);
+        return;
+      }
+
+      followingIds = await getFollowingIds(currentProfile.id);
+
+      if (followingIds.length === 0) {
+        setFeed([]);
+        setIsLoadingFeed(false);
+        return;
+      }
+    }
+
+    let query = supabase
+      .from("blips")
+      .select(
+        `
+        id,
+        user_id,
+        content,
+        created_at,
+        profiles!inner(username, avatar_url, gradient_theme, profile_visibility)
+      `
+      )
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (view === "following") {
+      query = query.in("user_id", followingIds);
+    }
+
+    if (mutedIds.length > 0) {
+      query = query.not("user_id", "in", `(${mutedIds.join(",")})`);
+    }
+
+    if (blockedUserIds.length > 0) {
+      query = query.not("user_id", "in", `(${blockedUserIds.join(",")})`);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error loading feed:", error);
+      setFeed([]);
+      setIsLoadingFeed(false);
+      return;
+    }
+
+    let formattedFeed: FeedItem[] =
+      (data as RawBlip[] | null)?.map((blip) => {
+        const profileData = getProfileFromBlip(blip);
+
+        return {
+          id: blip.id,
+          userId: blip.user_id,
+          content: blip.content,
+          createdAt: blip.created_at,
+          username: profileData?.username ?? "unknown",
+          avatarUrl: profileData?.avatar_url ?? null,
+          gradientTheme: profileData?.gradient_theme ?? "blush",
+          profileVisibility: profileData?.profile_visibility ?? "public",
+        };
+      }) ?? [];
+
+    if (view === "world") {
+      formattedFeed = formattedFeed.filter(
+        (blip) => blip.profileVisibility !== "private"
+      );
+    }
+
+    setFeed(formattedFeed);
+    setIsLoadingFeed(false);
+  }
+
+  async function changeFeedView(view: FeedView) {
+    setFeedView(view);
+    await loadFeed(view, profile);
+  }
+
+  async function refreshFeed() {
+    setIsRefreshing(true);
+    await loadFeed(feedView, profile);
+    setIsRefreshing(false);
   }
 
   async function signIn() {
     setIsSubmitting(true);
-    setMessage("");
+    setAuthMessage("");
 
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -103,28 +347,28 @@ export default function QuietliMobileHome() {
     setIsSubmitting(false);
 
     if (error) {
-      setMessage(error.message);
+      setAuthMessage(error.message);
       return;
     }
 
-    setMessage("");
+    setAuthMessage("");
   }
 
   async function signUp() {
     setIsSubmitting(true);
-    setMessage("");
+    setAuthMessage("");
 
     const finalUsername = cleanUsername(username);
 
     if (!finalUsername || finalUsername.length < 3) {
       setIsSubmitting(false);
-      setMessage("Please choose a username with at least 3 characters.");
+      setAuthMessage("Please choose a username with at least 3 characters.");
       return;
     }
 
     if (password.length < 6) {
       setIsSubmitting(false);
-      setMessage("Please choose a password with at least 6 characters.");
+      setAuthMessage("Please choose a password with at least 6 characters.");
       return;
     }
 
@@ -136,7 +380,7 @@ export default function QuietliMobileHome() {
 
     if (existingProfile) {
       setIsSubmitting(false);
-      setMessage("That username is already taken.");
+      setAuthMessage("That username is already taken.");
       return;
     }
 
@@ -153,11 +397,11 @@ export default function QuietliMobileHome() {
     setIsSubmitting(false);
 
     if (error) {
-      setMessage(error.message);
+      setAuthMessage(error.message);
       return;
     }
 
-    setMessage(
+    setAuthMessage(
       "Almost there. Check your email for the Quietli confirmation link, then come back and sign in."
     );
   }
@@ -165,12 +409,14 @@ export default function QuietliMobileHome() {
   async function signOut() {
     await supabase.auth.signOut();
     setProfile(null);
-    setMessage("");
+    setFeed([]);
+    setAuthMessage("");
+    setComposerMessage("");
   }
 
   async function handleAuthSubmit() {
     if (!email.trim() || !password) {
-      setMessage("Please enter your email and password.");
+      setAuthMessage("Please enter your email and password.");
       return;
     }
 
@@ -179,6 +425,85 @@ export default function QuietliMobileHome() {
     } else {
       await signUp();
     }
+  }
+
+  async function postBlip() {
+    const trimmedContent = composerText.trim();
+
+    if (!trimmedContent) {
+      setComposerMessage("Write a tiny thought first.");
+      return;
+    }
+
+    if (trimmedContent.length > MAX_LENGTH) {
+      setComposerMessage(`Keep your blip under ${MAX_LENGTH} characters.`);
+      return;
+    }
+
+    if (cooldownSeconds > 0) {
+      setComposerMessage(
+        `Give it ${cooldownSeconds} more second${
+          cooldownSeconds === 1 ? "" : "s"
+        } before posting another blip.`
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    setComposerMessage("");
+
+    const { data, error } = await supabase.rpc("post_blip", {
+      p_content: trimmedContent,
+    });
+
+    setIsSubmitting(false);
+
+    if (error) {
+      console.error("Error posting mobile blip:", error);
+      setComposerMessage("Something went wrong posting your blip.");
+      return;
+    }
+
+    const result = data as PostBlipResult | null;
+
+    if (!result?.ok) {
+      if (result?.reason === "cooldown") {
+        const secondsRemaining =
+          typeof result.seconds_remaining === "number"
+            ? result.seconds_remaining
+            : COOLDOWN_SECONDS;
+
+        setCooldownSeconds(secondsRemaining);
+        setComposerMessage(
+          `Give it ${secondsRemaining} more second${
+            secondsRemaining === 1 ? "" : "s"
+          } before posting another blip.`
+        );
+        return;
+      }
+
+      if (result?.reason === "hourly_limit") {
+        setComposerMessage(HOURLY_LIMIT_MESSAGE);
+        return;
+      }
+
+      if (result?.reason === "possible_bot_spam") {
+        setComposerMessage(
+          "Quietli noticed a suspiciously fast burst of posting attempts. Posting has been paused for review."
+        );
+        return;
+      }
+
+      setComposerMessage(
+        result?.message ?? "Something went wrong posting your blip."
+      );
+      return;
+    }
+
+    setComposerText("");
+    setCooldownSeconds(COOLDOWN_SECONDS);
+    setComposerMessage(result.message ?? "Blip posted.");
+    await loadFeed(feedView, profile);
   }
 
   if (isLoadingSession) {
@@ -191,45 +516,181 @@ export default function QuietliMobileHome() {
   }
 
   if (session) {
+    const charactersLeft = MAX_LENGTH - composerText.length;
+
     return (
-      <ScrollView
-        style={styles.screen}
-        contentContainerStyle={styles.signedInContent}
+      <KeyboardAvoidingView
+        style={styles.keyboardScreen}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.heroCard}>
-          <Text style={styles.kicker}>Quietli mobile</Text>
-
-          <Text style={styles.title}>You’re signed in.</Text>
-
-          <Text style={styles.bodyText}>
-            This is the first native iPhone Quietli screen. Next we’ll build the
-            real mobile feed, composer, Discover, and profile pages using the
-            same Supabase backend as the website.
-          </Text>
-
-          <View style={styles.profilePreview}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarInitial}>
-                {(profile?.username || session.user.email || "q")
-                  .slice(0, 1)
-                  .toUpperCase()}
+        <ScrollView
+          style={styles.screen}
+          contentContainerStyle={styles.feedContent}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={refreshFeed} />
+          }
+        >
+          <View style={styles.mobileHeader}>
+            <View>
+              <Text style={styles.logoText}>Quietli</Text>
+              <Text style={styles.headerSubtext}>
+                @{profile?.username || "quietli_user"}
               </Text>
             </View>
 
-            <View style={styles.profileTextWrap}>
-              <Text style={styles.profileName}>
-                @{profile?.username || "quietli_user"}
+            <Pressable style={styles.signOutButton} onPress={signOut}>
+              <Text style={styles.signOutButtonText}>Sign out</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.composerCard}>
+            <TextInput
+              value={composerText}
+              onChangeText={(value) => {
+                setComposerText(value);
+                setComposerMessage("");
+              }}
+              multiline
+              maxLength={MAX_LENGTH}
+              placeholder="What floated through your brain?"
+              placeholderTextColor="rgba(100, 43, 115, 0.45)"
+              style={styles.composerInput}
+            />
+
+            <View style={styles.composerFooter}>
+              <Text style={styles.characterCount}>
+                {charactersLeft} characters left
               </Text>
 
-              <Text style={styles.profileEmail}>{session.user.email}</Text>
+              <Pressable
+                style={[
+                  styles.postButton,
+                  (isSubmitting || cooldownSeconds > 0) && styles.disabledButton,
+                ]}
+                onPress={postBlip}
+                disabled={isSubmitting || cooldownSeconds > 0}
+              >
+                <Text style={styles.postButtonText}>
+                  {isSubmitting
+                    ? "Posting..."
+                    : cooldownSeconds > 0
+                      ? `Pause ${cooldownSeconds}s`
+                      : "Post blip"}
+                </Text>
+              </Pressable>
+            </View>
+
+            {composerMessage ? (
+              <Text style={styles.composerMessage}>{composerMessage}</Text>
+            ) : null}
+          </View>
+
+          <View style={styles.feedToggleRow}>
+            <View style={styles.feedToggle}>
+              <Pressable
+                style={[
+                  styles.feedToggleButton,
+                  feedView === "following" && styles.feedToggleButtonActive,
+                ]}
+                onPress={() => changeFeedView("following")}
+              >
+                <Text
+                  style={[
+                    styles.feedToggleButtonText,
+                    feedView === "following" &&
+                      styles.feedToggleButtonTextActive,
+                  ]}
+                >
+                  Following
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[
+                  styles.feedToggleButton,
+                  feedView === "world" && styles.feedToggleButtonActive,
+                ]}
+                onPress={() => changeFeedView("world")}
+              >
+                <Text
+                  style={[
+                    styles.feedToggleButtonText,
+                    feedView === "world" && styles.feedToggleButtonTextActive,
+                  ]}
+                >
+                  World View
+                </Text>
+              </Pressable>
             </View>
           </View>
 
-          <Pressable style={styles.secondaryButton} onPress={signOut}>
-            <Text style={styles.secondaryButtonText}>Sign out</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
+          <Text style={styles.feedHint}>
+            {feedView === "following"
+              ? "Blips from the quiet corners you follow."
+              : "The latest public blips drifting through Quietli."}
+          </Text>
+
+          {isLoadingFeed ? (
+            <View style={styles.emptyCard}>
+              <ActivityIndicator color="#ffffff" />
+              <Text style={styles.emptyText}>Loading blips...</Text>
+            </View>
+          ) : feed.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyTitle}>
+                {feedView === "following"
+                  ? "You’re not following anyone yet."
+                  : "No public blips yet."}
+              </Text>
+
+              <Text style={styles.emptyText}>
+                {feedView === "following"
+                  ? "Switch to World View to discover public blips."
+                  : "Quiet out here. Be the first to toss a thought into the world."}
+              </Text>
+
+              {feedView === "following" ? (
+                <Pressable
+                  style={styles.secondaryButton}
+                  onPress={() => changeFeedView("world")}
+                >
+                  <Text style={styles.secondaryButtonText}>View World</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : (
+            <View style={styles.feedList}>
+              {feed.map((blip) => (
+                <View
+                  key={blip.id}
+                  style={[
+                    styles.blipCard,
+                    { backgroundColor: getBlipCardColor(blip.gradientTheme) },
+                  ]}
+                >
+                  <View style={styles.blipHeader}>
+                    <View style={styles.avatarCircle}>
+                      <Text style={styles.avatarInitial}>
+                        {blip.username.slice(0, 1).toUpperCase()}
+                      </Text>
+                    </View>
+
+                    <View style={styles.blipHeaderText}>
+                      <Text style={styles.blipUsername}>@{blip.username}</Text>
+                      <Text style={styles.blipDate}>
+                        {formatDate(blip.createdAt)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.blipContent}>{blip.content}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 
@@ -264,7 +725,7 @@ export default function QuietliMobileHome() {
               ]}
               onPress={() => {
                 setAuthMode("signin");
-                setMessage("");
+                setAuthMessage("");
               }}
             >
               <Text
@@ -284,7 +745,7 @@ export default function QuietliMobileHome() {
               ]}
               onPress={() => {
                 setAuthMode("signup");
-                setMessage("");
+                setAuthMessage("");
               }}
             >
               <Text
@@ -362,7 +823,9 @@ export default function QuietliMobileHome() {
             </Text>
           </Pressable>
 
-          {message ? <Text style={styles.messageText}>{message}</Text> : null}
+          {authMessage ? (
+            <Text style={styles.messageText}>{authMessage}</Text>
+          ) : null}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -395,11 +858,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 18,
   },
-  signedInContent: {
-    minHeight: "100%",
-    justifyContent: "center",
-    padding: 18,
-  },
   authCard: {
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.22)",
@@ -407,26 +865,27 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     padding: 22,
   },
-  heroCard: {
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.22)",
-    backgroundColor: "rgba(255,255,255,0.18)",
-    borderRadius: 32,
-    padding: 24,
+  mobileHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 18,
+    marginTop: 12,
   },
   logoText: {
     color: "#ffffff",
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 18,
+    marginBottom: 4,
   },
-  kicker: {
+  headerSubtext: {
     color: "rgba(255,255,255,0.65)",
     fontSize: 13,
-    fontWeight: "400",
-    letterSpacing: 2,
-    marginBottom: 12,
-    textTransform: "uppercase",
+    fontWeight: "300",
+  },
+  feedContent: {
+    padding: 18,
+    paddingBottom: 36,
   },
   title: {
     color: "#ffffff",
@@ -506,19 +965,34 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
   },
-  secondaryButton: {
-    alignItems: "center",
+  signOutButton: {
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.3)",
     backgroundColor: "rgba(255,255,255,0.16)",
     borderRadius: 999,
-    marginTop: 24,
-    paddingVertical: 13,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  signOutButtonText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "300",
+  },
+  secondaryButton: {
+    alignItems: "center",
+    alignSelf: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderRadius: 999,
+    marginTop: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
   },
   secondaryButtonText: {
     color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "400",
+    fontSize: 14,
+    fontWeight: "300",
   },
   disabledButton: {
     opacity: 0.55,
@@ -531,44 +1005,164 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: "center",
   },
-  profilePreview: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
+  composerCard: {
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
-    backgroundColor: "rgba(255,255,255,0.12)",
-    borderRadius: 24,
-    marginTop: 22,
-    padding: 14,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 30,
+    marginBottom: 18,
+    padding: 16,
+  },
+  composerInput: {
+    minHeight: 110,
+    backgroundColor: "rgba(255,255,255,0.72)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+    borderRadius: 22,
+    color: "#642B73",
+    fontSize: 16,
+    fontWeight: "300",
+    lineHeight: 23,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
+    textAlignVertical: "top",
+  },
+  composerFooter: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 14,
+  },
+  characterCount: {
+    color: "rgba(255,255,255,0.64)",
+    fontSize: 13,
+    fontWeight: "300",
+  },
+  postButton: {
+    backgroundColor: "#ffffff",
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  postButtonText: {
+    color: "#642B73",
+    fontSize: 14,
+    fontWeight: "400",
+  },
+  composerMessage: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 13,
+    fontWeight: "300",
+    lineHeight: 20,
+    marginTop: 12,
+  },
+  feedToggleRow: {
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  feedToggle: {
+    flexDirection: "row",
+    gap: 8,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderColor: "rgba(255,255,255,0.2)",
+    borderRadius: 999,
+    borderWidth: 1,
+    padding: 4,
+  },
+  feedToggleButton: {
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+  },
+  feedToggleButtonActive: {
+    backgroundColor: "#ffffff",
+  },
+  feedToggleButtonText: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 14,
+    fontWeight: "300",
+  },
+  feedToggleButtonTextActive: {
+    color: "#642B73",
+  },
+  feedHint: {
+    color: "rgba(255,255,255,0.68)",
+    fontSize: 13,
+    fontWeight: "300",
+    lineHeight: 20,
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  feedList: {
+    gap: 14,
+  },
+  blipCard: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    borderRadius: 30,
+    padding: 18,
+  },
+  blipHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 16,
   },
   avatarCircle: {
     alignItems: "center",
     justifyContent: "center",
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.85)",
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 3,
+    borderColor: "rgba(255,255,255,0.9)",
     backgroundColor: "rgba(255,255,255,0.18)",
   },
   avatarInitial: {
     color: "#ffffff",
-    fontSize: 22,
-    fontWeight: "400",
+    fontSize: 20,
+    fontWeight: "300",
   },
-  profileTextWrap: {
+  blipHeaderText: {
     flex: 1,
   },
-  profileName: {
+  blipUsername: {
     color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "500",
+    fontSize: 17,
+    fontWeight: "400",
   },
-  profileEmail: {
+  blipDate: {
     color: "rgba(255,255,255,0.66)",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "300",
     marginTop: 2,
+  },
+  blipContent: {
+    color: "rgba(255,255,255,0.92)",
+    fontSize: 17,
+    fontWeight: "300",
+    lineHeight: 27,
+  },
+  emptyCard: {
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 30,
+    padding: 24,
+  },
+  emptyTitle: {
+    color: "#ffffff",
+    fontSize: 22,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  emptyText: {
+    color: "rgba(255,255,255,0.74)",
+    fontSize: 15,
+    fontWeight: "300",
+    lineHeight: 23,
+    marginTop: 10,
+    textAlign: "center",
   },
 });
