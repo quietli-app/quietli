@@ -1,228 +1,180 @@
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { BlipCard } from "@/components/blip-card";
-import { gradientThemes, profileBackgroundThemes } from "@/lib/gradient-themes";
+import { gradientThemes } from "@/lib/gradient-themes";
+
+type EmbedVariant = "latest" | "feed";
+
+type Profile = {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  bio: string | null;
+  gradient_theme: string | null;
+  profile_visibility: string | null;
+};
+
+type Blip = {
+  id: string;
+  content: string;
+  created_at: string;
+};
 
 export default async function EmbedPage({
   params,
   searchParams,
 }: {
   params: Promise<{ username: string }>;
-  searchParams: Promise<{ mode?: string }>;
+  searchParams: Promise<{ variant?: string }>;
 }) {
   const { username } = await params;
-  const { mode } = await searchParams;
+  const { variant } = await searchParams;
 
-  const embedMode = mode === "latest" ? "latest" : "feed";
-  const limit = embedMode === "latest" ? 1 : 10;
+  const embedVariant: EmbedVariant = variant === "feed" ? "feed" : "latest";
 
   const supabase = await createClient();
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, avatar_url, bio, gradient_theme")
+    .select("id, username, avatar_url, bio, gradient_theme, profile_visibility")
     .eq("username", username)
-    .single();
+    .single<Profile>();
 
   if (!profile) {
     notFound();
   }
 
-  const activeTheme = profile.gradient_theme ?? "blush";
-  const profileBackground =
-    profileBackgroundThemes[activeTheme] ?? profileBackgroundThemes.blush;
-  const blipBackground = gradientThemes[activeTheme] ?? gradientThemes.blush;
+  const cardBackground =
+    gradientThemes[profile.gradient_theme ?? "blush"] ?? gradientThemes.blush;
+
+  if (profile.profile_visibility === "private") {
+    return (
+      <main
+        className="fixed inset-0 overflow-hidden bg-transparent font-sans"
+        style={{ width: "100%", height: "100%" }}
+      >
+        <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[24px] bg-white/20 px-4 text-center text-sm font-bold text-white">
+          This Quietli profile is private.
+        </div>
+      </main>
+    );
+  }
+
+  const blipLimit = embedVariant === "latest" ? 1 : 5;
 
   const { data: blips } = await supabase
     .from("blips")
     .select("id, content, created_at")
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(blipLimit)
+    .returns<Blip[]>();
 
-  const latestBlip = blips?.[0];
-  const profileUrl = `/profile/${profile.username}`;
+  if (embedVariant === "latest") {
+    const latestBlip = blips?.[0];
 
-  if (embedMode === "latest") {
     return (
       <main
-        className="embed-page"
-        style={{
-          width: "100vw",
-          height: "100vh",
-          margin: 0,
-          padding: 0,
-          overflow: "hidden",
-          background: "transparent",
-        }}
+        className="fixed inset-0 overflow-hidden bg-transparent font-sans"
+        style={{ width: "100%", height: "100%" }}
       >
-        {latestBlip ? (
-          <article
-            style={{
-              position: "relative",
-              width: "100%",
-              height: "100%",
-              boxSizing: "border-box",
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              overflow: "hidden",
-              borderRadius: "24px",
-              border: "1px solid rgba(255,255,255,0.25)",
-              padding: "0 48px 0 18px",
-              background: blipBackground,
-            }}
-          >
-            <div
-              style={{
-                width: "44px",
-                height: "44px",
-                borderRadius: "9999px",
-                overflow: "hidden",
-                flexShrink: 0,
-                border: "1px solid rgba(255,255,255,0.35)",
-                background: "rgba(255,255,255,0.35)",
-              }}
-            >
+        <div
+          className="relative flex h-full w-full items-center overflow-hidden rounded-[24px] px-5"
+          style={{ background: cardBackground }}
+        >
+          <div className="flex min-w-0 items-center gap-4 pr-14">
+            <div className="relative h-14 w-14 flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/30">
               {profile.avatar_url ? (
                 <img
                   src={profile.avatar_url}
                   alt={profile.username}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
+                  className="absolute inset-0 h-full w-full rounded-full object-cover"
                 />
               ) : (
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.875rem",
-                    fontWeight: 700,
-                    color: "#642B73",
-                  }}
-                >
+                <div className="flex h-full w-full items-center justify-center rounded-full text-lg font-black text-[#2b0f2f]">
                   {profile.username.slice(0, 1).toUpperCase()}
                 </div>
               )}
             </div>
 
-            <div style={{ minWidth: 0 }}>
-              <p
-                style={{
-                  margin: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  fontSize: "0.875rem",
-                  fontWeight: 700,
-                  color: "#2b0f2f",
-                }}
-              >
+            <div className="min-w-0">
+              <p className="truncate text-base font-black leading-5 text-[#2b0f2f]">
                 @{profile.username}
               </p>
 
-              <p
-                style={{
-                  margin: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  fontSize: "1rem",
-                  color: "#2b0f2f",
-                }}
-              >
-                {latestBlip.content}
+              <p className="mt-1 line-clamp-2 text-lg font-bold leading-6 text-[#2b0f2f]">
+                {latestBlip?.content ?? "No blips yet."}
               </p>
             </div>
-
-            <Link
-  href={profileUrl}
-  target="_blank"
-  aria-label={`Open ${profile.username}'s Quietli profile`}
-  style={{
-    position: "absolute",
-    right: "14px",
-    bottom: "12px",
-    width: "32px",
-    height: "32px",
-    borderRadius: "9999px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "transparent",
-    border: "none",
-  }}
->
-  <Image
-    src="/quietli-q.png"
-    alt="Quietli"
-    width={24}
-    height={24}
-    style={{
-      width: "24px",
-      height: "24px",
-      objectFit: "contain",
-    }}
-  />
-</Link>
-          </article>
-        ) : (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              boxSizing: "border-box",
-              display: "flex",
-              alignItems: "center",
-              borderRadius: "24px",
-              padding: "0 18px",
-              background: "rgba(255,255,255,0.2)",
-              color: "white",
-            }}
-          >
-            No blips yet.
           </div>
-        )}
+
+          <div className="absolute bottom-3 right-4 text-4xl font-black leading-none text-white/90">
+            Q
+          </div>
+        </div>
       </main>
     );
   }
 
   return (
     <main
-      className="embed-page min-h-screen p-4"
-      style={{ background: profileBackground }}
+      className="fixed inset-0 overflow-hidden bg-transparent font-sans"
+      style={{ width: "100%", height: "100%" }}
     >
-      <section className="mb-4 rounded-[1.5rem] border border-white/20 bg-white/20 p-4 backdrop-blur-xl">
-        <h1 className="text-xl font-bold text-white">@{profile.username}</h1>
-        <p className="text-sm text-slate-100">
-          {profile.bio || "A stream of passing thoughts."}
+      <div
+        className="h-full w-full overflow-hidden rounded-[24px] p-4"
+        style={{ background: cardBackground }}
+      >
+        <div className="mb-4 flex items-center gap-3">
+          <div className="relative h-14 w-14 flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/30">
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.username}
+                className="absolute inset-0 h-full w-full rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center rounded-full text-lg font-black text-[#2b0f2f]">
+                {profile.username.slice(0, 1).toUpperCase()}
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0">
+            <p className="truncate text-xl font-black text-[#2b0f2f]">
+              @{profile.username}
+            </p>
+
+            <p className="truncate text-sm font-semibold text-[#2b0f2f]/75">
+              {profile.bio || "A stream of passing thoughts."}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid max-h-[310px] gap-3 overflow-hidden">
+          {blips && blips.length > 0 ? (
+            blips.map((blip) => (
+              <div
+                key={blip.id}
+                className="rounded-[1.25rem] border border-white/25 bg-white/25 p-4"
+              >
+                <p className="line-clamp-3 text-base font-bold leading-7 text-[#2b0f2f]">
+                  {blip.content}
+                </p>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-[1.25rem] border border-white/25 bg-white/25 p-4">
+              <p className="text-base font-bold text-[#2b0f2f]">
+                No blips yet.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <p className="mt-4 text-right text-xs font-bold uppercase tracking-[0.18em] text-white/75">
+          Quietli
         </p>
-      </section>
-
-      <div className="grid gap-3">
-        {blips?.map((blip) => (
-          <BlipCard
-            key={blip.id}
-            id={blip.id}
-            content={blip.content}
-            createdAt={blip.created_at}
-            username={profile.username}
-            avatarUrl={profile.avatar_url}
-            gradientTheme={profile.gradient_theme}
-            canDelete={false}
-          />
-        ))}
       </div>
-
-      <p className="mt-4 text-center text-xs text-white/70">Quietli</p>
     </main>
   );
 }

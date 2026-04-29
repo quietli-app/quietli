@@ -1,167 +1,134 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 
 type EmbedCodeBoxProps = {
   username: string;
 };
 
-const heightOptions = [100, 250, 400, 600, 800];
-
 export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
-  const [copied, setCopied] = useState(false);
+  const [message, setMessage] = useState("");
 
-  // Default preview is now Latest only + 100px
-  const [height, setHeight] = useState(100);
-  const [mode, setMode] = useState<"feed" | "latest">("latest");
+  const latestEmbedUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/embed/${username}?variant=latest`;
+  }, [username]);
 
-  const [origin, setOrigin] = useState("");
+  const feedEmbedUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/embed/${username}?variant=feed`;
+  }, [username]);
 
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
+  const latestEmbedCode = `<iframe src="${latestEmbedUrl}" width="100%" height="100" style="border:0;border-radius:24px;overflow:hidden;display:block;" scrolling="no" title="Quietli latest blip"></iframe>`;
 
-  const previewUrl =
-    mode === "latest"
-      ? `/embed/${username}?mode=latest`
-      : `/embed/${username}`;
+  const feedEmbedCode = `<iframe src="${feedEmbedUrl}" width="100%" height="420" style="border:0;border-radius:24px;overflow:hidden;display:block;" title="Quietli feed"></iframe>`;
 
-  const fullEmbedUrl = `${origin}${previewUrl}`;
+  async function copyEmbedCode(code: string) {
+    setMessage("");
 
-  const embedCode = `<iframe src="${fullEmbedUrl}" width="100%" height="${height}" style="border:0;border-radius:24px;overflow:hidden;" loading="lazy"></iframe>`;
-
-  async function copyEmbedCode() {
-    await navigator.clipboard.writeText(embedCode);
-    setCopied(true);
-
-    setTimeout(() => {
-      setCopied(false);
-    }, 1800);
-  }
-
-  function handleModeChange(newMode: "feed" | "latest") {
-    setMode(newMode);
-
-    if (newMode === "latest" && height > 250) {
-      setHeight(100);
-    }
-
-    if (newMode === "feed" && height < 250) {
-      setHeight(600);
-    }
-  }
-
-  function handleHeightChange(newHeight: number) {
-    setHeight(newHeight);
-
-    if (newHeight === 100) {
-      setMode("latest");
+    try {
+      await navigator.clipboard.writeText(code);
+      setMessage("Embed code copied.");
+    } catch {
+      setMessage(
+        "Could not copy automatically. You can select and copy it manually."
+      );
     }
   }
 
   return (
     <div className="rounded-[1.5rem] border border-white/20 bg-white/20 p-5 backdrop-blur-xl">
       <p className="mb-2 text-xl font-bold text-white">Embed your blips</p>
-      <p className="mb-4 text-base text-slate-100">
-        Choose a format, choose a height, then copy the iframe code into your
-        website.
+
+      <p className="mb-5 text-base leading-7 text-slate-100">
+        Add your latest blip or your Quietli feed to a website, blog, portfolio,
+        or little corner of the internet.
       </p>
 
-      <div className="mb-4">
-        <p className="mb-2 text-sm font-bold text-white">Format</p>
-
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => handleModeChange("feed")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              mode === "feed"
-                ? "bg-white text-[#642B73]"
-                : "bg-white/25 text-white hover:bg-white/35"
-            }`}
-          >
-            Feed
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleModeChange("latest")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              mode === "latest"
-                ? "bg-white text-[#642B73]"
-                : "bg-white/25 text-white hover:bg-white/35"
-            }`}
-          >
-            Latest only
-          </button>
-        </div>
-      </div>
-
-      <div className="mb-4">
-        <p className="mb-2 text-sm font-bold text-white">Height</p>
-
-        <div className="flex flex-wrap gap-2">
-          {heightOptions.map((option) => (
+      <div className="grid gap-6">
+        <section className="rounded-[1.5rem] border border-white/15 bg-white/15 p-4">
+          <div className="mb-4 flex flex-wrap items-center gap-4">
             <button
-              key={option}
               type="button"
-              onClick={() => handleHeightChange(option)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                height === option
-                  ? "bg-white text-[#642B73]"
-                  : "bg-white/25 text-white hover:bg-white/35"
-              }`}
+              onClick={() => copyEmbedCode(latestEmbedCode)}
+              className="rounded-full bg-gradient-to-r from-[#C6426E] via-[#A13E7A] to-[#642B73] px-5 py-3 text-sm font-bold text-white transition hover:brightness-110"
             >
-              {option}px
+              Copy latest blip embed
             </button>
-          ))}
+
+            <a
+              href={latestEmbedUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-bold text-white underline decoration-white/50 underline-offset-4 transition hover:decoration-white"
+            >
+              Preview latest embed
+            </a>
+          </div>
+
+          <div className="h-[100px] overflow-hidden rounded-[1.5rem] border border-white/25 bg-white/20">
+            <iframe
+              src={latestEmbedUrl}
+              title="Quietli latest blip embed preview"
+              width="100%"
+              height="100"
+              scrolling="no"
+              className="block h-[100px] w-full border-0"
+              style={{
+                border: 0,
+                overflow: "hidden",
+                display: "block",
+              }}
+            />
+          </div>
+        </section>
+
+        <section className="rounded-[1.5rem] border border-white/15 bg-white/15 p-4">
+          <div className="mb-4 flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={() => copyEmbedCode(feedEmbedCode)}
+              className="rounded-full border border-white/30 bg-white/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/30"
+            >
+              Copy feed embed
+            </button>
+
+            <a
+              href={feedEmbedUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-bold text-white underline decoration-white/50 underline-offset-4 transition hover:decoration-white"
+            >
+              Preview feed embed
+            </a>
+          </div>
+
+          <div className="h-[420px] overflow-hidden rounded-[1.5rem] border border-white/25 bg-white/20">
+            <iframe
+              src={feedEmbedUrl}
+              title="Quietli feed embed preview"
+              width="100%"
+              height="420"
+              className="block h-[420px] w-full border-0"
+              style={{
+                border: 0,
+                overflow: "hidden",
+                display: "block",
+              }}
+            />
+          </div>
+        </section>
+
+        <div className="rounded-[1.25rem] border border-white/15 bg-white/15 p-4">
+          <p className="mb-2 text-sm font-bold text-white">Latest blip code</p>
+
+          <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-[1rem] bg-white/15 p-4 text-xs leading-6 text-white/75">
+            {latestEmbedCode}
+          </pre>
         </div>
       </div>
 
-      <textarea
-        readOnly
-        value={embedCode}
-        className="min-h-[120px] w-full resize-none rounded-[1rem] border border-white/30 bg-white/60 px-4 py-3 text-sm text-[#642B73] outline-none"
-      />
-
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={copyEmbedCode}
-          disabled={!origin}
-          className="rounded-full bg-gradient-to-r from-[#C6426E] via-[#A13E7A] to-[#642B73] px-5 py-2.5 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-50"
-        >
-          {copied ? "Copied!" : "Copy embed code"}
-        </button>
-
-        <a
-          href={previewUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="text-sm font-medium text-white underline underline-offset-4"
-        >
-          Preview embed
-        </a>
-      </div>
-
-      {copied ? (
-        <p className="mt-3 text-sm text-emerald-100">
-          Embed code copied to your clipboard.
-        </p>
-      ) : null}
-
-      <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-white/20 bg-white/10">
-        <iframe
-          src={previewUrl}
-          width="100%"
-          height={height}
-          style={{
-            border: 0,
-            display: "block",
-          }}
-          loading="lazy"
-        />
-      </div>
+      {message ? <p className="mt-4 text-sm text-white/85">{message}</p> : null}
     </div>
   );
 }
