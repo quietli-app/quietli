@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 import { getMobileGradientTheme } from "../../lib/mobile-gradient-themes";
@@ -238,55 +238,6 @@ export default function QuietliMobileHome() {
     setFollowRequestCount(count ?? 0);
   }
 
-  useEffect(() => {
-    if (cooldownSeconds <= 0) return;
-
-    const timer = setInterval(() => {
-      setCooldownSeconds((current) => Math.max(0, current - 1));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [cooldownSeconds]);
-
-  useEffect(() => {
-    async function loadSession() {
-      const {
-        data: { session: currentSession },
-      } = await supabase.auth.getSession();
-
-      setSession(currentSession);
-      setIsLoadingSession(false);
-
-      if (currentSession?.user?.id) {
-        const loadedProfile = await loadProfile(currentSession.user.id);
-        await loadFollowRequestCount(currentSession.user.id);
-        await loadFeed("following", loadedProfile);
-      }
-    }
-
-    loadSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
-      setSession(nextSession);
-
-      if (nextSession?.user?.id) {
-        const loadedProfile = await loadProfile(nextSession.user.id);
-        await loadFollowRequestCount(nextSession.user.id);
-        await loadFeed("following", loadedProfile);
-      } else {
-        setProfile(null);
-        setFeed([]);
-        setFollowRequestCount(0);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
   async function loadProfile(userId: string) {
     const { data, error } = await supabase
       .from("profiles")
@@ -438,6 +389,84 @@ export default function QuietliMobileHome() {
     setFeed(formattedFeed);
     setIsLoadingFeed(false);
   }
+
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+
+    const timer = setInterval(() => {
+      setCooldownSeconds((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [cooldownSeconds]);
+
+  useEffect(() => {
+    async function loadSession() {
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+
+      setSession(currentSession);
+      setIsLoadingSession(false);
+
+      if (currentSession?.user?.id) {
+        const loadedProfile = await loadProfile(currentSession.user.id);
+        await loadFollowRequestCount(currentSession.user.id);
+        await loadFeed("following", loadedProfile);
+      }
+    }
+
+    loadSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+      setSession(nextSession);
+
+      if (nextSession?.user?.id) {
+        const loadedProfile = await loadProfile(nextSession.user.id);
+        await loadFollowRequestCount(nextSession.user.id);
+        await loadFeed("following", loadedProfile);
+      } else {
+        setProfile(null);
+        setFeed([]);
+        setFollowRequestCount(0);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      async function refreshCurrentUserData() {
+        const {
+          data: { session: currentSession },
+        } = await supabase.auth.getSession();
+
+        if (!isActive || !currentSession?.user?.id) return;
+
+        setSession(currentSession);
+
+        const loadedProfile = await loadProfile(currentSession.user.id);
+
+        if (!isActive) return;
+
+        await loadFollowRequestCount(currentSession.user.id);
+        await loadFeed(feedView, loadedProfile);
+      }
+
+      refreshCurrentUserData();
+
+      return () => {
+        isActive = false;
+      };
+    }, [feedView])
+  );
 
   async function changeFeedView(view: FeedView) {
     setFeedView(view);
