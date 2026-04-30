@@ -841,19 +841,30 @@ export default function QuietliMobileHome() {
 
                     <Text style={styles.emptyText}>
                       {feedView === "following"
-                        ? "Switch to World View to discover public blips."
+                        ? "Follow a few quiet corners to build your personal feed, or peek at World View to see what’s drifting through Quietli."
                         : "Quiet out here. Be the first to toss a thought into the world."}
                     </Text>
 
                     {feedView === "following" ? (
-                      <Pressable
-                        style={styles.secondaryButton}
-                        onPress={() => changeFeedView("world")}
-                      >
-                        <Text style={styles.secondaryButtonText}>
-                          View World
-                        </Text>
-                      </Pressable>
+                      <View style={styles.emptyActionArea}>
+                        <Pressable
+                          style={styles.primaryEmptyButton}
+                          onPress={openDiscover}
+                        >
+                          <Text style={styles.primaryEmptyButtonText}>
+                            Discover people
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          style={styles.secondaryEmptyButton}
+                          onPress={() => changeFeedView("world")}
+                        >
+                          <Text style={styles.secondaryEmptyButtonText}>
+                            View World instead
+                          </Text>
+                        </Pressable>
+                      </View>
                     ) : null}
                   </View>
                 ) : (
@@ -1477,6 +1488,40 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     marginTop: 10,
     textAlign: "center",
+  },
+  emptyActionArea: {
+    alignItems: "center",
+    gap: 10,
+    marginTop: 18,
+    width: "100%",
+  },
+  primaryEmptyButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderRadius: 999,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    width: "100%",
+  },
+  primaryEmptyButtonText: {
+    color: "#642B73",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  secondaryEmptyButton: {
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 999,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    width: "100%",
+  },
+  secondaryEmptyButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "300",
   },
   menuOverlay: {
     flex: 1,
