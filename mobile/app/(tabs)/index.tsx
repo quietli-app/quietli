@@ -14,10 +14,12 @@ import {
   View,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 import { getMobileGradientTheme } from "../../lib/mobile-gradient-themes";
+
 
 type AuthMode = "signin" | "signup";
 type FeedView = "following" | "world";
@@ -602,10 +604,17 @@ export default function QuietliMobileHome() {
 
   if (isLoadingSession) {
     return (
-      <View style={styles.loadingScreen}>
-        <ActivityIndicator color="#ffffff" />
-        <Text style={styles.loadingText}>Opening Quietli...</Text>
-      </View>
+      <LinearGradient
+        colors={["#C6426E", "#642B73"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientScreen}
+      >
+        <View style={styles.loadingScreen}>
+          <ActivityIndicator color="#ffffff" />
+          <Text style={styles.loadingText}>Opening Quietli...</Text>
+        </View>
+      </LinearGradient>
     );
   }
 
@@ -615,175 +624,186 @@ export default function QuietliMobileHome() {
 
     return (
       <>
-        <KeyboardAvoidingView
-          style={styles.keyboardScreen}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        <LinearGradient
+          colors={["#C6426E", "#642B73"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradientScreen}
         >
-          <ScrollView
-            style={styles.screen}
-            contentContainerStyle={styles.feedContent}
-            keyboardShouldPersistTaps="handled"
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefreshing}
-                onRefresh={refreshFeed}
-              />
-            }
-          >
-            <View style={styles.mobileHeader}>
-              <Pressable
-                style={styles.mobileHeaderProfile}
-                onPress={() => openProfile(currentUsername)}
-              >
-                <AvatarBubble
-                  username={currentUsername}
-                  avatarUrl={profile?.avatar_url ?? null}
-                  size={46}
+          <SafeAreaView style={styles.safeArea} edges={["top"]}>
+
+  <KeyboardAvoidingView
+    style={styles.keyboardScreen}
+    behavior={Platform.OS === "ios" ? "padding" : undefined}
+  >
+    <ScrollView
+              style={styles.screen}
+              contentContainerStyle={styles.feedContent}
+              keyboardShouldPersistTaps="handled"
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={refreshFeed}
+                />
+              }
+            >
+              <View style={styles.mobileHeader}>
+                <Pressable
+                  style={styles.mobileHeaderProfile}
+                  onPress={() => openProfile(currentUsername)}
+                >
+                  <AvatarBubble
+                    username={currentUsername}
+                    avatarUrl={profile?.avatar_url ?? null}
+                    size={46}
+                  />
+
+                  <View>
+                    <Text style={styles.logoText}>Quietli</Text>
+                    <Text style={styles.headerSubtext}>@{currentUsername}</Text>
+                  </View>
+                </Pressable>
+
+                <Pressable
+                  style={styles.menuButton}
+                  onPress={() => setIsMenuOpen(true)}
+                >
+                  <Text style={styles.menuButtonText}>Menu</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.composerCard}>
+                <TextInput
+                  value={composerText}
+                  onChangeText={(value) => {
+                    setComposerText(value);
+                    setComposerMessage("");
+                  }}
+                  multiline
+                  maxLength={MAX_LENGTH}
+                  placeholder="What floated through your brain?"
+                  placeholderTextColor="rgba(100, 43, 115, 0.45)"
+                  style={styles.composerInput}
                 />
 
-                <View>
-                  <Text style={styles.logoText}>Quietli</Text>
-                  <Text style={styles.headerSubtext}>@{currentUsername}</Text>
-                </View>
-              </Pressable>
-
-              <Pressable
-                style={styles.menuButton}
-                onPress={() => setIsMenuOpen(true)}
-              >
-                <Text style={styles.menuButtonText}>Menu</Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.composerCard}>
-              <TextInput
-                value={composerText}
-                onChangeText={(value) => {
-                  setComposerText(value);
-                  setComposerMessage("");
-                }}
-                multiline
-                maxLength={MAX_LENGTH}
-                placeholder="What floated through your brain?"
-                placeholderTextColor="rgba(100, 43, 115, 0.45)"
-                style={styles.composerInput}
-              />
-
-              <View style={styles.composerFooter}>
-                <Text style={styles.characterCount}>
-                  {charactersLeft} characters left
-                </Text>
-
-                <Pressable
-                  style={[
-                    styles.postButton,
-                    (isSubmitting || cooldownSeconds > 0) &&
-                      styles.disabledButton,
-                  ]}
-                  onPress={postBlip}
-                  disabled={isSubmitting || cooldownSeconds > 0}
-                >
-                  <Text style={styles.postButtonText}>
-                    {isSubmitting
-                      ? "Posting..."
-                      : cooldownSeconds > 0
-                        ? `Pause ${cooldownSeconds}s`
-                        : "Post blip"}
+                <View style={styles.composerFooter}>
+                  <Text style={styles.characterCount}>
+                    {charactersLeft} characters left
                   </Text>
-                </Pressable>
-              </View>
 
-              {composerMessage ? (
-                <Text style={styles.composerMessage}>{composerMessage}</Text>
-              ) : null}
-            </View>
-
-            <View style={styles.feedToggleRow}>
-              <View style={styles.feedToggle}>
-                <Pressable
-                  style={[
-                    styles.feedToggleButton,
-                    feedView === "following" && styles.feedToggleButtonActive,
-                  ]}
-                  onPress={() => changeFeedView("following")}
-                >
-                  <Text
-                    style={[
-                      styles.feedToggleButtonText,
-                      feedView === "following" &&
-                        styles.feedToggleButtonTextActive,
-                    ]}
-                  >
-                    Following
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  style={[
-                    styles.feedToggleButton,
-                    feedView === "world" && styles.feedToggleButtonActive,
-                  ]}
-                  onPress={() => changeFeedView("world")}
-                >
-                  <Text
-                    style={[
-                      styles.feedToggleButtonText,
-                      feedView === "world" && styles.feedToggleButtonTextActive,
-                    ]}
-                  >
-                    World View
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-
-            <Text style={styles.feedHint}>
-              {feedView === "following"
-                ? "Blips from the quiet corners you follow."
-                : "The latest public blips drifting through Quietli."}
-            </Text>
-
-            {isLoadingFeed ? (
-              <View style={styles.emptyCard}>
-                <ActivityIndicator color="#ffffff" />
-                <Text style={styles.emptyText}>Loading blips...</Text>
-              </View>
-            ) : feed.length === 0 ? (
-              <View style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>
-                  {feedView === "following"
-                    ? "You’re not following anyone yet."
-                    : "No public blips yet."}
-                </Text>
-
-                <Text style={styles.emptyText}>
-                  {feedView === "following"
-                    ? "Switch to World View to discover public blips."
-                    : "Quiet out here. Be the first to toss a thought into the world."}
-                </Text>
-
-                {feedView === "following" ? (
                   <Pressable
-                    style={styles.secondaryButton}
-                    onPress={() => changeFeedView("world")}
+                    style={[
+                      styles.postButton,
+                      (isSubmitting || cooldownSeconds > 0) &&
+                        styles.disabledButton,
+                    ]}
+                    onPress={postBlip}
+                    disabled={isSubmitting || cooldownSeconds > 0}
                   >
-                    <Text style={styles.secondaryButtonText}>View World</Text>
+                    <Text style={styles.postButtonText}>
+                      {isSubmitting
+                        ? "Posting..."
+                        : cooldownSeconds > 0
+                          ? `Pause ${cooldownSeconds}s`
+                          : "Post blip"}
+                    </Text>
                   </Pressable>
+                </View>
+
+                {composerMessage ? (
+                  <Text style={styles.composerMessage}>{composerMessage}</Text>
                 ) : null}
               </View>
-            ) : (
-              <View style={styles.feedList}>
-                {feed.map((blip) => (
-                  <GradientBlipCard
-                    key={blip.id}
-                    blip={blip}
-                    onOpenProfile={openProfile}
-                  />
-                ))}
+
+              <View style={styles.feedToggleRow}>
+                <View style={styles.feedToggle}>
+                  <Pressable
+                    style={[
+                      styles.feedToggleButton,
+                      feedView === "following" && styles.feedToggleButtonActive,
+                    ]}
+                    onPress={() => changeFeedView("following")}
+                  >
+                    <Text
+                      style={[
+                        styles.feedToggleButtonText,
+                        feedView === "following" &&
+                          styles.feedToggleButtonTextActive,
+                      ]}
+                    >
+                      Following
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={[
+                      styles.feedToggleButton,
+                      feedView === "world" && styles.feedToggleButtonActive,
+                    ]}
+                    onPress={() => changeFeedView("world")}
+                  >
+                    <Text
+                      style={[
+                        styles.feedToggleButtonText,
+                        feedView === "world" &&
+                          styles.feedToggleButtonTextActive,
+                      ]}
+                    >
+                      World View
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
-            )}
-          </ScrollView>
-        </KeyboardAvoidingView>
+
+              <Text style={styles.feedHint}>
+                {feedView === "following"
+                  ? "Blips from the quiet corners you follow."
+                  : "The latest public blips drifting through Quietli."}
+              </Text>
+
+              {isLoadingFeed ? (
+                <View style={styles.emptyCard}>
+                  <ActivityIndicator color="#ffffff" />
+                  <Text style={styles.emptyText}>Loading blips...</Text>
+                </View>
+              ) : feed.length === 0 ? (
+                <View style={styles.emptyCard}>
+                  <Text style={styles.emptyTitle}>
+                    {feedView === "following"
+                      ? "You’re not following anyone yet."
+                      : "No public blips yet."}
+                  </Text>
+
+                  <Text style={styles.emptyText}>
+                    {feedView === "following"
+                      ? "Switch to World View to discover public blips."
+                      : "Quiet out here. Be the first to toss a thought into the world."}
+                  </Text>
+
+                  {feedView === "following" ? (
+                    <Pressable
+                      style={styles.secondaryButton}
+                      onPress={() => changeFeedView("world")}
+                    >
+                      <Text style={styles.secondaryButtonText}>View World</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              ) : (
+                <View style={styles.feedList}>
+                  {feed.map((blip) => (
+                    <GradientBlipCard
+                      key={blip.id}
+                      blip={blip}
+                      onOpenProfile={openProfile}
+                    />
+                  ))}
+                </View>
+              )}
+            </ScrollView>
+          </KeyboardAvoidingView>
+          </SafeAreaView>
+        </LinearGradient>
 
         <Modal visible={isMenuOpen} transparent animationType="fade">
           <Pressable
@@ -831,144 +851,157 @@ export default function QuietliMobileHome() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.keyboardScreen}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        style={styles.screen}
-        contentContainerStyle={styles.authContent}
-        keyboardShouldPersistTaps="handled"
+    <LinearGradient
+  colors={["#C6426E", "#642B73"]}
+  start={{ x: 0, y: 0 }}
+  end={{ x: 1, y: 1 }}
+  style={styles.gradientScreen}
+>
+      <KeyboardAvoidingView
+        style={styles.keyboardScreen}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.authCard}>
-          <Text style={styles.logoText}>Quietli</Text>
+        <ScrollView
+          style={styles.screen}
+          contentContainerStyle={styles.authContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.authCard}>
+            <Text style={styles.logoText}>Quietli</Text>
 
-          <Text style={styles.title}>
-            {authMode === "signin" ? "Welcome back." : "Join Quietli."}
-          </Text>
+            <Text style={styles.title}>
+              {authMode === "signin" ? "Welcome back." : "Join Quietli."}
+            </Text>
 
-          <Text style={styles.bodyText}>
-            {authMode === "signin"
-              ? "Sign in to your quiet corner."
-              : "Create an account and start posting tiny, low-stakes blips."}
-          </Text>
+            <Text style={styles.bodyText}>
+              {authMode === "signin"
+                ? "Sign in to your quiet corner."
+                : "Create an account and start posting tiny, low-stakes blips."}
+            </Text>
 
-          <View style={styles.modeToggle}>
-            <Pressable
-              style={[
-                styles.modeButton,
-                authMode === "signin" && styles.modeButtonActive,
-              ]}
-              onPress={() => {
-                setAuthMode("signin");
-                setAuthMessage("");
-              }}
-            >
-              <Text
+            <View style={styles.modeToggle}>
+              <Pressable
                 style={[
-                  styles.modeButtonText,
-                  authMode === "signin" && styles.modeButtonTextActive,
+                  styles.modeButton,
+                  authMode === "signin" && styles.modeButtonActive,
                 ]}
+                onPress={() => {
+                  setAuthMode("signin");
+                  setAuthMessage("");
+                }}
               >
-                Sign in
-              </Text>
-            </Pressable>
+                <Text
+                  style={[
+                    styles.modeButtonText,
+                    authMode === "signin" && styles.modeButtonTextActive,
+                  ]}
+                >
+                  Sign in
+                </Text>
+              </Pressable>
 
-            <Pressable
-              style={[
-                styles.modeButton,
-                authMode === "signup" && styles.modeButtonActive,
-              ]}
-              onPress={() => {
-                setAuthMode("signup");
-                setAuthMessage("");
-              }}
-            >
-              <Text
+              <Pressable
                 style={[
-                  styles.modeButtonText,
-                  authMode === "signup" && styles.modeButtonTextActive,
+                  styles.modeButton,
+                  authMode === "signup" && styles.modeButtonActive,
                 ]}
+                onPress={() => {
+                  setAuthMode("signup");
+                  setAuthMessage("");
+                }}
               >
-                Sign up
-              </Text>
-            </Pressable>
-          </View>
+                <Text
+                  style={[
+                    styles.modeButtonText,
+                    authMode === "signup" && styles.modeButtonTextActive,
+                  ]}
+                >
+                  Sign up
+                </Text>
+              </Pressable>
+            </View>
 
-          {authMode === "signup" ? (
+            {authMode === "signup" ? (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Username</Text>
+
+                <TextInput
+                  value={username}
+                  onChangeText={(value) => setUsername(cleanUsername(value))}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  placeholder="quietwallflower"
+                  placeholderTextColor="rgba(100, 43, 115, 0.45)"
+                  style={styles.input}
+                />
+
+                <Text style={styles.helpText}>
+                  Letters, numbers, and underscores only.
+                </Text>
+              </View>
+            ) : null}
+
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Username</Text>
+              <Text style={styles.label}>Email</Text>
 
               <TextInput
-                value={username}
-                onChangeText={(value) => setUsername(cleanUsername(value))}
+                value={email}
+                onChangeText={setEmail}
                 autoCapitalize="none"
                 autoCorrect={false}
-                placeholder="quietwallflower"
+                keyboardType="email-address"
+                placeholder="you@example.com"
                 placeholderTextColor="rgba(100, 43, 115, 0.45)"
                 style={styles.input}
               />
-
-              <Text style={styles.helpText}>
-                Letters, numbers, and underscores only.
-              </Text>
             </View>
-          ) : null}
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
 
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-              placeholder="you@example.com"
-              placeholderTextColor="rgba(100, 43, 115, 0.45)"
-              style={styles.input}
-            />
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                placeholder="••••••••"
+                placeholderTextColor="rgba(100, 43, 115, 0.45)"
+                style={styles.input}
+              />
+            </View>
+
+            <Pressable
+              style={[styles.primaryButton, isSubmitting && styles.disabledButton]}
+              onPress={handleAuthSubmit}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.primaryButtonText}>
+                {isSubmitting
+                  ? authMode === "signin"
+                    ? "Signing in..."
+                    : "Creating account..."
+                  : authMode === "signin"
+                    ? "Sign in"
+                    : "Create account"}
+              </Text>
+            </Pressable>
+
+            {authMessage ? (
+              <Text style={styles.messageText}>{authMessage}</Text>
+            ) : null}
           </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholder="••••••••"
-              placeholderTextColor="rgba(100, 43, 115, 0.45)"
-              style={styles.input}
-            />
-          </View>
-
-          <Pressable
-            style={[styles.primaryButton, isSubmitting && styles.disabledButton]}
-            onPress={handleAuthSubmit}
-            disabled={isSubmitting}
-          >
-            <Text style={styles.primaryButtonText}>
-              {isSubmitting
-                ? authMode === "signin"
-                  ? "Signing in..."
-                  : "Creating account..."
-                : authMode === "signin"
-                  ? "Sign in"
-                  : "Create account"}
-            </Text>
-          </Pressable>
-
-          {authMessage ? (
-            <Text style={styles.messageText}>{authMessage}</Text>
-          ) : null}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  gradientScreen: {
+    flex: 1,
+  },
   keyboardScreen: {
     flex: 1,
   },
@@ -976,6 +1009,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
+
   loadingScreen: {
     flex: 1,
     alignItems: "center",
@@ -1006,7 +1040,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 18,
-    marginTop: 12,
+    marginTop: 0,
   },
   mobileHeaderProfile: {
     alignItems: "center",
@@ -1040,6 +1074,7 @@ const styles = StyleSheet.create({
   },
   feedContent: {
     padding: 18,
+    paddingTop: 0,
     paddingBottom: 36,
   },
   title: {
@@ -1317,7 +1352,7 @@ const styles = StyleSheet.create({
   menuCard: {
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.22)",
-    backgroundColor: "transparent",
+    backgroundColor: "#642B73",
     borderRadius: 30,
     padding: 18,
   },

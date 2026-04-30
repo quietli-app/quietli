@@ -364,7 +364,7 @@ export default function MobileFollowRequestsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "#642B73",
   },
   content: {
     padding: 18,
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "transparent",
+    backgroundColor: "#642B73",
     padding: 24,
   },
   loadingText: {
