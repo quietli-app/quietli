@@ -849,37 +849,90 @@ export default function QuietliMobileHome() {
             onPress={() => setIsMenuOpen(false)}
           >
             <Pressable style={styles.menuCard}>
-              <Text style={styles.menuKicker}>Quietli</Text>
-              <Text style={styles.menuTitle}>Menu</Text>
+              <View style={styles.menuHandle} />
+
+              <View style={styles.menuProfileRow}>
+                <AvatarBubble
+                  username={currentUsername}
+                  avatarUrl={profile?.avatar_url ?? null}
+                  size={54}
+                />
+
+                <View style={styles.menuProfileText}>
+                  <Text style={styles.menuKicker}>Quietli</Text>
+                  <Text style={styles.menuUsername}>@{currentUsername}</Text>
+                  <Text style={styles.menuSubtext}>Your quiet corner</Text>
+                </View>
+              </View>
+
+              <View style={styles.menuDivider} />
 
               <Pressable
                 style={styles.menuItem}
                 onPress={() => openProfile(currentUsername)}
               >
-                <Text style={styles.menuItemText}>My profile</Text>
+                <View style={styles.menuItemRow}>
+                  <View>
+                    <Text style={styles.menuItemText}>My profile</Text>
+                    <Text style={styles.menuItemSubtext}>
+                      View your public page
+                    </Text>
+                  </View>
+
+                  <Text style={styles.menuChevron}>›</Text>
+                </View>
               </Pressable>
 
               <Pressable style={styles.menuItem} onPress={openDiscover}>
-                <Text style={styles.menuItemText}>Discover</Text>
+                <View style={styles.menuItemRow}>
+                  <View>
+                    <Text style={styles.menuItemText}>Discover</Text>
+                    <Text style={styles.menuItemSubtext}>
+                      Find quiet corners
+                    </Text>
+                  </View>
+
+                  <Text style={styles.menuChevron}>›</Text>
+                </View>
               </Pressable>
 
               <Pressable style={styles.menuItem} onPress={openFollowRequests}>
                 <View style={styles.menuItemRow}>
-                  <Text style={styles.menuItemText}>Follow requests</Text>
+                  <View>
+                    <Text style={styles.menuItemText}>Follow requests</Text>
+                    <Text style={styles.menuItemSubtext}>
+                      Review private-profile requests
+                    </Text>
+                  </View>
 
-                  {followRequestCount > 0 ? (
-                    <View style={styles.menuBadge}>
-                      <Text style={styles.menuBadgeText}>
-                        {followRequestCount}
-                      </Text>
-                    </View>
-                  ) : null}
+                  <View style={styles.menuItemRight}>
+                    {followRequestCount > 0 ? (
+                      <View style={styles.menuBadge}>
+                        <Text style={styles.menuBadgeText}>
+                          {followRequestCount}
+                        </Text>
+                      </View>
+                    ) : null}
+
+                    <Text style={styles.menuChevron}>›</Text>
+                  </View>
                 </View>
               </Pressable>
 
               <Pressable style={styles.menuItem} onPress={openSettings}>
-                <Text style={styles.menuItemText}>Settings</Text>
+                <View style={styles.menuItemRow}>
+                  <View>
+                    <Text style={styles.menuItemText}>Settings</Text>
+                    <Text style={styles.menuItemSubtext}>
+                      Edit profile, theme, and account
+                    </Text>
+                  </View>
+
+                  <Text style={styles.menuChevron}>›</Text>
+                </View>
               </Pressable>
+
+              <View style={styles.menuDivider} />
 
               <Pressable style={styles.menuItemDanger} onPress={signOut}>
                 <Text style={styles.menuItemDangerText}>Sign out</Text>
@@ -1400,37 +1453,66 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-end",
     backgroundColor: "rgba(18, 5, 28, 0.55)",
-    padding: 18,
+    padding: 14,
   },
   menuCard: {
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.22)",
     backgroundColor: "#642B73",
-    borderRadius: 30,
-    padding: 18,
+    borderRadius: 34,
+    padding: 16,
+    paddingTop: 10,
+  },
+  menuHandle: {
+    alignSelf: "center",
+    backgroundColor: "rgba(255,255,255,0.35)",
+    borderRadius: 999,
+    height: 5,
+    marginBottom: 16,
+    width: 46,
+  },
+  menuProfileRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 14,
+  },
+  menuProfileText: {
+    flex: 1,
   },
   menuKicker: {
     color: "rgba(255,255,255,0.62)",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "300",
-    letterSpacing: 1.5,
-    marginBottom: 6,
+    letterSpacing: 1.6,
+    marginBottom: 3,
     textTransform: "uppercase",
   },
-  menuTitle: {
+  menuUsername: {
     color: "#ffffff",
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: "500",
-    marginBottom: 16,
+  },
+  menuSubtext: {
+    color: "rgba(255,255,255,0.64)",
+    fontSize: 13,
+    fontWeight: "300",
+    marginTop: 2,
+  },
+  menuDivider: {
+    backgroundColor: "rgba(255,255,255,0.16)",
+    height: 1,
+    marginBottom: 10,
+    marginTop: 2,
   },
   menuItem: {
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
-    backgroundColor: "rgba(255,255,255,0.14)",
-    borderRadius: 20,
+    borderColor: "rgba(255,255,255,0.16)",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 22,
     marginBottom: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
   },
   menuItemRow: {
     alignItems: "center",
@@ -1438,10 +1520,27 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
+  menuItemRight: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
   menuItemText: {
     color: "#ffffff",
     fontSize: 16,
+    fontWeight: "400",
+  },
+  menuItemSubtext: {
+    color: "rgba(255,255,255,0.58)",
+    fontSize: 12,
     fontWeight: "300",
+    lineHeight: 17,
+    marginTop: 3,
+  },
+  menuChevron: {
+    color: "rgba(255,255,255,0.62)",
+    fontSize: 28,
+    fontWeight: "200",
   },
   menuBadge: {
     alignItems: "center",
@@ -1458,10 +1557,11 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   menuItemDanger: {
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
+    borderColor: "rgba(255,255,255,0.16)",
     backgroundColor: "rgba(255,255,255,0.08)",
-    borderRadius: 20,
+    borderRadius: 22,
     marginBottom: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -1477,7 +1577,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.3)",
     backgroundColor: "#ffffff",
     borderRadius: 999,
-    marginTop: 4,
+    marginTop: 2,
     paddingVertical: 12,
   },
   menuCloseText: {
