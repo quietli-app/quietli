@@ -9,9 +9,12 @@ import {
   Text,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
+import { getMobileGradientTheme } from "../../lib/mobile-gradient-themes";
 
 type Profile = {
   id: string;
@@ -31,19 +34,6 @@ type Blip = {
 };
 
 type FollowStatus = "none" | "pending" | "accepted";
-
-const themeBackgrounds: Record<string, string> = {
-  blush: "#C6426E",
-  violet: "#642B73",
-  sky: "#76D7EA",
-  mint: "#7DD8C5",
-  sunset: "#F59E8B",
-};
-
-function getProfileColor(theme?: string | null) {
-  if (!theme) return themeBackgrounds.blush;
-  return themeBackgrounds[theme] ?? themeBackgrounds.blush;
-}
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString([], {
@@ -315,27 +305,43 @@ export default function MobileProfileScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingScreen}>
-        <ActivityIndicator color="#ffffff" />
-        <Text style={styles.loadingText}>Loading profile...</Text>
-      </View>
+      <LinearGradient
+        colors={["#C6426E", "#642B73"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientScreen}
+      >
+        <View style={styles.loadingScreen}>
+          <ActivityIndicator color="#ffffff" />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </LinearGradient>
     );
   }
 
   if (!profile) {
     return (
-      <View style={styles.loadingScreen}>
-        <Text style={styles.emptyTitle}>Profile unavailable</Text>
-        <Text style={styles.emptyText}>{message}</Text>
+      <LinearGradient
+        colors={["#C6426E", "#642B73"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientScreen}
+      >
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+          <View style={styles.loadingScreen}>
+            <Text style={styles.emptyTitle}>Profile unavailable</Text>
+            <Text style={styles.emptyText}>{message}</Text>
 
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Back</Text>
-        </Pressable>
-      </View>
+            <Pressable style={styles.backButton} onPress={() => router.back()}>
+              <Text style={styles.backButtonText}>Back</Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
     );
   }
 
-  const profileColor = getProfileColor(profile.gradient_theme);
+  const profileGradient = getMobileGradientTheme(profile.gradient_theme);
   const isPrivate = profile.profile_visibility === "private";
   const canViewBlips = !isPrivate || isOwnProfile || followStatus === "accepted";
 
@@ -349,127 +355,161 @@ export default function MobileProfileScreen() {
           : "Follow";
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={refreshProfile} />
-      }
+    <LinearGradient
+      colors={["#C6426E", "#642B73"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradientScreen}
     >
-      <View style={styles.topRow}>
-        <Pressable style={styles.backButtonSmall} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Back</Text>
-        </Pressable>
-
-        <Text style={styles.topTitle}>Quietli</Text>
-      </View>
-
-      <View style={[styles.profileCard, { backgroundColor: profileColor }]}>
-        <AvatarBubble
-          username={profile.username}
-          avatarUrl={profile.avatar_url}
-          size={90}
-        />
-
-        <Text style={styles.username}>@{profile.username}</Text>
-
-        {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
-
-        {profile.profile_link_label && profile.profile_link_url ? (
-          <Text style={styles.profileLink}>{profile.profile_link_label}</Text>
-        ) : null}
-
-        {!isOwnProfile ? (
-          <View style={styles.followArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <ScrollView
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={refreshProfile}
+            />
+          }
+        >
+          <View style={styles.topRow}>
             <Pressable
-              style={[
-                styles.followButton,
-                followStatus === "accepted" && styles.followButtonMuted,
-                followStatus === "pending" && styles.followButtonMuted,
-                isFollowLoading && styles.disabledButton,
-              ]}
-              disabled={isFollowLoading}
-              onPress={
-                followStatus === "accepted" || followStatus === "pending"
-                  ? unfollowOrCancelRequest
-                  : followOrRequest
-              }
+              style={styles.backButtonSmall}
+              onPress={() => router.back()}
             >
-              <Text
-                style={[
-                  styles.followButtonText,
-                  followStatus === "accepted" && styles.followButtonMutedText,
-                  followStatus === "pending" && styles.followButtonMutedText,
-                ]}
-              >
-                {isFollowLoading ? "Working..." : followButtonLabel}
-              </Text>
+              <Text style={styles.backButtonText}>Back</Text>
             </Pressable>
 
-            {followStatus === "pending" ? (
-              <Text style={styles.followHint}>
-                Your request is waiting for approval.
-              </Text>
-            ) : null}
-
-            {followMessage ? (
-              <Text style={styles.followMessage}>{followMessage}</Text>
-            ) : null}
+            <Text style={styles.topTitle}>Quietli</Text>
           </View>
-        ) : (
-          <Text style={styles.ownProfileHint}>This is your profile.</Text>
-        )}
-      </View>
 
-      {!canViewBlips ? (
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>This profile is private.</Text>
+          <LinearGradient
+            colors={profileGradient.colors}
+            start={profileGradient.start}
+            end={profileGradient.end}
+            style={styles.profileCard}
+          >
+            <AvatarBubble
+              username={profile.username}
+              avatarUrl={profile.avatar_url}
+              size={90}
+            />
 
-          <Text style={styles.emptyText}>
-            {followStatus === "pending"
-              ? "Your follow request is pending. If they approve it, their blips will appear here."
-              : "Send a follow request to see this profile’s blips if they approve you."}
-          </Text>
-        </View>
-      ) : blips.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>No blips yet.</Text>
+            <Text style={styles.username}>@{profile.username}</Text>
 
-          <Text style={styles.emptyText}>
-            This quiet corner is still waiting for its first blip.
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.blipList}>
-          {blips.map((blip) => (
-            <View
-              key={blip.id}
-              style={[styles.blipCard, { backgroundColor: profileColor }]}
-            >
-              <Text style={styles.blipDate}>{formatDate(blip.created_at)}</Text>
-              <Text style={styles.blipContent}>{blip.content}</Text>
+            {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
+
+            {profile.profile_link_label && profile.profile_link_url ? (
+              <Text style={styles.profileLink}>{profile.profile_link_label}</Text>
+            ) : null}
+
+            {!isOwnProfile ? (
+              <View style={styles.followArea}>
+                <Pressable
+                  style={[
+                    styles.followButton,
+                    followStatus === "accepted" && styles.followButtonMuted,
+                    followStatus === "pending" && styles.followButtonMuted,
+                    isFollowLoading && styles.disabledButton,
+                  ]}
+                  disabled={isFollowLoading}
+                  onPress={
+                    followStatus === "accepted" || followStatus === "pending"
+                      ? unfollowOrCancelRequest
+                      : followOrRequest
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.followButtonText,
+                      followStatus === "accepted" &&
+                        styles.followButtonMutedText,
+                      followStatus === "pending" &&
+                        styles.followButtonMutedText,
+                    ]}
+                  >
+                    {isFollowLoading ? "Working..." : followButtonLabel}
+                  </Text>
+                </Pressable>
+
+                {followStatus === "pending" ? (
+                  <Text style={styles.followHint}>
+                    Your request is waiting for approval.
+                  </Text>
+                ) : null}
+
+                {followMessage ? (
+                  <Text style={styles.followMessage}>{followMessage}</Text>
+                ) : null}
+              </View>
+            ) : (
+              <Text style={styles.ownProfileHint}>This is your profile.</Text>
+            )}
+          </LinearGradient>
+
+          {!canViewBlips ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyTitle}>This profile is private.</Text>
+
+              <Text style={styles.emptyText}>
+                {followStatus === "pending"
+                  ? "Your follow request is pending. If they approve it, their blips will appear here."
+                  : "Send a follow request to see this profile’s blips if they approve you."}
+              </Text>
             </View>
-          ))}
-        </View>
-      )}
-    </ScrollView>
+          ) : blips.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyTitle}>No blips yet.</Text>
+
+              <Text style={styles.emptyText}>
+                This quiet corner is still waiting for its first blip.
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.blipList}>
+              {blips.map((blip) => (
+                <LinearGradient
+                  key={blip.id}
+                  colors={profileGradient.colors}
+                  start={profileGradient.start}
+                  end={profileGradient.end}
+                  style={styles.blipCard}
+                >
+                  <Text style={styles.blipDate}>
+                    {formatDate(blip.created_at)}
+                  </Text>
+                  <Text style={styles.blipContent}>{blip.content}</Text>
+                </LinearGradient>
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientScreen: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
   screen: {
     flex: 1,
-    backgroundColor: "#642B73",
+    backgroundColor: "transparent",
   },
   content: {
-    padding: 18,
+    paddingHorizontal: 18,
+    paddingTop: 0,
     paddingBottom: 40,
   },
   loadingScreen: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#642B73",
+    backgroundColor: "transparent",
     padding: 24,
   },
   loadingText: {
@@ -483,7 +523,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 18,
-    marginTop: 12,
+    marginTop: 0,
   },
   topTitle: {
     color: "#ffffff",
@@ -518,6 +558,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.22)",
     borderRadius: 34,
     padding: 24,
+    overflow: "hidden",
   },
   avatarCircle: {
     alignItems: "center",
@@ -616,6 +657,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.22)",
     borderRadius: 30,
     padding: 18,
+    overflow: "hidden",
   },
   blipDate: {
     color: "rgba(255,255,255,0.66)",
