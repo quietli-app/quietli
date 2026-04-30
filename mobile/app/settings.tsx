@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,6 +11,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
@@ -21,6 +23,7 @@ type Profile = {
   id: string;
   username: string | null;
   bio: string | null;
+  avatar_url: string | null;
   profile_visibility: ProfileVisibility | null;
   profile_link_label: string | null;
   profile_link_url: string | null;
@@ -31,6 +34,7 @@ type Profile = {
 const BIO_MAX_LENGTH = 160;
 const LINK_LABEL_MAX_LENGTH = 40;
 const LINK_URL_MAX_LENGTH = 220;
+const AVATAR_BUCKET = "avatars";
 
 const themeOptions: {
   id: GradientTheme;
@@ -93,6 +97,45 @@ function isValidUrl(value: string) {
   }
 }
 
+function getFileExtension(uri: string) {
+  const cleanUri = uri.split("?")[0] ?? uri;
+  const extension = cleanUri.split(".").pop()?.toLowerCase();
+
+  if (!extension || extension.length > 5) return "jpg";
+
+  if (extension === "jpeg" || extension === "jpg") return "jpg";
+  if (extension === "png") return "png";
+  if (extension === "webp") return "webp";
+
+  return "jpg";
+}
+
+function getMimeType(extension: string) {
+  if (extension === "png") return "image/png";
+  if (extension === "webp") return "image/webp";
+  return "image/jpeg";
+}
+
+function AvatarPreview({
+  username,
+  avatarUrl,
+}: {
+  username: string;
+  avatarUrl: string | null;
+}) {
+  return (
+    <View style={styles.avatarPreview}>
+      {avatarUrl ? (
+        <Image source={{ uri: avatarUrl }} style={styles.avatarPreviewImage} />
+      ) : (
+        <Text style={styles.avatarPreviewInitial}>
+          {username.slice(0, 1).toUpperCase()}
+        </Text>
+      )}
+    </View>
+  );
+}
+
 export default function MobileSettingsScreen() {
   const router = useRouter();
 
@@ -100,6 +143,7 @@ export default function MobileSettingsScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
 
   const [bio, setBio] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [profileVisibility, setProfileVisibility] =
     useState<ProfileVisibility>("public");
 
@@ -109,6 +153,7 @@ export default function MobileSettingsScreen() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingBio, setIsSavingBio] = useState(false);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [isSavingVisibility, setIsSavingVisibility] = useState(false);
   const [isSavingProfileLink, setIsSavingProfileLink] = useState(false);
   const [isSavingTheme, setIsSavingTheme] = useState(false);
@@ -130,7 +175,7 @@ export default function MobileSettingsScreen() {
       const { data, error } = await supabase
         .from("profiles")
         .select(
-          "id, username, bio, profile_visibility, profile_link_label, profile_link_url, gradient_theme, plan"
+          "id, username, bio, avatar_url, profile_visibility, profile_link_label, profile_link_url, gradient_theme, plan"
         )
         .eq("id", currentSession.user.id)
         .maybeSingle();
@@ -144,6 +189,7 @@ export default function MobileSettingsScreen() {
 
       setProfile(loadedProfile);
       setBio(loadedProfile?.bio ?? "");
+      setAvatarUrl(loadedProfile?.avatar_url ?? null);
       setProfileVisibility(
         loadedProfile?.profile_visibility === "private" ? "private" : "public"
       );
@@ -198,6 +244,134 @@ export default function MobileSettingsScreen() {
 
     setBio(trimmedBio);
     setMessage("Bio saved.");
+  }
+
+  async function chooseAndUploadAvatar() {
+    if (!session?.user?.id) {
+      setMessage("Please sign in again to update your profile photo.");
+      return;
+    }
+
+    setMessage("");
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      setMessage("Quietli needs photo library access to choose an avatar.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85,
+    });
+
+    if (result.canceled || !result.assets[0]?.uri) {
+      return;
+    }
+
+    const imageUri = result.assets[0].uri;
+    const extension = getFileExtension(imageUri);
+    const mimeType = getMimeType(extension);
+    const filePath = `${session.user.id}/avatar-${Date.now()}.${extension}`;
+
+    setIsSavingAvatar(true);
+    setMessage("");
+
+    try {
+      const response = await fetch(imageUri);
+      const imageBlob = await response.blob();
+
+      const { error: uploadError } = await supabase.storage
+        .from(AVATAR_BUCKET)
+        .upload(filePath, imageBlob, {
+          contentType: mimeType,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.error("Error uploading mobile avatar:", uploadError);
+        setMessage(
+          "Something went wrong uploading your avatar. Check your Supabase avatar storage bucket and policies."
+        );
+        setIsSavingAvatar(false);
+        return;
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(filePath);
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          avatar_url: publicUrl,
+        })
+        .eq("id", session.user.id);
+
+      if (profileError) {
+        console.error("Error saving mobile avatar URL:", profileError);
+        setMessage("The photo uploaded, but Quietli could not save it to your profile.");
+        setIsSavingAvatar(false);
+        return;
+      }
+
+      setAvatarUrl(publicUrl);
+      setProfile((current) =>
+        current
+          ? {
+              ...current,
+              avatar_url: publicUrl,
+            }
+          : current
+      );
+
+      setMessage("Profile photo saved.");
+    } catch (error) {
+      console.error("Unexpected mobile avatar upload error:", error);
+      setMessage("Something unexpected went wrong uploading your avatar.");
+    }
+
+    setIsSavingAvatar(false);
+  }
+
+  async function removeAvatar() {
+    if (!session?.user?.id) {
+      setMessage("Please sign in again to remove your profile photo.");
+      return;
+    }
+
+    setIsSavingAvatar(true);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        avatar_url: null,
+      })
+      .eq("id", session.user.id);
+
+    setIsSavingAvatar(false);
+
+    if (error) {
+      console.error("Error removing mobile avatar:", error);
+      setMessage("Something went wrong removing your profile photo.");
+      return;
+    }
+
+    setAvatarUrl(null);
+    setProfile((current) =>
+      current
+        ? {
+            ...current,
+            avatar_url: null,
+          }
+        : current
+    );
+
+    setMessage("Profile photo removed.");
   }
 
   async function saveVisibility(nextVisibility: ProfileVisibility) {
@@ -408,6 +582,7 @@ export default function MobileSettingsScreen() {
   const isPrivate = profileVisibility === "private";
   const activeTheme =
     themeOptions.find((theme) => theme.id === gradientTheme) ?? themeOptions[0];
+  const displayUsername = profile?.username || "quietli_user";
 
   return (
     <LinearGradient
@@ -434,8 +609,7 @@ export default function MobileSettingsScreen() {
             <Text style={styles.title}>Account settings.</Text>
 
             <Text style={styles.bodyText}>
-              Edit your bio, choose how visible your quiet corner should be, add
-              one link, and pick a profile theme.
+              Edit your bio, profile photo, visibility, link, and theme.
             </Text>
           </View>
 
@@ -451,10 +625,47 @@ export default function MobileSettingsScreen() {
           </View>
 
           <View style={styles.card}>
+            <Text style={styles.cardLabel}>Profile photo</Text>
+            <Text style={styles.cardTitle}>@{displayUsername}</Text>
+
+            <View style={styles.avatarRow}>
+              <AvatarPreview username={displayUsername} avatarUrl={avatarUrl} />
+
+              <View style={styles.avatarTextWrap}>
+                <Text style={styles.cardText}>
+                  Choose a square-ish photo from your iPhone library.
+                </Text>
+
+                <Text style={styles.inputHint}>
+                  Your avatar will update across your profile, feed, and Discover.
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.linkButtonRow}>
+              <Pressable
+                style={[styles.saveButton, isSavingAvatar && styles.disabledButton]}
+                disabled={isSavingAvatar}
+                onPress={chooseAndUploadAvatar}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isSavingAvatar ? "Saving..." : "Choose photo"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.clearButton}
+                disabled={isSavingAvatar}
+                onPress={removeAvatar}
+              >
+                <Text style={styles.clearButtonText}>Remove</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.card}>
             <Text style={styles.cardLabel}>Edit bio</Text>
-            <Text style={styles.cardTitle}>
-              @{profile?.username || "quietli_user"}
-            </Text>
+            <Text style={styles.cardTitle}>@{displayUsername}</Text>
 
             <TextInput
               value={bio}
@@ -627,9 +838,7 @@ export default function MobileSettingsScreen() {
                 },
               ]}
             >
-              <Text style={styles.themePreviewText}>
-                @{profile?.username || "quietli_user"}
-              </Text>
+              <Text style={styles.themePreviewText}>@{displayUsername}</Text>
 
               <Text style={styles.themePreviewSubtext}>
                 This is how your quiet corner feels.
@@ -721,14 +930,6 @@ export default function MobileSettingsScreen() {
                 <Text style={styles.secondaryButtonText}>View my profile</Text>
               </Pressable>
             ) : null}
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardLabel}>Coming next</Text>
-            <Text style={styles.cardText}>
-              Next we can add avatar upload, account/data tools, or a follow
-              request badge in the mobile menu.
-            </Text>
           </View>
 
           <View style={styles.dangerCard}>
@@ -880,6 +1081,37 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     marginTop: 8,
   },
+  avatarRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 14,
+    marginTop: 16,
+  },
+  avatarPreview: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 4,
+    borderColor: "rgba(255,255,255,0.9)",
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 42,
+    height: 84,
+    overflow: "hidden",
+    width: 84,
+  },
+  avatarPreviewImage: {
+    borderRadius: 42,
+    height: 84,
+    resizeMode: "cover",
+    width: 84,
+  },
+  avatarPreviewInitial: {
+    color: "#ffffff",
+    fontSize: 30,
+    fontWeight: "300",
+  },
+  avatarTextWrap: {
+    flex: 1,
+  },
   bioInput: {
     minHeight: 110,
     backgroundColor: "rgba(255,255,255,0.72)",
@@ -961,6 +1193,7 @@ const styles = StyleSheet.create({
   linkButtonRow: {
     alignItems: "center",
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
     marginTop: 16,
   },
