@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Image,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { useSwipeBack } from "../lib/use-swipe-back";
 
 type ProfileVisibility = "public" | "private";
 type GradientTheme = "blush" | "violet" | "sky" | "mint" | "sunset";
@@ -138,6 +140,7 @@ function AvatarPreview({
 
 export default function MobileSettingsScreen() {
   const router = useRouter();
+  const swipeBackPanHandlers = useSwipeBack(router);
 
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -152,6 +155,7 @@ export default function MobileSettingsScreen() {
   const [gradientTheme, setGradientTheme] = useState<GradientTheme>("blush");
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSavingBio, setIsSavingBio] = useState(false);
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [isSavingVisibility, setIsSavingVisibility] = useState(false);
@@ -159,47 +163,63 @@ export default function MobileSettingsScreen() {
   const [isSavingTheme, setIsSavingTheme] = useState(false);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    async function loadSettings() {
-      const {
-        data: { session: currentSession },
-      } = await supabase.auth.getSession();
-
-      setSession(currentSession);
-
-      if (!currentSession?.user?.id) {
-        setIsLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select(
-          "id, username, bio, avatar_url, profile_visibility, profile_link_label, profile_link_url, gradient_theme, plan"
-        )
-        .eq("id", currentSession.user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error loading mobile settings profile:", error);
-        setMessage("Something went wrong loading your settings.");
-      }
-
-      const loadedProfile = (data ?? null) as Profile | null;
-
-      setProfile(loadedProfile);
-      setBio(loadedProfile?.bio ?? "");
-      setAvatarUrl(loadedProfile?.avatar_url ?? null);
-      setProfileVisibility(
-        loadedProfile?.profile_visibility === "private" ? "private" : "public"
-      );
-      setProfileLinkLabel(loadedProfile?.profile_link_label ?? "");
-      setProfileLinkUrl(loadedProfile?.profile_link_url ?? "");
-      setGradientTheme(loadedProfile?.gradient_theme ?? "blush");
-      setIsLoading(false);
+  async function loadSettings({ showLoading = false } = {}) {
+    if (showLoading) {
+      setIsLoading(true);
     }
 
-    loadSettings();
+    const {
+      data: { session: currentSession },
+    } = await supabase.auth.getSession();
+
+    setSession(currentSession);
+
+    if (!currentSession?.user?.id) {
+      setIsLoading(false);
+      setIsRefreshing(false);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(
+        "id, username, bio, avatar_url, profile_visibility, profile_link_label, profile_link_url, gradient_theme, plan"
+      )
+      .eq("id", currentSession.user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error loading mobile settings profile:", error);
+      setMessage("Something went wrong loading your settings.");
+      setIsLoading(false);
+      setIsRefreshing(false);
+      return;
+    }
+
+    const loadedProfile = (data ?? null) as Profile | null;
+
+    setProfile(loadedProfile);
+    setBio(loadedProfile?.bio ?? "");
+    setAvatarUrl(loadedProfile?.avatar_url ?? null);
+    setProfileVisibility(
+      loadedProfile?.profile_visibility === "private" ? "private" : "public"
+    );
+    setProfileLinkLabel(loadedProfile?.profile_link_label ?? "");
+    setProfileLinkUrl(loadedProfile?.profile_link_url ?? "");
+    setGradientTheme(loadedProfile?.gradient_theme ?? "blush");
+
+    setIsLoading(false);
+    setIsRefreshing(false);
+  }
+
+  async function refreshSettings() {
+    setIsRefreshing(true);
+    setMessage("");
+    await loadSettings();
+  }
+
+  useEffect(() => {
+    loadSettings({ showLoading: true });
   }, []);
 
   async function saveBio() {
@@ -313,7 +333,9 @@ export default function MobileSettingsScreen() {
 
       if (profileError) {
         console.error("Error saving mobile avatar URL:", profileError);
-        setMessage("The photo uploaded, but Quietli could not save it to your profile.");
+        setMessage(
+          "The photo uploaded, but Quietli could not save it to your profile."
+        );
         setIsSavingAvatar(false);
         return;
       }
@@ -590,9 +612,19 @@ export default function MobileSettingsScreen() {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradientScreen}
+      {...swipeBackPanHandlers}
     >
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        <ScrollView
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={refreshSettings}
+            />
+          }
+        >
           <View style={styles.topRow}>
             <Pressable
               style={styles.backButtonSmall}
@@ -637,14 +669,18 @@ export default function MobileSettingsScreen() {
                 </Text>
 
                 <Text style={styles.inputHint}>
-                  Your avatar will update across your profile, feed, and Discover.
+                  Your avatar will update across your profile, feed, and
+                  Discover.
                 </Text>
               </View>
             </View>
 
             <View style={styles.linkButtonRow}>
               <Pressable
-                style={[styles.saveButton, isSavingAvatar && styles.disabledButton]}
+                style={[
+                  styles.saveButton,
+                  isSavingAvatar && styles.disabledButton,
+                ]}
                 disabled={isSavingAvatar}
                 onPress={chooseAndUploadAvatar}
               >
