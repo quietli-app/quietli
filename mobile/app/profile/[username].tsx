@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -100,12 +101,19 @@ export default function MobileProfileScreen() {
   const [blips, setBlips] = useState<Blip[]>([]);
   const [followStatus, setFollowStatus] = useState<FollowStatus>("none");
   const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isMuteLoading, setIsMuteLoading] = useState(false);
+  const [isBlockLoading, setIsBlockLoading] = useState(false);
+  const [isControlsOpen, setIsControlsOpen] = useState(false);
+
   const [message, setMessage] = useState("");
   const [followMessage, setFollowMessage] = useState("");
+  const [safetyMessage, setSafetyMessage] = useState("");
 
   async function getCurrentSession() {
     const {
@@ -139,6 +147,36 @@ export default function MobileProfileScreen() {
     return status as FollowStatus;
   }
 
+  async function loadSafetyStatus(currentUserId: string, targetUserId: string) {
+    const { data: muteData, error: muteError } = await supabase
+      .from("mutes")
+      .select("muted_id")
+      .eq("muter_id", currentUserId)
+      .eq("muted_id", targetUserId)
+      .maybeSingle();
+
+    if (muteError) {
+      console.error("Error loading mobile mute status:", muteError);
+      setIsMuted(false);
+    } else {
+      setIsMuted(Boolean(muteData));
+    }
+
+    const { data: blockData, error: blockError } = await supabase
+      .from("blocks")
+      .select("blocked_id")
+      .eq("blocker_id", currentUserId)
+      .eq("blocked_id", targetUserId)
+      .maybeSingle();
+
+    if (blockError) {
+      console.error("Error loading mobile block status:", blockError);
+      setIsBlocked(false);
+    } else {
+      setIsBlocked(Boolean(blockData));
+    }
+  }
+
   async function loadProfile() {
     if (!username) {
       setMessage("No profile username was provided.");
@@ -148,6 +186,7 @@ export default function MobileProfileScreen() {
 
     setMessage("");
     setFollowMessage("");
+    setSafetyMessage("");
 
     const currentSession = await getCurrentSession();
 
@@ -186,8 +225,12 @@ export default function MobileProfileScreen() {
         currentUserId,
         typedProfile.id
       );
+
+      await loadSafetyStatus(currentUserId, typedProfile.id);
     } else {
       setFollowStatus("none");
+      setIsMuted(false);
+      setIsBlocked(false);
     }
 
     const canViewBlips =
@@ -231,7 +274,7 @@ export default function MobileProfileScreen() {
       return;
     }
 
-    if (!profile || isOwnProfile) return;
+    if (!profile || isOwnProfile || isBlocked) return;
 
     setIsFollowLoading(true);
     setFollowMessage("");
@@ -298,6 +341,147 @@ export default function MobileProfileScreen() {
     await loadProfile();
   }
 
+  async function muteProfile() {
+    if (!session?.user?.id || !profile || isOwnProfile) return;
+
+    setIsMuteLoading(true);
+    setSafetyMessage("");
+
+    const { error } = await supabase.from("mutes").upsert(
+      {
+        muter_id: session.user.id,
+        muted_id: profile.id,
+      },
+      {
+        onConflict: "muter_id,muted_id",
+      }
+    );
+
+    setIsMuteLoading(false);
+
+    if (error) {
+      console.error("Error muting mobile profile:", error);
+      setSafetyMessage("Something went wrong muting this profile.");
+      return;
+    }
+
+    setIsMuted(true);
+    setSafetyMessage(`@${profile.username} is now muted.`);
+  }
+
+  async function unmuteProfile() {
+    if (!session?.user?.id || !profile || isOwnProfile) return;
+
+    setIsMuteLoading(true);
+    setSafetyMessage("");
+
+    const { error } = await supabase
+      .from("mutes")
+      .delete()
+      .eq("muter_id", session.user.id)
+      .eq("muted_id", profile.id);
+
+    setIsMuteLoading(false);
+
+    if (error) {
+      console.error("Error unmuting mobile profile:", error);
+      setSafetyMessage("Something went wrong unmuting this profile.");
+      return;
+    }
+
+    setIsMuted(false);
+    setSafetyMessage(`@${profile.username} is no longer muted.`);
+  }
+
+  async function blockProfile() {
+    if (!session?.user?.id || !profile || isOwnProfile) return;
+
+    setIsBlockLoading(true);
+    setSafetyMessage("");
+
+    const { error: blockError } = await supabase.from("blocks").upsert(
+      {
+        blocker_id: session.user.id,
+        blocked_id: profile.id,
+      },
+      {
+        onConflict: "blocker_id,blocked_id",
+      }
+    );
+
+    if (blockError) {
+      console.error("Error blocking mobile profile:", blockError);
+      setSafetyMessage("Something went wrong blocking this profile.");
+      setIsBlockLoading(false);
+      return;
+    }
+
+    await supabase
+      .from("follows")
+      .delete()
+      .or(
+        `and(follower_id.eq.${session.user.id},following_id.eq.${profile.id}),and(follower_id.eq.${profile.id},following_id.eq.${session.user.id})`
+      );
+
+    await supabase.from("mutes").upsert(
+      {
+        muter_id: session.user.id,
+        muted_id: profile.id,
+      },
+      {
+        onConflict: "muter_id,muted_id",
+      }
+    );
+
+    setIsBlockLoading(false);
+    setIsBlocked(true);
+    setIsMuted(true);
+    setFollowStatus("none");
+    setBlips([]);
+    setSafetyMessage(`@${profile.username} is now blocked.`);
+  }
+
+  async function unblockProfile() {
+    if (!session?.user?.id || !profile || isOwnProfile) return;
+
+    setIsBlockLoading(true);
+    setSafetyMessage("");
+
+    const { error } = await supabase
+      .from("blocks")
+      .delete()
+      .eq("blocker_id", session.user.id)
+      .eq("blocked_id", profile.id);
+
+    setIsBlockLoading(false);
+
+    if (error) {
+      console.error("Error unblocking mobile profile:", error);
+      setSafetyMessage("Something went wrong unblocking this profile.");
+      return;
+    }
+
+    setIsBlocked(false);
+    setSafetyMessage(`@${profile.username} is no longer blocked.`);
+    await loadProfile();
+  }
+
+  async function handleMutePress() {
+    if (isMuted) {
+      await unmuteProfile();
+    } else {
+      await muteProfile();
+    }
+  }
+
+  async function handleBlockPress() {
+    if (isBlocked) {
+      await unblockProfile();
+    } else {
+      await blockProfile();
+    }
+  }
+
   useEffect(() => {
     loadProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -343,7 +527,8 @@ export default function MobileProfileScreen() {
 
   const profileGradient = getMobileGradientTheme(profile.gradient_theme);
   const isPrivate = profile.profile_visibility === "private";
-  const canViewBlips = !isPrivate || isOwnProfile || followStatus === "accepted";
+  const canViewBlips =
+    !isBlocked && (!isPrivate || isOwnProfile || followStatus === "accepted");
 
   const followButtonLabel =
     followStatus === "accepted"
@@ -355,137 +540,244 @@ export default function MobileProfileScreen() {
           : "Follow";
 
   return (
-    <LinearGradient
-      colors={["#C6426E", "#642B73"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradientScreen}
-    >
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        <ScrollView
-          style={styles.screen}
-          contentContainerStyle={styles.content}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={refreshProfile}
-            />
-          }
-        >
-          <View style={styles.topRow}>
-            <Pressable
-              style={styles.backButtonSmall}
-              onPress={() => router.back()}
-            >
-              <Text style={styles.backButtonText}>Back</Text>
-            </Pressable>
-
-            <Text style={styles.topTitle}>Quietli</Text>
-          </View>
-
-          <LinearGradient
-            colors={profileGradient.colors}
-            start={profileGradient.start}
-            end={profileGradient.end}
-            style={styles.profileCard}
+    <>
+      <LinearGradient
+        colors={["#C6426E", "#642B73"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientScreen}
+      >
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+          <ScrollView
+            style={styles.screen}
+            contentContainerStyle={styles.content}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={refreshProfile}
+              />
+            }
           >
-            <AvatarBubble
-              username={profile.username}
-              avatarUrl={profile.avatar_url}
-              size={90}
-            />
+            <View style={styles.topRow}>
+              <Pressable
+                style={styles.backButtonSmall}
+                onPress={() => router.back()}
+              >
+                <Text style={styles.backButtonText}>Back</Text>
+              </Pressable>
 
-            <Text style={styles.username}>@{profile.username}</Text>
+              <Text style={styles.topTitle}>Quietli</Text>
+            </View>
 
-            {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
-
-            {profile.profile_link_label && profile.profile_link_url ? (
-              <Text style={styles.profileLink}>{profile.profile_link_label}</Text>
-            ) : null}
-
-            {!isOwnProfile ? (
-              <View style={styles.followArea}>
+            <LinearGradient
+              colors={profileGradient.colors}
+              start={profileGradient.start}
+              end={profileGradient.end}
+              style={styles.profileCard}
+            >
+              {!isOwnProfile ? (
                 <Pressable
-                  style={[
-                    styles.followButton,
-                    followStatus === "accepted" && styles.followButtonMuted,
-                    followStatus === "pending" && styles.followButtonMuted,
-                    isFollowLoading && styles.disabledButton,
-                  ]}
-                  disabled={isFollowLoading}
-                  onPress={
-                    followStatus === "accepted" || followStatus === "pending"
-                      ? unfollowOrCancelRequest
-                      : followOrRequest
-                  }
+                  style={styles.profileMenuButton}
+                  onPress={() => setIsControlsOpen(true)}
                 >
-                  <Text
-                    style={[
-                      styles.followButtonText,
-                      followStatus === "accepted" &&
-                        styles.followButtonMutedText,
-                      followStatus === "pending" &&
-                        styles.followButtonMutedText,
-                    ]}
-                  >
-                    {isFollowLoading ? "Working..." : followButtonLabel}
-                  </Text>
+                  <Text style={styles.profileMenuButtonText}>•••</Text>
                 </Pressable>
+              ) : null}
 
-                {followStatus === "pending" ? (
-                  <Text style={styles.followHint}>
-                    Your request is waiting for approval.
+              <AvatarBubble
+                username={profile.username}
+                avatarUrl={profile.avatar_url}
+                size={90}
+              />
+
+              <Text style={styles.username}>@{profile.username}</Text>
+
+              {profile.bio ? (
+                <Text style={styles.bio}>{profile.bio}</Text>
+              ) : null}
+
+              {profile.profile_link_label && profile.profile_link_url ? (
+                <Text style={styles.profileLink}>
+                  {profile.profile_link_label}
+                </Text>
+              ) : null}
+
+              {isBlocked ? (
+                <View style={styles.blockNotice}>
+                  <Text style={styles.blockNoticeText}>
+                    You have blocked this profile.
                   </Text>
-                ) : null}
+                </View>
+              ) : null}
 
-                {followMessage ? (
-                  <Text style={styles.followMessage}>{followMessage}</Text>
-                ) : null}
+              {!isOwnProfile && !isBlocked ? (
+                <View style={styles.followArea}>
+                  <Pressable
+                    style={[
+                      styles.followButton,
+                      followStatus === "accepted" && styles.followButtonMuted,
+                      followStatus === "pending" && styles.followButtonMuted,
+                      isFollowLoading && styles.disabledButton,
+                    ]}
+                    disabled={isFollowLoading}
+                    onPress={
+                      followStatus === "accepted" || followStatus === "pending"
+                        ? unfollowOrCancelRequest
+                        : followOrRequest
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.followButtonText,
+                        followStatus === "accepted" &&
+                          styles.followButtonMutedText,
+                        followStatus === "pending" &&
+                          styles.followButtonMutedText,
+                      ]}
+                    >
+                      {isFollowLoading ? "Working..." : followButtonLabel}
+                    </Text>
+                  </Pressable>
+
+                  {followStatus === "pending" ? (
+                    <Text style={styles.followHint}>
+                      Your request is waiting for approval.
+                    </Text>
+                  ) : null}
+
+                  {followMessage ? (
+                    <Text style={styles.followMessage}>{followMessage}</Text>
+                  ) : null}
+                </View>
+              ) : null}
+
+              {isOwnProfile ? (
+                <Text style={styles.ownProfileHint}>
+                  This is your profile.
+                </Text>
+              ) : null}
+
+              {safetyMessage ? (
+                <Text style={styles.inlineSafetyMessage}>{safetyMessage}</Text>
+              ) : null}
+            </LinearGradient>
+
+            {!canViewBlips ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyTitle}>
+                  {isBlocked ? "Profile blocked." : "This profile is private."}
+                </Text>
+
+                <Text style={styles.emptyText}>
+                  {isBlocked
+                    ? "Unblock this profile if you want to view or interact with it again."
+                    : followStatus === "pending"
+                      ? "Your follow request is pending. If they approve it, their blips will appear here."
+                      : "Send a follow request to see this profile’s blips if they approve you."}
+                </Text>
+              </View>
+            ) : blips.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyTitle}>No blips yet.</Text>
+
+                <Text style={styles.emptyText}>
+                  This quiet corner is still waiting for its first blip.
+                </Text>
               </View>
             ) : (
-              <Text style={styles.ownProfileHint}>This is your profile.</Text>
+              <View style={styles.blipList}>
+                {blips.map((blip) => (
+                  <LinearGradient
+                    key={blip.id}
+                    colors={profileGradient.colors}
+                    start={profileGradient.start}
+                    end={profileGradient.end}
+                    style={styles.blipCard}
+                  >
+                    <Text style={styles.blipDate}>
+                      {formatDate(blip.created_at)}
+                    </Text>
+                    <Text style={styles.blipContent}>{blip.content}</Text>
+                  </LinearGradient>
+                ))}
+              </View>
             )}
-          </LinearGradient>
+          </ScrollView>
+        </SafeAreaView>
+      </LinearGradient>
 
-          {!canViewBlips ? (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyTitle}>This profile is private.</Text>
+      <Modal visible={isControlsOpen} transparent animationType="fade">
+        <Pressable
+          style={styles.controlsOverlay}
+          onPress={() => setIsControlsOpen(false)}
+        >
+          <Pressable style={styles.controlsCard}>
+            <Text style={styles.controlsKicker}>Quietli</Text>
+            <Text style={styles.controlsTitle}>Profile controls</Text>
 
-              <Text style={styles.emptyText}>
-                {followStatus === "pending"
-                  ? "Your follow request is pending. If they approve it, their blips will appear here."
-                  : "Send a follow request to see this profile’s blips if they approve you."}
+            <Text style={styles.controlsText}>
+              Mute hides this user from your feed. Block removes social
+              connections and keeps this profile out of your Quietli space.
+              {"\n\n"}
+They will not be notified if you mute or block them.
+            </Text>
+
+            <Pressable
+              style={[
+                styles.controlsItem,
+                isMuted && styles.controlsItemActive,
+                isMuteLoading && styles.disabledButton,
+              ]}
+              disabled={isMuteLoading || isBlockLoading}
+              onPress={handleMutePress}
+            >
+              <Text
+                style={[
+                  styles.controlsItemText,
+                  isMuted && styles.controlsItemActiveText,
+                ]}
+              >
+                {isMuteLoading ? "Working..." : isMuted ? "Unmute" : "Mute"}
               </Text>
-            </View>
-          ) : blips.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyTitle}>No blips yet.</Text>
+            </Pressable>
 
-              <Text style={styles.emptyText}>
-                This quiet corner is still waiting for its first blip.
+            <Pressable
+              style={[
+                styles.controlsItem,
+                isBlocked && styles.controlsItemActive,
+                isBlockLoading && styles.disabledButton,
+              ]}
+              disabled={isMuteLoading || isBlockLoading}
+              onPress={handleBlockPress}
+            >
+              <Text
+                style={[
+                  styles.controlsItemText,
+                  isBlocked && styles.controlsItemActiveText,
+                ]}
+              >
+                {isBlockLoading
+                  ? "Working..."
+                  : isBlocked
+                    ? "Unblock"
+                    : "Block"}
               </Text>
-            </View>
-          ) : (
-            <View style={styles.blipList}>
-              {blips.map((blip) => (
-                <LinearGradient
-                  key={blip.id}
-                  colors={profileGradient.colors}
-                  start={profileGradient.start}
-                  end={profileGradient.end}
-                  style={styles.blipCard}
-                >
-                  <Text style={styles.blipDate}>
-                    {formatDate(blip.created_at)}
-                  </Text>
-                  <Text style={styles.blipContent}>{blip.content}</Text>
-                </LinearGradient>
-              ))}
-            </View>
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+            </Pressable>
+
+            {safetyMessage ? (
+              <Text style={styles.controlsMessage}>{safetyMessage}</Text>
+            ) : null}
+
+            <Pressable
+              style={styles.controlsClose}
+              onPress={() => setIsControlsOpen(false)}
+            >
+              <Text style={styles.controlsCloseText}>Close</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -560,6 +852,28 @@ const styles = StyleSheet.create({
     padding: 24,
     overflow: "hidden",
   },
+  profileMenuButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    position: "absolute",
+    right: 16,
+    top: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.28)",
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderRadius: 999,
+    height: 36,
+    width: 44,
+    zIndex: 10,
+  },
+  profileMenuButtonText: {
+  color: "#ffffff",
+  fontSize: 18,
+  fontWeight: "500",
+  letterSpacing: 1,
+  lineHeight: 18,
+  textAlign: "center",
+},
   avatarCircle: {
     alignItems: "center",
     justifyContent: "center",
@@ -596,6 +910,20 @@ const styles = StyleSheet.create({
     fontWeight: "300",
     marginTop: 14,
     textDecorationLine: "underline",
+  },
+  blockNotice: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.24)",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 999,
+    marginTop: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  blockNoticeText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "300",
   },
   followArea: {
     alignItems: "center",
@@ -645,6 +973,14 @@ const styles = StyleSheet.create({
     fontWeight: "300",
     marginTop: 14,
   },
+  inlineSafetyMessage: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 13,
+    fontWeight: "300",
+    lineHeight: 19,
+    marginTop: 12,
+    textAlign: "center",
+  },
   disabledButton: {
     opacity: 0.55,
   },
@@ -693,5 +1029,82 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     marginTop: 10,
     textAlign: "center",
+  },
+  controlsOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(18, 5, 28, 0.55)",
+    padding: 18,
+  },
+  controlsCard: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "#642B73",
+    borderRadius: 30,
+    padding: 18,
+  },
+  controlsKicker: {
+    color: "rgba(255,255,255,0.62)",
+    fontSize: 12,
+    fontWeight: "300",
+    letterSpacing: 1.5,
+    marginBottom: 6,
+    textTransform: "uppercase",
+  },
+  controlsTitle: {
+    color: "#ffffff",
+    fontSize: 28,
+    fontWeight: "500",
+    marginBottom: 10,
+  },
+  controlsText: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 14,
+    fontWeight: "300",
+    lineHeight: 21,
+    marginBottom: 14,
+  },
+  controlsItem: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: 20,
+    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  controlsItemActive: {
+    backgroundColor: "#ffffff",
+  },
+  controlsItemText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "300",
+  },
+  controlsItemActiveText: {
+    color: "#642B73",
+    fontWeight: "400",
+  },
+  controlsMessage: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 13,
+    fontWeight: "300",
+    lineHeight: 19,
+    marginBottom: 12,
+    marginTop: 2,
+  },
+  controlsClose: {
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+    backgroundColor: "#ffffff",
+    borderRadius: 999,
+    marginTop: 4,
+    paddingVertical: 12,
+  },
+  controlsCloseText: {
+    color: "#642B73",
+    fontSize: 15,
+    fontWeight: "400",
   },
 });
