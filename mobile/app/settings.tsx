@@ -8,6 +8,8 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
@@ -359,28 +361,44 @@ export default function MobileSettingsScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingScreen}>
-        <ActivityIndicator color="#ffffff" />
-        <Text style={styles.loadingText}>Opening settings...</Text>
-      </View>
+      <LinearGradient
+        colors={["#C6426E", "#642B73"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientScreen}
+      >
+        <View style={styles.loadingScreen}>
+          <ActivityIndicator color="#ffffff" />
+          <Text style={styles.loadingText}>Opening settings...</Text>
+        </View>
+      </LinearGradient>
     );
   }
 
   if (!session) {
     return (
-      <View style={styles.loadingScreen}>
-        <Text style={styles.emptyTitle}>You’re signed out.</Text>
-        <Text style={styles.emptyText}>
-          Sign in again to manage your Quietli settings.
-        </Text>
+      <LinearGradient
+        colors={["#C6426E", "#642B73"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientScreen}
+      >
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+          <View style={styles.loadingScreen}>
+            <Text style={styles.emptyTitle}>You’re signed out.</Text>
+            <Text style={styles.emptyText}>
+              Sign in again to manage your Quietli settings.
+            </Text>
 
-        <Pressable
-          style={styles.primaryButton}
-          onPress={() => router.replace("/" as never)}
-        >
-          <Text style={styles.primaryButtonText}>Back to sign in</Text>
-        </Pressable>
-      </View>
+            <Pressable
+              style={styles.primaryButton}
+              onPress={() => router.replace("/" as never)}
+            >
+              <Text style={styles.primaryButtonText}>Back to sign in</Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
     );
   }
 
@@ -392,339 +410,362 @@ export default function MobileSettingsScreen() {
     themeOptions.find((theme) => theme.id === gradientTheme) ?? themeOptions[0];
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.topRow}>
-        <Pressable style={styles.backButtonSmall} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Back</Text>
-        </Pressable>
-
-        <Text style={styles.topTitle}>Settings</Text>
-      </View>
-
-      <View style={styles.heroCard}>
-        <Text style={styles.kicker}>Quietli</Text>
-        <Text style={styles.title}>Account settings.</Text>
-
-        <Text style={styles.bodyText}>
-          Edit your bio, choose how visible your quiet corner should be, add one
-          link, and pick a profile theme.
-        </Text>
-      </View>
-
-      {message ? (
-        <View style={styles.messageCard}>
-          <Text style={styles.messageText}>{message}</Text>
-        </View>
-      ) : null}
-
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Signed in as</Text>
-        <Text style={styles.cardTitle}>{session.user.email}</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Edit bio</Text>
-        <Text style={styles.cardTitle}>
-          @{profile?.username || "quietli_user"}
-        </Text>
-
-        <TextInput
-          value={bio}
-          onChangeText={(value) => {
-            setBio(value.slice(0, BIO_MAX_LENGTH));
-            setMessage("");
-          }}
-          multiline
-          maxLength={BIO_MAX_LENGTH}
-          placeholder="Write a tiny profile bio..."
-          placeholderTextColor="rgba(100, 43, 115, 0.45)"
-          style={styles.bioInput}
-        />
-
-        <View style={styles.bioFooter}>
-          <Text style={styles.characterCount}>
-            {charactersLeft} characters left
-          </Text>
-
-          <Pressable
-            style={[styles.saveButton, isSavingBio && styles.disabledButton]}
-            disabled={isSavingBio}
-            onPress={saveBio}
-          >
-            <Text style={styles.saveButtonText}>
-              {isSavingBio ? "Saving..." : "Save bio"}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Profile visibility</Text>
-        <Text style={styles.cardTitle}>
-          {isPrivate ? "Private profile" : "Public profile"}
-        </Text>
-
-        <Text style={styles.cardText}>
-          {isPrivate
-            ? "Your blips are hidden from public view. New followers will need to send a request before they can see your private profile."
-            : "Your profile and public blips can appear in World View and Discover."}
-        </Text>
-
-        <View style={styles.visibilityToggle}>
-          <Pressable
-            style={[
-              styles.visibilityOption,
-              !isPrivate && styles.visibilityOptionActive,
-            ]}
-            disabled={isSavingVisibility}
-            onPress={() => saveVisibility("public")}
-          >
-            <Text
-              style={[
-                styles.visibilityOptionText,
-                !isPrivate && styles.visibilityOptionTextActive,
-              ]}
+    <LinearGradient
+      colors={["#C6426E", "#642B73"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradientScreen}
+    >
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+          <View style={styles.topRow}>
+            <Pressable
+              style={styles.backButtonSmall}
+              onPress={() => router.back()}
             >
-              Public
+              <Text style={styles.backButtonText}>Back</Text>
+            </Pressable>
+
+            <Text style={styles.topTitle}>Settings</Text>
+          </View>
+
+          <View style={styles.heroCard}>
+            <Text style={styles.kicker}>Quietli</Text>
+            <Text style={styles.title}>Account settings.</Text>
+
+            <Text style={styles.bodyText}>
+              Edit your bio, choose how visible your quiet corner should be, add
+              one link, and pick a profile theme.
             </Text>
-          </Pressable>
+          </View>
 
-          <Pressable
-            style={[
-              styles.visibilityOption,
-              isPrivate && styles.visibilityOptionActive,
-            ]}
-            disabled={isSavingVisibility}
-            onPress={() => saveVisibility("private")}
-          >
-            <Text
-              style={[
-                styles.visibilityOptionText,
-                isPrivate && styles.visibilityOptionTextActive,
-              ]}
-            >
-              Private
+          {message ? (
+            <View style={styles.messageCard}>
+              <Text style={styles.messageText}>{message}</Text>
+            </View>
+          ) : null}
+
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Signed in as</Text>
+            <Text style={styles.cardTitle}>{session.user.email}</Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Edit bio</Text>
+            <Text style={styles.cardTitle}>
+              @{profile?.username || "quietli_user"}
             </Text>
-          </Pressable>
-        </View>
 
-        {isSavingVisibility ? (
-          <Text style={styles.savingText}>Saving visibility...</Text>
-        ) : null}
-      </View>
+            <TextInput
+              value={bio}
+              onChangeText={(value) => {
+                setBio(value.slice(0, BIO_MAX_LENGTH));
+                setMessage("");
+              }}
+              multiline
+              maxLength={BIO_MAX_LENGTH}
+              placeholder="Write a tiny profile bio..."
+              placeholderTextColor="rgba(100, 43, 115, 0.45)"
+              style={styles.bioInput}
+            />
 
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Profile link</Text>
-        <Text style={styles.cardTitle}>Add one link</Text>
+            <View style={styles.bioFooter}>
+              <Text style={styles.characterCount}>
+                {charactersLeft} characters left
+              </Text>
 
-        <Text style={styles.cardText}>
-          Free profiles can have one link. Later, Quietli Plus can expand this
-          into multiple links and richer profile extras.
-        </Text>
-
-        <Text style={styles.inputLabel}>Link label</Text>
-        <TextInput
-          value={profileLinkLabel}
-          onChangeText={(value) => {
-            setProfileLinkLabel(value.slice(0, LINK_LABEL_MAX_LENGTH));
-            setMessage("");
-          }}
-          maxLength={LINK_LABEL_MAX_LENGTH}
-          placeholder="My website"
-          placeholderTextColor="rgba(100, 43, 115, 0.45)"
-          style={styles.textInput}
-        />
-
-        <Text style={styles.inputHint}>
-          {linkLabelCharactersLeft} label characters left
-        </Text>
-
-        <Text style={styles.inputLabel}>Link URL</Text>
-        <TextInput
-          value={profileLinkUrl}
-          onChangeText={(value) => {
-            setProfileLinkUrl(value.slice(0, LINK_URL_MAX_LENGTH));
-            setMessage("");
-          }}
-          maxLength={LINK_URL_MAX_LENGTH}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-          placeholder="https://example.com"
-          placeholderTextColor="rgba(100, 43, 115, 0.45)"
-          style={styles.textInput}
-        />
-
-        <Text style={styles.inputHint}>
-          {linkUrlCharactersLeft} URL characters left
-        </Text>
-
-        <View style={styles.linkButtonRow}>
-          <Pressable
-            style={[
-              styles.saveButton,
-              isSavingProfileLink && styles.disabledButton,
-            ]}
-            disabled={isSavingProfileLink}
-            onPress={saveProfileLink}
-          >
-            <Text style={styles.saveButtonText}>
-              {isSavingProfileLink ? "Saving..." : "Save link"}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.clearButton}
-            disabled={isSavingProfileLink}
-            onPress={clearProfileLinkFields}
-          >
-            <Text style={styles.clearButtonText}>Clear</Text>
-          </Pressable>
-        </View>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Theme</Text>
-        <Text style={styles.cardTitle}>{activeTheme.label}</Text>
-
-        <Text style={styles.cardText}>
-          Pick the color mood for your profile and blip cards.
-        </Text>
-
-        <View
-          style={[
-            styles.themePreview,
-            {
-              backgroundColor: activeTheme.color,
-            },
-          ]}
-        >
-          <Text style={styles.themePreviewText}>
-            @{profile?.username || "quietli_user"}
-          </Text>
-
-          <Text style={styles.themePreviewSubtext}>
-            This is how your quiet corner feels.
-          </Text>
-        </View>
-
-        <View style={styles.themeGrid}>
-          {themeOptions.map((theme) => {
-            const isActive = theme.id === gradientTheme;
-
-            return (
               <Pressable
-                key={theme.id}
-                style={[
-                  styles.themeOption,
-                  isActive && styles.themeOptionActive,
-                ]}
-                disabled={isSavingTheme}
-                onPress={() => saveTheme(theme.id)}
+                style={[styles.saveButton, isSavingBio && styles.disabledButton]}
+                disabled={isSavingBio}
+                onPress={saveBio}
               >
-                <View
-                  style={[
-                    styles.themeSwatch,
-                    {
-                      backgroundColor: theme.color,
-                    },
-                  ]}
-                />
-
-                <View style={styles.themeTextWrap}>
-                  <Text
-                    style={[
-                      styles.themeLabel,
-                      isActive && styles.themeLabelActive,
-                    ]}
-                  >
-                    {theme.label}
-                  </Text>
-
-                  <Text style={styles.themeDescription}>
-                    {theme.description}
-                  </Text>
-                </View>
-
-                {isActive ? <Text style={styles.themeActiveText}>✓</Text> : null}
+                <Text style={styles.saveButtonText}>
+                  {isSavingBio ? "Saving..." : "Save bio"}
+                </Text>
               </Pressable>
-            );
-          })}
-        </View>
+            </View>
+          </View>
 
-        {isSavingTheme ? (
-          <Text style={styles.savingText}>Saving theme...</Text>
-        ) : null}
-      </View>
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Profile visibility</Text>
+            <Text style={styles.cardTitle}>
+              {isPrivate ? "Private profile" : "Public profile"}
+            </Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Profile</Text>
+            <Text style={styles.cardText}>
+              {isPrivate
+                ? "Your blips are hidden from public view. New followers will need to send a request before they can see your private profile."
+                : "Your profile and public blips can appear in World View and Discover."}
+            </Text>
 
-        <Text style={styles.cardText}>
-          Visibility: {profileVisibility || "public"}
-        </Text>
+            <View style={styles.visibilityToggle}>
+              <Pressable
+                style={[
+                  styles.visibilityOption,
+                  !isPrivate && styles.visibilityOptionActive,
+                ]}
+                disabled={isSavingVisibility}
+                onPress={() => saveVisibility("public")}
+              >
+                <Text
+                  style={[
+                    styles.visibilityOptionText,
+                    !isPrivate && styles.visibilityOptionTextActive,
+                  ]}
+                >
+                  Public
+                </Text>
+              </Pressable>
 
-        <Text style={styles.cardText}>
-          Plan: {profile?.plan === "plus" ? "Plus" : "Free"}
-        </Text>
+              <Pressable
+                style={[
+                  styles.visibilityOption,
+                  isPrivate && styles.visibilityOptionActive,
+                ]}
+                disabled={isSavingVisibility}
+                onPress={() => saveVisibility("private")}
+              >
+                <Text
+                  style={[
+                    styles.visibilityOptionText,
+                    isPrivate && styles.visibilityOptionTextActive,
+                  ]}
+                >
+                  Private
+                </Text>
+              </Pressable>
+            </View>
 
-        {profile?.profile_link_label && profile?.profile_link_url ? (
-          <Text style={styles.cardText}>Link: {profile.profile_link_label}</Text>
-        ) : (
-          <Text style={styles.cardText}>Link: none</Text>
-        )}
+            {isSavingVisibility ? (
+              <Text style={styles.savingText}>Saving visibility...</Text>
+            ) : null}
+          </View>
 
-        <Text style={styles.cardText}>Theme: {activeTheme.label}</Text>
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Profile link</Text>
+            <Text style={styles.cardTitle}>Add one link</Text>
 
-        {profile?.username ? (
-          <Pressable
-            style={styles.secondaryButton}
-            onPress={() =>
-              router.push({
-                pathname: "/profile/[username]",
-                params: { username: profile.username },
-              } as never)
-            }
-          >
-            <Text style={styles.secondaryButtonText}>View my profile</Text>
-          </Pressable>
-        ) : null}
-      </View>
+            <Text style={styles.cardText}>
+              Free profiles can have one link. Later, Quietli Plus can expand
+              this into multiple links and richer profile extras.
+            </Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Coming next</Text>
-        <Text style={styles.cardText}>
-          Next we can add avatar upload, account/data tools, or a follow request
-          badge in the mobile menu.
-        </Text>
-      </View>
+            <Text style={styles.inputLabel}>Link label</Text>
+            <TextInput
+              value={profileLinkLabel}
+              onChangeText={(value) => {
+                setProfileLinkLabel(value.slice(0, LINK_LABEL_MAX_LENGTH));
+                setMessage("");
+              }}
+              maxLength={LINK_LABEL_MAX_LENGTH}
+              placeholder="My website"
+              placeholderTextColor="rgba(100, 43, 115, 0.45)"
+              style={styles.textInput}
+            />
 
-      <View style={styles.dangerCard}>
-        <Text style={styles.cardLabel}>Session</Text>
-        <Text style={styles.cardTitle}>Sign out of Quietli</Text>
+            <Text style={styles.inputHint}>
+              {linkLabelCharactersLeft} label characters left
+            </Text>
 
-        <Pressable style={styles.signOutButton} onPress={signOut}>
-          <Text style={styles.signOutButtonText}>Sign out</Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+            <Text style={styles.inputLabel}>Link URL</Text>
+            <TextInput
+              value={profileLinkUrl}
+              onChangeText={(value) => {
+                setProfileLinkUrl(value.slice(0, LINK_URL_MAX_LENGTH));
+                setMessage("");
+              }}
+              maxLength={LINK_URL_MAX_LENGTH}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              placeholder="https://example.com"
+              placeholderTextColor="rgba(100, 43, 115, 0.45)"
+              style={styles.textInput}
+            />
+
+            <Text style={styles.inputHint}>
+              {linkUrlCharactersLeft} URL characters left
+            </Text>
+
+            <View style={styles.linkButtonRow}>
+              <Pressable
+                style={[
+                  styles.saveButton,
+                  isSavingProfileLink && styles.disabledButton,
+                ]}
+                disabled={isSavingProfileLink}
+                onPress={saveProfileLink}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isSavingProfileLink ? "Saving..." : "Save link"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.clearButton}
+                disabled={isSavingProfileLink}
+                onPress={clearProfileLinkFields}
+              >
+                <Text style={styles.clearButtonText}>Clear</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Theme</Text>
+            <Text style={styles.cardTitle}>{activeTheme.label}</Text>
+
+            <Text style={styles.cardText}>
+              Pick the color mood for your profile and blip cards.
+            </Text>
+
+            <View
+              style={[
+                styles.themePreview,
+                {
+                  backgroundColor: activeTheme.color,
+                },
+              ]}
+            >
+              <Text style={styles.themePreviewText}>
+                @{profile?.username || "quietli_user"}
+              </Text>
+
+              <Text style={styles.themePreviewSubtext}>
+                This is how your quiet corner feels.
+              </Text>
+            </View>
+
+            <View style={styles.themeGrid}>
+              {themeOptions.map((theme) => {
+                const isActive = theme.id === gradientTheme;
+
+                return (
+                  <Pressable
+                    key={theme.id}
+                    style={[
+                      styles.themeOption,
+                      isActive && styles.themeOptionActive,
+                    ]}
+                    disabled={isSavingTheme}
+                    onPress={() => saveTheme(theme.id)}
+                  >
+                    <View
+                      style={[
+                        styles.themeSwatch,
+                        {
+                          backgroundColor: theme.color,
+                        },
+                      ]}
+                    />
+
+                    <View style={styles.themeTextWrap}>
+                      <Text
+                        style={[
+                          styles.themeLabel,
+                          isActive && styles.themeLabelActive,
+                        ]}
+                      >
+                        {theme.label}
+                      </Text>
+
+                      <Text style={styles.themeDescription}>
+                        {theme.description}
+                      </Text>
+                    </View>
+
+                    {isActive ? (
+                      <Text style={styles.themeActiveText}>✓</Text>
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {isSavingTheme ? (
+              <Text style={styles.savingText}>Saving theme...</Text>
+            ) : null}
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Profile</Text>
+
+            <Text style={styles.cardText}>
+              Visibility: {profileVisibility || "public"}
+            </Text>
+
+            <Text style={styles.cardText}>
+              Plan: {profile?.plan === "plus" ? "Plus" : "Free"}
+            </Text>
+
+            {profile?.profile_link_label && profile?.profile_link_url ? (
+              <Text style={styles.cardText}>
+                Link: {profile.profile_link_label}
+              </Text>
+            ) : (
+              <Text style={styles.cardText}>Link: none</Text>
+            )}
+
+            <Text style={styles.cardText}>Theme: {activeTheme.label}</Text>
+
+            {profile?.username ? (
+              <Pressable
+                style={styles.secondaryButton}
+                onPress={() =>
+                  router.push({
+                    pathname: "/profile/[username]",
+                    params: { username: profile.username },
+                  } as never)
+                }
+              >
+                <Text style={styles.secondaryButtonText}>View my profile</Text>
+              </Pressable>
+            ) : null}
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Coming next</Text>
+            <Text style={styles.cardText}>
+              Next we can add avatar upload, account/data tools, or a follow
+              request badge in the mobile menu.
+            </Text>
+          </View>
+
+          <View style={styles.dangerCard}>
+            <Text style={styles.cardLabel}>Session</Text>
+            <Text style={styles.cardTitle}>Sign out of Quietli</Text>
+
+            <Pressable style={styles.signOutButton} onPress={signOut}>
+              <Text style={styles.signOutButtonText}>Sign out</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientScreen: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
   screen: {
     flex: 1,
-    backgroundColor: "#642B73",
+    backgroundColor: "transparent",
   },
   content: {
-    padding: 18,
+    paddingHorizontal: 18,
+    paddingTop: 0,
     paddingBottom: 40,
   },
   loadingScreen: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#642B73",
+    backgroundColor: "transparent",
     padding: 24,
   },
   loadingText: {
@@ -738,7 +779,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 18,
-    marginTop: 12,
+    marginTop: 0,
   },
   topTitle: {
     color: "#ffffff",
