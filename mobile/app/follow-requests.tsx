@@ -9,6 +9,8 @@ import {
   Text,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
@@ -236,145 +238,177 @@ export default function MobileFollowRequestsScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingScreen}>
-        <ActivityIndicator color="#ffffff" />
-        <Text style={styles.loadingText}>Loading follow requests...</Text>
-      </View>
+      <LinearGradient
+        colors={["#C6426E", "#642B73"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientScreen}
+      >
+        <View style={styles.loadingScreen}>
+          <ActivityIndicator color="#ffffff" />
+          <Text style={styles.loadingText}>Loading follow requests...</Text>
+        </View>
+      </LinearGradient>
     );
   }
 
   if (!session) {
     return (
-      <View style={styles.loadingScreen}>
-        <Text style={styles.emptyTitle}>You’re signed out.</Text>
-        <Text style={styles.emptyText}>
-          Sign in again to review follow requests.
-        </Text>
+      <LinearGradient
+        colors={["#C6426E", "#642B73"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientScreen}
+      >
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+          <View style={styles.loadingScreen}>
+            <Text style={styles.emptyTitle}>You’re signed out.</Text>
+            <Text style={styles.emptyText}>
+              Sign in again to review follow requests.
+            </Text>
 
-        <Pressable
-          style={styles.primaryButton}
-          onPress={() => router.replace("/" as never)}
-        >
-          <Text style={styles.primaryButtonText}>Back to sign in</Text>
-        </Pressable>
-      </View>
+            <Pressable
+              style={styles.primaryButton}
+              onPress={() => router.replace("/" as never)}
+            >
+              <Text style={styles.primaryButtonText}>Back to sign in</Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={refreshRequests} />
-      }
+    <LinearGradient
+      colors={["#C6426E", "#642B73"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradientScreen}
     >
-      <View style={styles.topRow}>
-        <Pressable style={styles.backButtonSmall} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Back</Text>
-        </Pressable>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <ScrollView
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={refreshRequests} />
+          }
+        >
+          <View style={styles.topRow}>
+            <Pressable style={styles.backButtonSmall} onPress={() => router.back()}>
+              <Text style={styles.backButtonText}>Back</Text>
+            </Pressable>
 
-        <Text style={styles.topTitle}>Requests</Text>
-      </View>
+            <Text style={styles.topTitle}>Requests</Text>
+          </View>
 
-      <View style={styles.heroCard}>
-        <Text style={styles.kicker}>Quietli</Text>
-        <Text style={styles.title}>Follow requests.</Text>
+          <View style={styles.heroCard}>
+            <Text style={styles.kicker}>Quietli</Text>
+            <Text style={styles.title}>Follow requests.</Text>
 
-        <Text style={styles.bodyText}>
-          Approve or deny requests from people who want to follow your private
-          profile.
-        </Text>
-      </View>
+            <Text style={styles.bodyText}>
+              Approve or deny requests from people who want to follow your private
+              profile.
+            </Text>
+          </View>
 
-      {message ? (
-        <View style={styles.messageCard}>
-          <Text style={styles.messageText}>{message}</Text>
-        </View>
-      ) : null}
-
-      {requests.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>No follow requests.</Text>
-          <Text style={styles.emptyText}>
-            Nothing waiting right now. Quiet little inbox, very on-brand.
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.requestList}>
-          {requests.map((request) => (
-            <View key={request.id} style={styles.requestCard}>
-              <Pressable
-                style={styles.requestProfile}
-                onPress={() => openProfile(request.username)}
-              >
-                <AvatarBubble
-                  username={request.username}
-                  avatarUrl={request.avatarUrl}
-                />
-
-                <View style={styles.requestTextWrap}>
-                  <Text style={styles.username}>@{request.username}</Text>
-
-                  <Text numberOfLines={2} style={styles.bio}>
-                    {request.bio || "A quiet little corner of Quietli."}
-                  </Text>
-
-                  <Text style={styles.dateText}>
-                    Requested {formatDate(request.createdAt)}
-                  </Text>
-                </View>
-              </Pressable>
-
-              <View style={styles.actionRow}>
-                <Pressable
-                  style={[
-                    styles.approveButton,
-                    workingRequestId === request.id && styles.disabledButton,
-                  ]}
-                  disabled={workingRequestId === request.id}
-                  onPress={() => approveRequest(request.id)}
-                >
-                  <Text style={styles.approveButtonText}>
-                    {workingRequestId === request.id ? "Working..." : "Approve"}
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  style={[
-                    styles.denyButton,
-                    workingRequestId === request.id && styles.disabledButton,
-                  ]}
-                  disabled={workingRequestId === request.id}
-                  onPress={() => denyRequest(request.id)}
-                >
-                  <Text style={styles.denyButtonText}>
-                    {workingRequestId === request.id ? "Working..." : "Deny"}
-                  </Text>
-                </Pressable>
-              </View>
+          {message ? (
+            <View style={styles.messageCard}>
+              <Text style={styles.messageText}>{message}</Text>
             </View>
-          ))}
-        </View>
-      )}
-    </ScrollView>
+          ) : null}
+
+          {requests.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyTitle}>No follow requests.</Text>
+              <Text style={styles.emptyText}>
+                Nothing waiting right now. Quiet little inbox, very on-brand.
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.requestList}>
+              {requests.map((request) => (
+                <View key={request.id} style={styles.requestCard}>
+                  <Pressable
+                    style={styles.requestProfile}
+                    onPress={() => openProfile(request.username)}
+                  >
+                    <AvatarBubble
+                      username={request.username}
+                      avatarUrl={request.avatarUrl}
+                    />
+
+                    <View style={styles.requestTextWrap}>
+                      <Text style={styles.username}>@{request.username}</Text>
+
+                      <Text numberOfLines={2} style={styles.bio}>
+                        {request.bio || "A quiet little corner of Quietli."}
+                      </Text>
+
+                      <Text style={styles.dateText}>
+                        Requested {formatDate(request.createdAt)}
+                      </Text>
+                    </View>
+                  </Pressable>
+
+                  <View style={styles.actionRow}>
+                    <Pressable
+                      style={[
+                        styles.approveButton,
+                        workingRequestId === request.id && styles.disabledButton,
+                      ]}
+                      disabled={workingRequestId === request.id}
+                      onPress={() => approveRequest(request.id)}
+                    >
+                      <Text style={styles.approveButtonText}>
+                        {workingRequestId === request.id ? "Working..." : "Approve"}
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={[
+                        styles.denyButton,
+                        workingRequestId === request.id && styles.disabledButton,
+                      ]}
+                      disabled={workingRequestId === request.id}
+                      onPress={() => denyRequest(request.id)}
+                    >
+                      <Text style={styles.denyButtonText}>
+                        {workingRequestId === request.id ? "Working..." : "Deny"}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientScreen: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
   screen: {
     flex: 1,
-    backgroundColor: "#642B73",
+    backgroundColor: "transparent",
   },
   content: {
-    padding: 18,
+    paddingHorizontal: 18,
+    paddingTop: 0,
     paddingBottom: 40,
   },
   loadingScreen: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#642B73",
+    backgroundColor: "transparent",
     padding: 24,
   },
   loadingText: {
@@ -388,7 +422,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 18,
-    marginTop: 12,
+    marginTop: 0,
   },
   topTitle: {
     color: "#ffffff",
