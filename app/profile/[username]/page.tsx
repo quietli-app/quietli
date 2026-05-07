@@ -204,6 +204,60 @@ export default async function ProfilePage({
   const hasProfileLink =
     Boolean(profile.profile_link_label) && Boolean(profile.profile_link_url);
 
+  const ownerPreviewButton = isPublicPreview ? (
+    <Link
+      href={`/profile/${profile.username}`}
+      className="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white/20 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30 sm:w-auto"
+    >
+      Back to editor
+    </Link>
+  ) : (
+    <Link
+      href={`/profile/${profile.username}?preview=public`}
+      className="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white/20 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30 sm:w-auto"
+    >
+      Public preview
+    </Link>
+  );
+
+  const visitorControls = user ? (
+    <div className="flex flex-wrap gap-2 sm:justify-end">
+      {!blockedByProfileOwner ? (
+        <>
+          {!initiallyBlocked ? (
+            <>
+              <FollowButton
+                currentUserId={user.id}
+                profileUserId={profile.id}
+                initialStatus={followStatus}
+                profileVisibility={profile.profile_visibility}
+              />
+
+              <MuteButton
+                currentUserId={user.id}
+                profileUserId={profile.id}
+                initiallyMuted={initiallyMuted}
+              />
+            </>
+          ) : null}
+
+          <BlockButton
+            currentUserId={user.id}
+            profileUserId={profile.id}
+            initiallyBlocked={initiallyBlocked}
+          />
+        </>
+      ) : null}
+    </div>
+  ) : (
+    <Link
+      href="/login"
+      className="inline-flex w-full items-center justify-center rounded-full border border-white/30 bg-white/20 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30 sm:w-auto"
+    >
+      Sign in to follow
+    </Link>
+  );
+
   return (
     <>
       <ProfileNavTheme
@@ -212,7 +266,7 @@ export default async function ProfilePage({
       />
 
       <main
-        className="profile-theme-page min-h-screen px-4 py-10"
+        className="profile-theme-page min-h-screen px-4 pb-12 pt-6 sm:py-10"
         style={
           {
             "--profile-gradient": profileBackground,
@@ -220,138 +274,92 @@ export default async function ProfilePage({
         }
       >
         <div className="mx-auto max-w-5xl">
-          <section className="relative mb-8 rounded-[2rem] border border-white/20 bg-white/20 p-6 backdrop-blur-xl">
-            <div className="absolute right-5 top-5">
-              {isOwnProfile ? (
-                isPublicPreview ? (
-                  <Link
-                    href={`/profile/${profile.username}`}
-                    className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30"
-                  >
-                    Back to editor
-                  </Link>
-                ) : (
-                  <Link
-                    href={`/profile/${profile.username}?preview=public`}
-                    className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30"
-                  >
-                    Public preview
-                  </Link>
-                )
-              ) : user ? (
-                <div className="flex flex-wrap justify-end gap-2">
-                  {!blockedByProfileOwner ? (
-                    <>
-                      {!initiallyBlocked ? (
-                        <>
-                          <FollowButton
-                            currentUserId={user.id}
-                            profileUserId={profile.id}
-                            initialStatus={followStatus}
-                            profileVisibility={profile.profile_visibility}
-                          />
-
-                          <MuteButton
-                            currentUserId={user.id}
-                            profileUserId={profile.id}
-                            initiallyMuted={initiallyMuted}
-                          />
-                        </>
-                      ) : null}
-
-                      <BlockButton
-                        currentUserId={user.id}
-                        profileUserId={profile.id}
-                        initiallyBlocked={initiallyBlocked}
-                      />
-                    </>
-                  ) : null}
-                </div>
-              ) : (
-                <Link
-                  href="/login"
-                  className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30"
-                >
-                  Sign in to follow
-                </Link>
-              )}
-            </div>
-
-            <div className="flex items-center gap-5 pr-40">
-              <div
-                style={{
-                  padding: "3px",
-                  borderRadius: "9999px",
-                  background: accentColor,
-                  display: "inline-block",
-                  flexShrink: 0,
-                }}
-              >
+          <section className="mb-8 rounded-[2rem] border border-white/20 bg-white/20 p-5 text-white backdrop-blur-xl sm:p-6">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex min-w-0 flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
                 <div
                   style={{
-                    width: "96px",
-                    height: "96px",
+                    padding: "3px",
                     borderRadius: "9999px",
-                    overflow: "hidden",
-                    background: "rgba(255,255,255,0.3)",
+                    background: accentColor,
+                    display: "inline-block",
+                    flexShrink: 0,
                   }}
                 >
-                  {profile.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt={profile.username}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "2rem",
-                        fontWeight: "600",
-                        color: accentColor,
-                      }}
+                  <div
+                    style={{
+                      width: "96px",
+                      height: "96px",
+                      borderRadius: "9999px",
+                      overflow: "hidden",
+                      background: "rgba(255,255,255,0.3)",
+                    }}
+                  >
+                    {profile.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt={profile.username}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "2rem",
+                          fontWeight: "600",
+                          color: accentColor,
+                        }}
+                      >
+                        {profile.username.slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-col items-center gap-2 sm:items-start">
+                    <h1 className="max-w-full break-words text-3xl font-semibold leading-tight tracking-[-0.04em] text-white sm:text-4xl lg:text-5xl">
+                      @{profile.username}
+                    </h1>
+
+                    {profile.profile_visibility === "private" ? (
+                      <span className="rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-white/75">
+                        Private
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <p className="mt-2 max-w-2xl break-words text-base font-light leading-7 text-white/84">
+                    {profile.bio || "A stream of passing thoughts."}
+                  </p>
+
+                  {hasProfileLink && !hasBlockBetweenUsers ? (
+                    <a
+                      href={profile.profile_link_url ?? "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-4 inline-flex max-w-full items-center justify-center rounded-full border border-white/30 bg-white/20 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/30"
                     >
-                      {profile.username.slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
+                      <span className="truncate">
+                        {profile.profile_link_label}
+                      </span>
+                    </a>
+                  ) : null}
                 </div>
               </div>
 
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-4xl font-bold text-white">
-                    @{profile.username}
-                  </h1>
-
-                  {profile.profile_visibility === "private" ? (
-                    <span className="rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-white/75">
-                      Private
-                    </span>
-                  ) : null}
-                </div>
-
-                <p className="text-slate-100">
-                  {profile.bio || "A stream of passing thoughts."}
-                </p>
-
-                {hasProfileLink && !hasBlockBetweenUsers ? (
-                  <a
-                    href={profile.profile_link_url ?? "#"}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-4 inline-flex rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-bold text-white backdrop-blur-md transition hover:bg-white/30"
-                  >
-                    {profile.profile_link_label}
-                  </a>
-                ) : null}
+              <div className="w-full shrink-0 lg:w-auto">
+                {isOwnProfile
+                  ? ownerPreviewButton
+                  : visitorControls}
               </div>
             </div>
 
