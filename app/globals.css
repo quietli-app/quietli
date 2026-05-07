@@ -202,58 +202,6 @@ body {
   }
 }
 
-/* iPhone / mobile browser safe-area polish */
-:root {
-  --mobile-safe-top: env(safe-area-inset-top, 0px);
-  --mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-html,
-body {
-  min-height: 100%;
-  overflow-x: hidden;
-  background:
-    linear-gradient(
-      135deg,
-      #c6426e 0%,
-      #8f4db8 45%,
-      #642b73 100%
-    );
-}
-
-body {
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-@media (max-width: 768px) {
-  html,
-  body {
-    min-height: 100dvh;
-    background:
-      linear-gradient(
-        135deg,
-        #c6426e 0%,
-        #8f4db8 45%,
-        #642b73 100%
-      );
-  }
-
-  main {
-    padding-top: 0;
-    padding-bottom: max(28px, env(safe-area-inset-bottom));
-  }
-
-  header,
-  nav {
-    padding-top: 0;
-  }
-
-  * {
-    max-width: 100%;
-  }
-}
-
 /* iPhone / mobile browser safe-area gradient fix */
 :root {
   --mobile-safe-top: env(safe-area-inset-top, 0px);
@@ -267,9 +215,9 @@ body {
   background:
     linear-gradient(
       135deg,
-      #c6426e 0%,
-      #8f4db8 45%,
-      #642b73 100%
+      #b6a9ef 0%,
+      #9f95e6 48%,
+      #887ed8 100%
     );
 }
 
@@ -285,9 +233,9 @@ body {
     background:
       linear-gradient(
         135deg,
-        #c6426e 0%,
-        #8f4db8 45%,
-        #642b73 100%
+        #b6a9ef 0%,
+        #9f95e6 48%,
+        #887ed8 100%
       );
   }
 

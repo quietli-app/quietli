@@ -32,11 +32,12 @@ export default function RootLayout({
       <body
         className="min-h-screen antialiased"
         style={{
-          background: "linear-gradient(to bottom right, #c6426e, #8f4db8, #642b73)",
+          background:
+            "linear-gradient(to bottom right, #b6a9ef, #9f95e6, #887ed8)",
           color: "#f8fafc",
         }}
       >
-        <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_40%)]" />
+        <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_40%)]" />
         <TopNav />
         {children}
       </body>
