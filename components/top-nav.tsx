@@ -95,7 +95,7 @@ export async function TopNav() {
             Menu
           </summary>
 
-          <div className="absolute right-0 top-14 z-50 w-[calc(100vw-40px)] max-w-[360px] overflow-hidden rounded-[30px] border border-white/20 bg-[#8f87dc] p-3 text-white shadow-2xl shadow-black/20">
+          <div className="absolute right-0 top-14 z-50 w-[calc(100vw-40px)] !max-w-[360px] overflow-hidden rounded-[30px] border border-white/20 bg-[#8f87dc] p-3 text-white shadow-2xl shadow-black/20">
             <div className="mb-2 rounded-[24px] bg-white/10 px-5 py-4">
               <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/60">
                 Quietli
