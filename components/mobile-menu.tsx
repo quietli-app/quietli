@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 type MobileMenuProps = {
@@ -14,10 +14,16 @@ export function MobileMenu({
   isSignedIn,
   signOutAction,
 }: MobileMenuProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   function closeMenu() {
+    setIsOpen(false);
+  }
+
+  function goTo(path: string) {
+    router.push(path);
     setIsOpen(false);
   }
 
@@ -47,11 +53,11 @@ export function MobileMenu({
     };
   }, [isOpen]);
 
-  const mobilePrimaryLinkClass =
-    "block rounded-2xl px-5 py-4 text-base font-semibold text-white transition hover:bg-white/20";
+  const mobilePrimaryButtonClass =
+    "block w-full rounded-2xl px-5 py-4 text-left text-base font-semibold text-white transition hover:bg-white/20";
 
-  const mobileSecondaryLinkClass =
-    "block rounded-2xl px-5 py-4 text-base font-medium text-white/80 transition hover:bg-white/20 hover:text-white";
+  const mobileSecondaryButtonClass =
+    "block w-full rounded-2xl px-5 py-4 text-left text-base font-medium text-white/80 transition hover:bg-white/20 hover:text-white";
 
   return (
     <div ref={menuRef} className="relative md:hidden">
@@ -77,67 +83,67 @@ export function MobileMenu({
             </p>
           </div>
 
-          <Link
-            href="/discover"
-            onClick={closeMenu}
-            className={mobilePrimaryLinkClass}
+          <button
+            type="button"
+            onClick={() => goTo("/discover")}
+            className={mobilePrimaryButtonClass}
           >
             Discover
-          </Link>
+          </button>
 
-          <Link
-            href="/plus"
-            onClick={closeMenu}
-            className={mobilePrimaryLinkClass}
+          <button
+            type="button"
+            onClick={() => goTo("/plus")}
+            className={mobilePrimaryButtonClass}
           >
             Plus
-          </Link>
+          </button>
 
           {username ? (
-            <Link
-              href={`/profile/${username}`}
-              onClick={closeMenu}
-              className={mobilePrimaryLinkClass}
+            <button
+              type="button"
+              onClick={() => goTo(`/profile/${username}`)}
+              className={mobilePrimaryButtonClass}
             >
               My page
-            </Link>
+            </button>
           ) : null}
 
           {isSignedIn ? (
-            <Link
-              href="/settings"
-              onClick={closeMenu}
-              className={mobilePrimaryLinkClass}
+            <button
+              type="button"
+              onClick={() => goTo("/settings")}
+              className={mobilePrimaryButtonClass}
             >
               Settings
-            </Link>
+            </button>
           ) : null}
 
           <div className="my-2 h-px bg-white/20" />
 
-          <Link
-            href="/privacy"
-            onClick={closeMenu}
-            className={mobileSecondaryLinkClass}
+          <button
+            type="button"
+            onClick={() => goTo("/privacy")}
+            className={mobileSecondaryButtonClass}
           >
             Privacy
-          </Link>
+          </button>
 
-          <Link
-            href="/terms"
-            onClick={closeMenu}
-            className={mobileSecondaryLinkClass}
+          <button
+            type="button"
+            onClick={() => goTo("/terms")}
+            className={mobileSecondaryButtonClass}
           >
             Terms
-          </Link>
+          </button>
 
-          <Link
-            href="/contact"
-            onClick={closeMenu}
-            className={mobileSecondaryLinkClass}
+          <button
+            type="button"
+            onClick={() => goTo("/contact")}
+            className={mobileSecondaryButtonClass}
           >
             Contact
-          </Link>
+          </button>
 
           <div className="my-2 h-px bg-white/20" />
 
@@ -152,13 +158,13 @@ export function MobileMenu({
               </button>
             </form>
           ) : (
-            <Link
-              href="/login"
-              onClick={closeMenu}
-              className="block rounded-2xl bg-white px-5 py-4 text-center text-base font-semibold text-[#642b73] transition hover:bg-white/90"
+            <button
+              type="button"
+              onClick={() => goTo("/login")}
+              className="block w-full rounded-2xl bg-white px-5 py-4 text-center text-base font-semibold text-[#642b73] transition hover:bg-white/90"
             >
               Sign in
-            </Link>
+            </button>
           )}
         </div>
       ) : null}
