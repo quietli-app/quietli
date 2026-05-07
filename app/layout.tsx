@@ -3,8 +3,18 @@ import "./globals.css";
 import { TopNav } from "@/components/top-nav";
 
 export const metadata: Metadata = {
-  title: "Brain Blip",
-  description: "A non-social social feed for passing thoughts.",
+  title: "Quietli",
+  description:
+    "A quiet place to put a thought into the world without turning it into a performance.",
+  applicationName: "Quietli",
+  appleWebApp: {
+    capable: true,
+    title: "Quietli",
+    statusBarStyle: "black-translucent",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export const viewport: Viewport = {
@@ -22,7 +32,7 @@ export default function RootLayout({
       <body
         className="min-h-screen antialiased"
         style={{
-          background: "linear-gradient(to bottom right, #c6426e, #642b73)",
+          background: "linear-gradient(to bottom right, #c6426e, #8f4db8, #642b73)",
           color: "#f8fafc",
         }}
       >
