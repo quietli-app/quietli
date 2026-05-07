@@ -60,7 +60,6 @@ export default async function HomePage() {
       <section className="relative z-10 mx-auto flex min-h-[80vh] max-w-5xl flex-col items-center justify-center text-center">
         <RevealOnScroll>
           <p className="mb-5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-xl">
-            Quietli
           </p>
         </RevealOnScroll>
 
