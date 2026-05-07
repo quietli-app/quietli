@@ -23,8 +23,8 @@ export function MobileMenu({
   }
 
   function goTo(path: string) {
-    router.push(path);
     setIsOpen(false);
+    router.push(path);
   }
 
   useEffect(() => {
@@ -54,10 +54,12 @@ export function MobileMenu({
   }, [isOpen]);
 
   const mobilePrimaryButtonClass =
-    "block w-full rounded-2xl px-5 py-4 text-left text-base font-semibold text-white transition hover:bg-white/20";
+    "flex w-full items-center justify-between rounded-2xl px-5 py-4 text-left text-base font-semibold text-white transition hover:bg-white/20 active:bg-white/25";
 
   const mobileSecondaryButtonClass =
-    "block w-full rounded-2xl px-5 py-4 text-left text-base font-medium text-white/80 transition hover:bg-white/20 hover:text-white";
+    "flex w-full items-center justify-between rounded-2xl px-5 py-4 text-left text-base font-medium text-white/80 transition hover:bg-white/20 hover:text-white active:bg-white/25";
+
+  const mobileArrowClass = "ml-4 text-xl font-light text-white/45";
 
   return (
     <div ref={menuRef} className="relative md:hidden">
@@ -88,7 +90,8 @@ export function MobileMenu({
             onClick={() => goTo("/discover")}
             className={mobilePrimaryButtonClass}
           >
-            Discover
+            <span>Discover</span>
+            <span className={mobileArrowClass}>›</span>
           </button>
 
           <button
@@ -96,7 +99,8 @@ export function MobileMenu({
             onClick={() => goTo("/plus")}
             className={mobilePrimaryButtonClass}
           >
-            Plus
+            <span>Plus</span>
+            <span className={mobileArrowClass}>›</span>
           </button>
 
           {username ? (
@@ -105,7 +109,8 @@ export function MobileMenu({
               onClick={() => goTo(`/profile/${username}`)}
               className={mobilePrimaryButtonClass}
             >
-              My page
+              <span>My page</span>
+              <span className={mobileArrowClass}>›</span>
             </button>
           ) : null}
 
@@ -115,7 +120,8 @@ export function MobileMenu({
               onClick={() => goTo("/settings")}
               className={mobilePrimaryButtonClass}
             >
-              Settings
+              <span>Settings</span>
+              <span className={mobileArrowClass}>›</span>
             </button>
           ) : null}
 
@@ -126,7 +132,8 @@ export function MobileMenu({
             onClick={() => goTo("/privacy")}
             className={mobileSecondaryButtonClass}
           >
-            Privacy
+            <span>Privacy</span>
+            <span className={mobileArrowClass}>›</span>
           </button>
 
           <button
@@ -134,7 +141,8 @@ export function MobileMenu({
             onClick={() => goTo("/terms")}
             className={mobileSecondaryButtonClass}
           >
-            Terms
+            <span>Terms</span>
+            <span className={mobileArrowClass}>›</span>
           </button>
 
           <button
@@ -142,17 +150,18 @@ export function MobileMenu({
             onClick={() => goTo("/contact")}
             className={mobileSecondaryButtonClass}
           >
-            Contact
+            <span>Contact</span>
+            <span className={mobileArrowClass}>›</span>
           </button>
 
           <div className="my-2 h-px bg-white/20" />
 
           {isSignedIn ? (
-            <form action={signOutAction}>
+            <form action={signOutAction} className="w-full">
               <button
                 type="submit"
                 onClick={closeMenu}
-                className="block w-full rounded-2xl bg-white px-5 py-4 text-left text-base font-semibold text-[#642b73] transition hover:bg-white/90"
+                className="flex w-full items-center justify-center rounded-2xl bg-white px-5 py-4 text-center text-base font-semibold text-[#642b73] transition hover:bg-white/90 active:bg-white/80"
               >
                 Sign out
               </button>
@@ -161,7 +170,7 @@ export function MobileMenu({
             <button
               type="button"
               onClick={() => goTo("/login")}
-              className="block w-full rounded-2xl bg-white px-5 py-4 text-center text-base font-semibold text-[#642b73] transition hover:bg-white/90"
+              className="flex w-full items-center justify-center rounded-2xl bg-white px-5 py-4 text-center text-base font-semibold text-[#642b73] transition hover:bg-white/90 active:bg-white/80"
             >
               Sign in
             </button>
