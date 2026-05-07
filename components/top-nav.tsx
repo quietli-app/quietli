@@ -104,7 +104,7 @@ export async function TopNav() {
             Menu
           </summary>
 
-          <div className="absolute right-0 mt-3 w-52 overflow-hidden rounded-[1.5rem] border border-white/25 bg-white/20 p-2 text-white shadow-2xl backdrop-blur-xl">
+          <div className="absolute right-0 top-14 z-50 w-[min(86vw,320px)] rounded-[28px] border border-white/20 bg-[#8f87dc] p-3 shadow-2xl shadow-black/20">
             <Link
               href="/discover"
               className="block rounded-[1rem] px-4 py-3 text-sm font-medium transition hover:bg-white/20"
