@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -19,6 +20,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 import { getMobileGradientTheme } from "../../lib/mobile-gradient-themes";
+
 
 type AuthMode = "signin" | "signup";
 type FeedView = "following" | "world";
@@ -141,12 +143,17 @@ function AvatarBubble({
 
 function GradientBlipCard({
   blip,
+  currentUserId,
   onOpenProfile,
+  onDeleteBlip,
 }: {
   blip: FeedItem;
+  currentUserId: string | null;
   onOpenProfile: (username: string) => void;
+  onDeleteBlip: (blip: FeedItem) => void;
 }) {
   const gradient = getMobileGradientTheme(blip.gradientTheme);
+  const isOwnBlip = currentUserId === blip.userId;
 
   return (
     <LinearGradient
@@ -155,17 +162,28 @@ function GradientBlipCard({
       end={gradient.end}
       style={styles.blipCard}
     >
-      <Pressable
-        style={styles.blipHeader}
-        onPress={() => onOpenProfile(blip.username)}
-      >
-        <AvatarBubble username={blip.username} avatarUrl={blip.avatarUrl} />
+      <View style={styles.blipTopRow}>
+        <Pressable
+          style={styles.blipHeader}
+          onPress={() => onOpenProfile(blip.username)}
+        >
+          <AvatarBubble username={blip.username} avatarUrl={blip.avatarUrl} />
 
-        <View style={styles.blipHeaderText}>
-          <Text style={styles.blipUsername}>@{blip.username}</Text>
-          <Text style={styles.blipDate}>{formatDate(blip.createdAt)}</Text>
-        </View>
-      </Pressable>
+          <View style={styles.blipHeaderText}>
+            <Text style={styles.blipUsername}>@{blip.username}</Text>
+            <Text style={styles.blipDate}>{formatDate(blip.createdAt)}</Text>
+          </View>
+        </Pressable>
+
+        {isOwnBlip ? (
+          <Pressable
+            style={styles.blipOptionsButton}
+            onPress={() => onDeleteBlip(blip)}
+          >
+            <Text style={styles.blipOptionsButtonText}>•••</Text>
+          </Pressable>
+        ) : null}
+      </View>
 
       <Text style={styles.blipContent}>{blip.content}</Text>
     </LinearGradient>
@@ -192,6 +210,7 @@ export default function QuietliMobileHome() {
 
   const [composerText, setComposerText] = useState("");
   const [composerMessage, setComposerMessage] = useState("");
+  const [feedStatusMessage, setFeedStatusMessage] = useState("");
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [authMessage, setAuthMessage] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -220,6 +239,15 @@ export default function QuietliMobileHome() {
   function openSettings() {
     setIsMenuOpen(false);
     router.push("/settings" as never);
+  }
+
+  function openSafety() {
+    setIsMenuOpen(false);
+    router.push("/safety" as never);
+  }
+
+  function showFeedStatus(message: string) {
+    setFeedStatusMessage(message);
   }
 
   async function loadFollowRequestCount(userId: string) {
@@ -401,6 +429,16 @@ export default function QuietliMobileHome() {
   }, [cooldownSeconds]);
 
   useEffect(() => {
+    if (!feedStatusMessage) return;
+
+    const timer = setTimeout(() => {
+      setFeedStatusMessage("");
+    }, 4200);
+
+    return () => clearTimeout(timer);
+  }, [feedStatusMessage]);
+
+  useEffect(() => {
     async function loadSession() {
       const {
         data: { session: currentSession },
@@ -470,11 +508,13 @@ export default function QuietliMobileHome() {
 
   async function changeFeedView(view: FeedView) {
     setFeedView(view);
+    setFeedStatusMessage("");
     await loadFeed(view, profile);
   }
 
   async function refreshFeed() {
     setIsRefreshing(true);
+    setFeedStatusMessage("");
     await loadFeed(feedView, profile);
 
     if (session?.user?.id) {
@@ -563,6 +603,7 @@ export default function QuietliMobileHome() {
     setFollowRequestCount(0);
     setAuthMessage("");
     setComposerMessage("");
+    setFeedStatusMessage("");
   }
 
   async function handleAuthSubmit() {
@@ -578,16 +619,56 @@ export default function QuietliMobileHome() {
     }
   }
 
+  async function deleteBlip(blip: FeedItem) {
+    if (!session?.user?.id || blip.userId !== session.user.id) {
+      return;
+    }
+
+    Alert.alert(
+      "Delete blip?",
+      "This will permanently remove this blip from Quietli.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const { error } = await supabase
+              .from("blips")
+              .delete()
+              .eq("id", blip.id)
+              .eq("user_id", session.user.id);
+
+            if (error) {
+              console.error("Error deleting mobile blip:", error);
+              showFeedStatus("Something went wrong deleting that blip.");
+              return;
+            }
+
+            setFeed((current) => current.filter((item) => item.id !== blip.id));
+            setComposerMessage("");
+            showFeedStatus("Blip deleted.");
+          },
+        },
+      ]
+    );
+  }
+
   async function postBlip() {
     const trimmedContent = composerText.trim();
 
     if (!trimmedContent) {
       setComposerMessage("Write a tiny thought first.");
+      setFeedStatusMessage("");
       return;
     }
 
     if (trimmedContent.length > MAX_LENGTH) {
       setComposerMessage(`Keep your blip under ${MAX_LENGTH} characters.`);
+      setFeedStatusMessage("");
       return;
     }
 
@@ -597,11 +678,13 @@ export default function QuietliMobileHome() {
           cooldownSeconds === 1 ? "" : "s"
         } before posting another blip.`
       );
+      setFeedStatusMessage("");
       return;
     }
 
     setIsSubmitting(true);
     setComposerMessage("");
+    setFeedStatusMessage("");
 
     const { data, error } = await supabase.rpc("post_blip", {
       p_content: trimmedContent,
@@ -611,7 +694,7 @@ export default function QuietliMobileHome() {
 
     if (error) {
       console.error("Error posting mobile blip:", error);
-      setComposerMessage("Something went wrong posting your blip.");
+      showFeedStatus("Something went wrong posting your blip.");
       return;
     }
 
@@ -639,21 +722,19 @@ export default function QuietliMobileHome() {
       }
 
       if (result?.reason === "possible_bot_spam") {
-        setComposerMessage(
+        showFeedStatus(
           "Quietli noticed a suspiciously fast burst of posting attempts. Posting has been paused for review."
         );
         return;
       }
 
-      setComposerMessage(
-        result?.message ?? "Something went wrong posting your blip."
-      );
+      showFeedStatus(result?.message ?? "Something went wrong posting your blip.");
       return;
     }
 
     setComposerText("");
     setCooldownSeconds(COOLDOWN_SECONDS);
-    setComposerMessage(result.message ?? "Blip posted.");
+    showFeedStatus(result.message ?? "Blip posted.");
     await loadFeed(feedView, profile);
   }
 
@@ -734,12 +815,25 @@ export default function QuietliMobileHome() {
                   </Pressable>
                 </View>
 
+                {feedStatusMessage ? (
+                  <View style={styles.feedStatusCard}>
+                    <Text style={styles.feedStatusText}>
+                      {feedStatusMessage}
+                    </Text>
+
+                    <Pressable onPress={() => setFeedStatusMessage("")}>
+                      <Text style={styles.feedStatusClose}>Close</Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+
                 <View style={styles.composerCard}>
                   <TextInput
                     value={composerText}
                     onChangeText={(value) => {
                       setComposerText(value);
                       setComposerMessage("");
+                      setFeedStatusMessage("");
                     }}
                     multiline
                     maxLength={MAX_LENGTH}
@@ -873,7 +967,9 @@ export default function QuietliMobileHome() {
                       <GradientBlipCard
                         key={blip.id}
                         blip={blip}
+                        currentUserId={session?.user?.id ?? null}
                         onOpenProfile={openProfile}
+                        onDeleteBlip={deleteBlip}
                       />
                     ))}
                   </View>
@@ -965,6 +1061,19 @@ export default function QuietliMobileHome() {
                     <Text style={styles.menuItemText}>Settings</Text>
                     <Text style={styles.menuItemSubtext}>
                       Edit profile, theme, and account
+                    </Text>
+                  </View>
+
+                  <Text style={styles.menuChevron}>›</Text>
+                </View>
+              </Pressable>
+
+              <Pressable style={styles.menuItem} onPress={openSafety}>
+                <View style={styles.menuItemRow}>
+                  <View>
+                    <Text style={styles.menuItemText}>Safety</Text>
+                    <Text style={styles.menuItemSubtext}>
+                      Manage muted and blocked profiles
                     </Text>
                   </View>
 
@@ -1327,6 +1436,31 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: "center",
   },
+  feedStatusCard: {
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderRadius: 24,
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+    marginBottom: 14,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+  },
+  feedStatusText: {
+    color: "rgba(255,255,255,0.86)",
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "300",
+    lineHeight: 20,
+  },
+  feedStatusClose: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "500",
+  },
   composerCard: {
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.22)",
@@ -1425,11 +1559,36 @@ const styles = StyleSheet.create({
     padding: 18,
     overflow: "hidden",
   },
+  blipTopRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+    marginBottom: 16,
+  },
   blipHeader: {
     alignItems: "center",
+    flex: 1,
     flexDirection: "row",
     gap: 12,
-    marginBottom: 16,
+  },
+  blipOptionsButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.28)",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: 999,
+    height: 32,
+    width: 40,
+  },
+  blipOptionsButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "500",
+    letterSpacing: 1,
+    lineHeight: 16,
+    textAlign: "center",
   },
   avatarCircle: {
     alignItems: "center",

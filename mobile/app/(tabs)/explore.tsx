@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -7,32 +7,24 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
+import { getMobileGradientTheme } from "../../lib/mobile-gradient-themes";
 
 type DiscoverProfile = {
   id: string;
-  username: string;
+  username: string | null;
   bio: string | null;
   avatar_url: string | null;
   gradient_theme: string | null;
   profile_visibility: string | null;
 };
-
-const themeBackgrounds: Record<string, string> = {
-  blush: "#C6426E",
-  violet: "#642B73",
-  sky: "#76D7EA",
-  mint: "#7DD8C5",
-  sunset: "#F59E8B",
-};
-
-function getProfileColor(theme?: string | null) {
-  if (!theme) return themeBackgrounds.blush;
-  return themeBackgrounds[theme] ?? themeBackgrounds.blush;
-}
 
 function AvatarBubble({
   username,
@@ -77,13 +69,28 @@ function AvatarBubble({
   );
 }
 
-export default function MobileDiscoverScreen() {
+export default function MobileExploreScreen() {
   const router = useRouter();
 
+  const [session, setSession] = useState<Session | null>(null);
   const [profiles, setProfiles] = useState<DiscoverProfile[]>([]);
+  const [searchText, setSearchText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [message, setMessage] = useState("");
+
+  const filteredProfiles = useMemo(() => {
+    const cleanSearch = searchText.trim().toLowerCase();
+
+    if (!cleanSearch) return profiles;
+
+    return profiles.filter((profile) => {
+      const username = profile.username?.toLowerCase() ?? "";
+      const bio = profile.bio?.toLowerCase() ?? "";
+
+      return username.includes(cleanSearch) || bio.includes(cleanSearch);
+    });
+  }, [profiles, searchText]);
 
   function openProfile(username: string) {
     router.push({
@@ -95,15 +102,18 @@ export default function MobileDiscoverScreen() {
   async function loadProfiles() {
     setMessage("");
 
+    const {
+      data: { session: currentSession },
+    } = await supabase.auth.getSession();
+
+    setSession(currentSession);
+
     const { data, error } = await supabase
       .from("profiles")
-      .select(
-        "id, username, bio, avatar_url, gradient_theme, profile_visibility"
-      )
+      .select("id, username, bio, avatar_url, gradient_theme, profile_visibility")
       .eq("profile_visibility", "public")
-      .not("username", "is", null)
       .order("username", { ascending: true })
-      .limit(80);
+      .limit(75);
 
     if (error) {
       console.error("Error loading mobile discover profiles:", error);
@@ -113,7 +123,13 @@ export default function MobileDiscoverScreen() {
       return;
     }
 
-    setProfiles((data ?? []) as DiscoverProfile[]);
+    const currentUserId = currentSession?.user?.id ?? null;
+
+    const visibleProfiles = ((data ?? []) as DiscoverProfile[]).filter(
+      (profile) => profile.id !== currentUserId && profile.username
+    );
+
+    setProfiles(visibleProfiles);
     setIsLoading(false);
   }
 
@@ -129,98 +145,182 @@ export default function MobileDiscoverScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingScreen}>
-        <ActivityIndicator color="#ffffff" />
-        <Text style={styles.loadingText}>Opening Discover...</Text>
-      </View>
+      <LinearGradient
+        colors={["#C6426E", "#642B73"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientScreen}
+      >
+        <View style={styles.loadingScreen}>
+          <ActivityIndicator color="#ffffff" />
+          <Text style={styles.loadingText}>Opening Discover...</Text>
+        </View>
+      </LinearGradient>
+    );
+  }
+
+  if (!session) {
+    return (
+      <LinearGradient
+        colors={["#C6426E", "#642B73"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientScreen}
+      >
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+          <View style={styles.loadingScreen}>
+            <Text style={styles.emptyTitle}>You’re signed out.</Text>
+            <Text style={styles.emptyText}>
+              Sign in again to discover quiet corners.
+            </Text>
+
+            <Pressable
+              style={styles.primaryButton}
+              onPress={() => router.replace("/" as never)}
+            >
+              <Text style={styles.primaryButtonText}>Back to sign in</Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={refreshProfiles} />
-      }
+    <LinearGradient
+      colors={["#C6426E", "#642B73"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradientScreen}
     >
-      <View style={styles.topRow}>
-        <Pressable style={styles.backButtonSmall} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Back</Text>
-        </Pressable>
-
-        <Text style={styles.topTitle}>Discover</Text>
-      </View>
-
-      <View style={styles.heroCard}>
-        <Text style={styles.kicker}>Quietli</Text>
-        <Text style={styles.title}>Find quiet corners.</Text>
-
-        <Text style={styles.bodyText}>
-          Browse public profiles and discover small thoughts drifting through
-          Quietli.
-        </Text>
-      </View>
-
-      {message ? (
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>Could not load Discover.</Text>
-          <Text style={styles.emptyText}>{message}</Text>
-        </View>
-      ) : profiles.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>No public profiles yet.</Text>
-          <Text style={styles.emptyText}>
-            Quiet out here. Public profiles will appear here as people join.
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.profileList}>
-          {profiles.map((profile) => (
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <ScrollView
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={refreshProfiles}
+            />
+          }
+        >
+          <View style={styles.topRow}>
             <Pressable
-              key={profile.id}
-              style={[
-                styles.profileCard,
-                { backgroundColor: getProfileColor(profile.gradient_theme) },
-              ]}
-              onPress={() => openProfile(profile.username)}
+              style={styles.backButtonSmall}
+              onPress={() => router.back()}
             >
-              <AvatarBubble
-                username={profile.username}
-                avatarUrl={profile.avatar_url}
-              />
-
-              <View style={styles.profileTextWrap}>
-                <Text style={styles.username}>@{profile.username}</Text>
-
-                <Text numberOfLines={2} style={styles.bio}>
-                  {profile.bio || "A quiet little corner of Quietli."}
-                </Text>
-              </View>
-
-              <Text style={styles.visitText}>View</Text>
+              <Text style={styles.backButtonText}>Back</Text>
             </Pressable>
-          ))}
-        </View>
-      )}
-    </ScrollView>
+
+            <Text style={styles.topTitle}>Discover</Text>
+          </View>
+
+          <View style={styles.heroCard}>
+            <Text style={styles.kicker}>Quietli</Text>
+            <Text style={styles.title}>Discover.</Text>
+
+            <Text style={styles.bodyText}>
+              Browse public quiet corners and find people whose blips feel like
+              your kind of weird.
+            </Text>
+          </View>
+
+          <View style={styles.searchCard}>
+            <Text style={styles.cardLabel}>Search</Text>
+
+            <TextInput
+              value={searchText}
+              onChangeText={setSearchText}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="Search usernames or bios..."
+              placeholderTextColor="rgba(100, 43, 115, 0.45)"
+              style={styles.searchInput}
+            />
+          </View>
+
+          {message ? (
+            <View style={styles.messageCard}>
+              <Text style={styles.messageText}>{message}</Text>
+            </View>
+          ) : null}
+
+          {filteredProfiles.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyTitle}>No profiles found.</Text>
+
+              <Text style={styles.emptyText}>
+                Quiet little Discover today. Try clearing the search or checking
+                back later.
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.profileList}>
+              {filteredProfiles.map((profile) => {
+                const username = profile.username ?? "quietli_user";
+                const profileGradient = getMobileGradientTheme(
+                  profile.gradient_theme
+                );
+
+                return (
+                  <Pressable
+                    key={profile.id}
+                    onPress={() => openProfile(username)}
+                  >
+                    <LinearGradient
+                      colors={profileGradient.colors}
+                      start={profileGradient.start}
+                      end={profileGradient.end}
+                      style={styles.profileCard}
+                    >
+                      <AvatarBubble
+                        username={username}
+                        avatarUrl={profile.avatar_url}
+                      />
+
+                      <View style={styles.profileTextWrap}>
+                        <Text style={styles.username}>@{username}</Text>
+
+                        <Text numberOfLines={2} style={styles.bio}>
+                          {profile.bio || "A quiet little corner of Quietli."}
+                        </Text>
+                      </View>
+
+                      <Text style={styles.profileArrow}>›</Text>
+                    </LinearGradient>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientScreen: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
   screen: {
     flex: 1,
-    backgroundColor: "#642B73",
+    backgroundColor: "transparent",
   },
   content: {
-    padding: 18,
+    paddingHorizontal: 18,
+    paddingTop: 0,
     paddingBottom: 40,
   },
   loadingScreen: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#642B73",
+    backgroundColor: "transparent",
     padding: 24,
   },
   loadingText: {
@@ -234,7 +334,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 18,
-    marginTop: 12,
+    marginTop: 0,
   },
   topTitle: {
     color: "#ffffff",
@@ -284,6 +384,47 @@ const styles = StyleSheet.create({
     lineHeight: 25,
     marginTop: 12,
   },
+  searchCard: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 30,
+    marginBottom: 14,
+    padding: 18,
+  },
+  cardLabel: {
+    color: "rgba(255,255,255,0.62)",
+    fontSize: 12,
+    fontWeight: "300",
+    letterSpacing: 1.5,
+    marginBottom: 8,
+    textTransform: "uppercase",
+  },
+  searchInput: {
+    backgroundColor: "rgba(255,255,255,0.72)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+    borderRadius: 18,
+    color: "#642B73",
+    fontSize: 16,
+    fontWeight: "300",
+    paddingHorizontal: 15,
+    paddingVertical: 13,
+  },
+  messageCard: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: 24,
+    marginBottom: 14,
+    padding: 14,
+  },
+  messageText: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 14,
+    fontWeight: "300",
+    lineHeight: 21,
+  },
   profileList: {
     gap: 14,
   },
@@ -295,6 +436,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     padding: 16,
+    overflow: "hidden",
   },
   avatarCircle: {
     alignItems: "center",
@@ -327,10 +469,10 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     marginTop: 3,
   },
-  visitText: {
-    color: "rgba(255,255,255,0.8)",
-    fontSize: 13,
-    fontWeight: "300",
+  profileArrow: {
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 32,
+    fontWeight: "200",
   },
   emptyCard: {
     alignItems: "center",
@@ -353,5 +495,18 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     marginTop: 10,
     textAlign: "center",
+  },
+  primaryButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderRadius: 999,
+    marginTop: 22,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  primaryButtonText: {
+    color: "#642B73",
+    fontSize: 14,
+    fontWeight: "400",
   },
 });

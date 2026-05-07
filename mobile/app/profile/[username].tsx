@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
+  Linking,
   Modal,
   Pressable,
   RefreshControl,
@@ -16,6 +18,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 import { getMobileGradientTheme } from "../../lib/mobile-gradient-themes";
+import { useSwipeBack } from "../../lib/use-swipe-back";
 
 type Profile = {
   id: string;
@@ -90,6 +93,8 @@ function AvatarBubble({
 
 export default function MobileProfileScreen() {
   const router = useRouter();
+  const swipeBackPanHandlers = useSwipeBack(router);
+
   const params = useLocalSearchParams<{ username?: string }>();
 
   const username = Array.isArray(params.username)
@@ -266,6 +271,41 @@ export default function MobileProfileScreen() {
     setIsRefreshing(true);
     await loadProfile();
     setIsRefreshing(false);
+  }
+
+  async function deleteBlip(blip: Blip) {
+    if (!session?.user?.id || !profile || !isOwnProfile) return;
+
+    Alert.alert(
+      "Delete blip?",
+      "This will permanently remove this blip from Quietli.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const { error } = await supabase
+              .from("blips")
+              .delete()
+              .eq("id", blip.id)
+              .eq("user_id", session.user.id);
+
+            if (error) {
+              console.error("Error deleting profile blip:", error);
+              setMessage("Something went wrong deleting that blip.");
+              return;
+            }
+
+            setBlips((current) => current.filter((item) => item.id !== blip.id));
+            setMessage("Blip deleted.");
+          },
+        },
+      ]
+    );
   }
 
   async function followOrRequest() {
@@ -482,6 +522,28 @@ export default function MobileProfileScreen() {
     }
   }
 
+  function openSettings() {
+    router.push("/settings" as never);
+  }
+
+  async function openProfileLink() {
+    if (!profile?.profile_link_url) return;
+
+    try {
+      const canOpen = await Linking.canOpenURL(profile.profile_link_url);
+
+      if (!canOpen) {
+        setMessage("Quietli could not open this link.");
+        return;
+      }
+
+      await Linking.openURL(profile.profile_link_url);
+    } catch (error) {
+      console.error("Error opening mobile profile link:", error);
+      setMessage("Something went wrong opening this link.");
+    }
+  }
+
   useEffect(() => {
     loadProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -546,6 +608,7 @@ export default function MobileProfileScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientScreen}
+        {...swipeBackPanHandlers}
       >
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
           <ScrollView
@@ -597,9 +660,14 @@ export default function MobileProfileScreen() {
               ) : null}
 
               {profile.profile_link_label && profile.profile_link_url ? (
-                <Text style={styles.profileLink}>
-                  {profile.profile_link_label}
-                </Text>
+                <Pressable
+                  onPress={openProfileLink}
+                  style={styles.profileLinkButton}
+                >
+                  <Text style={styles.profileLink}>
+                    {profile.profile_link_label}
+                  </Text>
+                </Pressable>
               ) : null}
 
               {isBlocked ? (
@@ -652,15 +720,32 @@ export default function MobileProfileScreen() {
               ) : null}
 
               {isOwnProfile ? (
-                <Text style={styles.ownProfileHint}>
-                  This is your profile.
-                </Text>
+                <View style={styles.ownProfileActions}>
+                  <Text style={styles.ownProfileHint}>
+                    This is your profile.
+                  </Text>
+
+                  <Pressable
+                    style={styles.editProfileButton}
+                    onPress={openSettings}
+                  >
+                    <Text style={styles.editProfileButtonText}>
+                      Edit profile
+                    </Text>
+                  </Pressable>
+                </View>
               ) : null}
 
               {safetyMessage ? (
                 <Text style={styles.inlineSafetyMessage}>{safetyMessage}</Text>
               ) : null}
             </LinearGradient>
+
+            {message ? (
+              <View style={styles.messageCard}>
+                <Text style={styles.messageText}>{message}</Text>
+              </View>
+            ) : null}
 
             {!canViewBlips ? (
               <View style={styles.emptyCard}>
@@ -694,9 +779,23 @@ export default function MobileProfileScreen() {
                     end={profileGradient.end}
                     style={styles.blipCard}
                   >
-                    <Text style={styles.blipDate}>
-                      {formatDate(blip.created_at)}
-                    </Text>
+                    <View style={styles.blipTopRow}>
+                      <View style={styles.blipDateWrap}>
+                        <Text style={styles.blipDate}>
+                          {formatDate(blip.created_at)}
+                        </Text>
+                      </View>
+
+                      {isOwnProfile ? (
+                        <Pressable
+                          style={styles.blipOptionsButton}
+                          onPress={() => deleteBlip(blip)}
+                        >
+                          <Text style={styles.blipOptionsButtonText}>•••</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+
                     <Text style={styles.blipContent}>{blip.content}</Text>
                   </LinearGradient>
                 ))}
@@ -719,7 +818,7 @@ export default function MobileProfileScreen() {
               Mute hides this user from your feed. Block removes social
               connections and keeps this profile out of your Quietli space.
               {"\n\n"}
-They will not be notified if you mute or block them.
+              They will not be notified if you mute or block them.
             </Text>
 
             <Pressable
@@ -867,13 +966,13 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   profileMenuButtonText: {
-  color: "#ffffff",
-  fontSize: 18,
-  fontWeight: "500",
-  letterSpacing: 1,
-  lineHeight: 18,
-  textAlign: "center",
-},
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "500",
+    letterSpacing: 1,
+    lineHeight: 18,
+    textAlign: "center",
+  },
   avatarCircle: {
     alignItems: "center",
     justifyContent: "center",
@@ -904,11 +1003,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: "center",
   },
+  profileLinkButton: {
+    marginTop: 14,
+  },
   profileLink: {
     color: "rgba(255,255,255,0.88)",
     fontSize: 14,
     fontWeight: "300",
-    marginTop: 14,
     textDecorationLine: "underline",
   },
   blockNotice: {
@@ -967,11 +1068,28 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlign: "center",
   },
+  ownProfileActions: {
+    alignItems: "center",
+    marginTop: 16,
+    width: "100%",
+  },
   ownProfileHint: {
     color: "rgba(255,255,255,0.72)",
     fontSize: 13,
     fontWeight: "300",
-    marginTop: 14,
+  },
+  editProfileButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderRadius: 999,
+    marginTop: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 11,
+  },
+  editProfileButtonText: {
+    color: "#642B73",
+    fontSize: 14,
+    fontWeight: "400",
   },
   inlineSafetyMessage: {
     color: "rgba(255,255,255,0.8)",
@@ -979,6 +1097,21 @@ const styles = StyleSheet.create({
     fontWeight: "300",
     lineHeight: 19,
     marginTop: 12,
+    textAlign: "center",
+  },
+  messageCard: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: 24,
+    marginTop: 18,
+    padding: 14,
+  },
+  messageText: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 14,
+    fontWeight: "300",
+    lineHeight: 21,
     textAlign: "center",
   },
   disabledButton: {
@@ -994,6 +1127,34 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     padding: 18,
     overflow: "hidden",
+  },
+  blipTopRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+    marginBottom: 10,
+  },
+  blipDateWrap: {
+    flex: 1,
+  },
+  blipOptionsButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.28)",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: 999,
+    height: 32,
+    width: 40,
+  },
+  blipOptionsButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "500",
+    letterSpacing: 1,
+    lineHeight: 16,
+    textAlign: "center",
   },
   blipDate: {
     color: "rgba(255,255,255,0.66)",

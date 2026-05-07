@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { useSwipeBack } from "../lib/use-swipe-back";
 
 type RawFollowRequest = {
   id: string;
@@ -96,6 +97,7 @@ function AvatarBubble({
 
 export default function MobileFollowRequestsScreen() {
   const router = useRouter();
+  const swipeBackPanHandlers = useSwipeBack(router);
 
   const [session, setSession] = useState<Session | null>(null);
   const [requests, setRequests] = useState<RequestItem[]>([]);
@@ -285,6 +287,7 @@ export default function MobileFollowRequestsScreen() {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradientScreen}
+      {...swipeBackPanHandlers}
     >
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <ScrollView
@@ -361,7 +364,9 @@ export default function MobileFollowRequestsScreen() {
                       onPress={() => approveRequest(request.id)}
                     >
                       <Text style={styles.approveButtonText}>
-                        {workingRequestId === request.id ? "Working..." : "Approve"}
+                        {workingRequestId === request.id
+                          ? "Working..."
+                          : "Approve"}
                       </Text>
                     </Pressable>
 

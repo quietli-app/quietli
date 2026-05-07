@@ -22,53 +22,63 @@ export default async function SettingsPage() {
     .eq("id", user.id)
     .single();
 
+  const quickLinkClass =
+    "rounded-full border border-white/30 bg-white/20 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30";
+
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
-      <AccountSettingsForm email={user.email ?? null} />
+    <main className="mx-auto w-full max-w-5xl px-4 pb-14 pt-6 sm:px-6 sm:py-10">
+      <div className="space-y-5">
+        <AccountSettingsForm email={user.email ?? null} />
 
-      <section className="mt-5">
-        <AccountPlanCard plan={profile?.plan ?? "free"} />
-      </section>
+        <section>
+          <AccountPlanCard plan={profile?.plan ?? "free"} />
+        </section>
 
-      <section className="mt-5">
-        <AccountDataTools userId={user.id} email={user.email ?? null} />
-      </section>
+        <section>
+          <AccountDataTools userId={user.id} email={user.email ?? null} />
+        </section>
 
-      <section className="mt-5 rounded-[2rem] border border-white/20 bg-white/20 p-6 text-white backdrop-blur-xl">
-        <h2 className="text-2xl font-semibold">Quick links</h2>
+        <section className="rounded-[2rem] border border-white/20 bg-white/20 p-5 text-white backdrop-blur-xl sm:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/55">
+                Navigation
+              </p>
 
-        <div className="mt-5 flex flex-wrap gap-3">
-          {profile?.username ? (
-            <Link
-              href={`/profile/${profile.username}`}
-              className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-normal text-white backdrop-blur-md transition hover:bg-white/30"
-            >
-              My Page
+              <h2 className="mt-1 text-2xl font-semibold tracking-[-0.03em]">
+                Quick links
+              </h2>
+            </div>
+
+            <p className="max-w-md text-sm font-light leading-6 text-white/65">
+              Jump around Quietli without digging through the menu.
+            </p>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            {profile?.username ? (
+              <Link
+                href={`/profile/${profile.username}`}
+                className={quickLinkClass}
+              >
+                My Page
+              </Link>
+            ) : null}
+
+            <Link href="/discover" className={quickLinkClass}>
+              Discover
             </Link>
-          ) : null}
 
-          <Link
-            href="/discover"
-            className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-normal text-white backdrop-blur-md transition hover:bg-white/30"
-          >
-            Discover
-          </Link>
+            <Link href="/plus" className={quickLinkClass}>
+              Plus
+            </Link>
 
-          <Link
-            href="/plus"
-            className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-normal text-white backdrop-blur-md transition hover:bg-white/30"
-          >
-            Plus
-          </Link>
-
-          <Link
-            href="/"
-            className="rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-normal text-white backdrop-blur-md transition hover:bg-white/30"
-          >
-            Home
-          </Link>
-        </div>
-      </section>
+            <Link href="/" className={quickLinkClass}>
+              Home
+            </Link>
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
