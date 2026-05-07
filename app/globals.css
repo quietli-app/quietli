@@ -155,3 +155,158 @@ img {
   display: block;
   max-width: 100%;
 }
+
+/* iPhone / mobile browser safe-area polish */
+:root {
+  --mobile-safe-top: env(safe-area-inset-top, 0px);
+  --mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html,
+body {
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  padding-top: 0;
+  padding-bottom: var(--mobile-safe-bottom);
+}
+
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Prevent the iPhone browser from crowding top content */
+@media (max-width: 768px) {
+  body {
+    min-height: 100dvh;
+  }
+
+  main {
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(28px, env(safe-area-inset-bottom));
+  }
+
+  /* Helps fixed/sticky headers avoid the iPhone notch/browser chrome */
+  header,
+  nav {
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+
+  /* Prevents accidental horizontal scrolling on mobile Safari */
+  * {
+    max-width: 100%;
+  }
+}
+
+/* iPhone / mobile browser safe-area polish */
+:root {
+  --mobile-safe-top: env(safe-area-inset-top, 0px);
+  --mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html,
+body {
+  min-height: 100%;
+  overflow-x: hidden;
+  background:
+    linear-gradient(
+      135deg,
+      #c6426e 0%,
+      #8f4db8 45%,
+      #642b73 100%
+    );
+}
+
+body {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  html,
+  body {
+    min-height: 100dvh;
+    background:
+      linear-gradient(
+        135deg,
+        #c6426e 0%,
+        #8f4db8 45%,
+        #642b73 100%
+      );
+  }
+
+  main {
+    padding-top: 0;
+    padding-bottom: max(28px, env(safe-area-inset-bottom));
+  }
+
+  header,
+  nav {
+    padding-top: 0;
+  }
+
+  * {
+    max-width: 100%;
+  }
+}
+
+/* iPhone / mobile browser safe-area gradient fix */
+:root {
+  --mobile-safe-top: env(safe-area-inset-top, 0px);
+  --mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html,
+body {
+  min-height: 100%;
+  overflow-x: hidden;
+  background:
+    linear-gradient(
+      135deg,
+      #c6426e 0%,
+      #8f4db8 45%,
+      #642b73 100%
+    );
+}
+
+body {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  html,
+  body {
+    min-height: 100dvh;
+    background:
+      linear-gradient(
+        135deg,
+        #c6426e 0%,
+        #8f4db8 45%,
+        #642b73 100%
+      );
+  }
+
+  body {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  main {
+    padding-top: 0;
+    padding-bottom: max(28px, env(safe-area-inset-bottom));
+  }
+
+  header,
+  nav {
+    padding-top: 0;
+  }
+
+  * {
+    max-width: 100%;
+  }
+}
