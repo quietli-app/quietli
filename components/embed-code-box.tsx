@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 type EmbedCodeBoxProps = {
   username: string;
@@ -9,6 +9,8 @@ type EmbedCodeBoxProps = {
 type EmbedMode = "latest" | "feed";
 type LatestEmbedSize = "compact" | "standard" | "large";
 type FeedEmbedHeight = 300 | 420 | 600;
+
+const RESIZE_MESSAGE_TYPE = "quietli:embed:resize";
 
 const latestSizeOptions: {
   label: string;
@@ -38,13 +40,23 @@ const latestSizeOptions: {
 
 const feedHeightOptions: FeedEmbedHeight[] = [300, 420, 600];
 
+function escapeHtmlAttribute(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
+  const reactId = useId();
   const [copyError, setCopyError] = useState("");
   const [isCopied, setIsCopied] = useState(false);
   const [mode, setMode] = useState<EmbedMode>("latest");
   const [latestSize, setLatestSize] = useState<LatestEmbedSize>("compact");
   const [feedHeight, setFeedHeight] = useState<FeedEmbedHeight>(420);
   const copyResetTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   useEffect(() => {
     return () => {
@@ -54,28 +66,118 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
     };
   }, []);
 
+  const embedId = useMemo(() => {
+    const cleanUsername =
+      username.replace(/[^a-zA-Z0-9_-]/g, "-").replace(/-+/g, "-") ||
+      "user";
+    const cleanReactId = reactId.replace(/[^a-zA-Z0-9_-]/g, "");
+
+    return `quietli-${cleanUsername}-${cleanReactId}`;
+  }, [reactId, username]);
+
   const selectedLatestOption =
     latestSizeOptions.find((option) => option.value === latestSize) ??
     latestSizeOptions[0];
 
   const activeHeight =
     mode === "latest" ? selectedLatestOption.height : feedHeight;
+  const [resizedPreview, setResizedPreview] = useState<{
+    key: string;
+    height: number;
+  } | null>(null);
 
   const embedUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
 
+    const params = new URLSearchParams({
+      variant: mode,
+      layout: "responsive",
+      embedId,
+    });
+
     if (mode === "latest") {
-      return `${window.location.origin}/embed/${username}?variant=latest&size=${latestSize}`;
+      params.set("size", latestSize);
+    } else {
+      params.set("height", String(feedHeight));
     }
 
-    return `${window.location.origin}/embed/${username}?variant=feed&height=${feedHeight}`;
-  }, [username, mode, latestSize, feedHeight]);
+    return `${window.location.origin}/embed/${encodeURIComponent(
+      username
+    )}?${params.toString()}`;
+  }, [username, mode, latestSize, feedHeight, embedId]);
 
-  const embedCode = `<iframe src="${embedUrl}" width="100%" height="${activeHeight}" style="border:0;border-radius:24px;overflow:hidden;display:block;" scrolling="${
-    mode === "latest" ? "no" : "yes"
-  }" loading="lazy" title="Quietli ${
+  useEffect(() => {
+    function handleEmbedResize(event: MessageEvent) {
+      const frame = previewFrameRef.current;
+
+      if (!frame || event.source !== frame.contentWindow) return;
+
+      const data = event.data as
+        | { type?: string; embedId?: string; height?: number }
+        | undefined;
+
+      if (data?.type !== RESIZE_MESSAGE_TYPE || data.embedId !== embedId) {
+        return;
+      }
+
+      const nextHeight = Math.max(activeHeight, Math.ceil(data.height ?? 0));
+
+      if (Number.isFinite(nextHeight)) {
+        setResizedPreview({ key: embedUrl, height: nextHeight });
+      }
+    }
+
+    window.addEventListener("message", handleEmbedResize);
+
+    return () => {
+      window.removeEventListener("message", handleEmbedResize);
+    };
+  }, [activeHeight, embedId, embedUrl]);
+
+  const previewHeight =
+    resizedPreview?.key === embedUrl
+      ? Math.max(activeHeight, resizedPreview.height)
+      : activeHeight;
+
+  const embedTitle = `Quietli ${
     mode === "latest" ? "latest blip" : "blip feed"
-  }"></iframe>`;
+  }`;
+  const escapedEmbedId = escapeHtmlAttribute(embedId);
+  const escapedEmbedUrl = escapeHtmlAttribute(embedUrl);
+  const escapedEmbedTitle = escapeHtmlAttribute(embedTitle);
+  const fallbackScrolling = mode === "latest" ? "no" : "yes";
+
+  const embedCode = `<div style="width:100%;max-width:100%;">
+  <iframe data-quietli-embed="${escapedEmbedId}" src="${escapedEmbedUrl}" width="100%" height="${activeHeight}" style="width:100%;max-width:100%;min-width:0;height:${activeHeight}px;border:0;border-radius:24px;overflow:hidden;display:block;" scrolling="${fallbackScrolling}" loading="lazy" title="${escapedEmbedTitle}"></iframe>
+  <script>
+  (function () {
+    var script = document.currentScript;
+    var frame = script ? script.previousElementSibling : null;
+    var embedId = ${JSON.stringify(embedId)};
+    var minHeight = ${activeHeight};
+
+    if (!frame || frame.tagName !== "IFRAME") {
+      frame = document.querySelector('iframe[data-quietli-embed="' + embedId + '"]');
+    }
+
+    if (!frame || frame.tagName !== "IFRAME") return;
+
+    function resizeQuietliEmbed(event) {
+      var data = event.data || {};
+
+      if (event.source !== frame.contentWindow) return;
+      if (data.type !== "${RESIZE_MESSAGE_TYPE}" || data.embedId !== embedId) return;
+
+      var nextHeight = Math.max(minHeight, Math.ceil(Number(data.height) || 0));
+
+      frame.style.height = nextHeight + "px";
+      frame.setAttribute("height", String(nextHeight));
+    }
+
+    window.addEventListener("message", resizeQuietliEmbed, false);
+  })();
+  </script>
+</div>`;
 
   async function copyEmbedCode() {
     setCopyError("");
@@ -191,10 +293,10 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
           </div>
         ) : (
           <div className="rounded-[1.25rem] border border-white/15 bg-white/10 p-4">
-            <p className="text-sm font-semibold text-white">Feed height</p>
+            <p className="text-sm font-semibold text-white">Fallback height</p>
 
             <p className="mt-1 text-xs font-light leading-5 text-white/60">
-              Choose how tall the embedded Quietli feed should appear.
+              Choose the starting height before the responsive resize finishes.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -240,19 +342,20 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
         <div
           className="w-full max-w-full overflow-hidden rounded-[24px] bg-transparent"
           style={{
-            height: activeHeight,
+            height: previewHeight,
             minHeight: activeHeight,
           }}
         >
           <iframe
+            ref={previewFrameRef}
             src={embedUrl}
             title="Quietli embed preview"
             width="100%"
-            height={activeHeight}
+            height={previewHeight}
             scrolling={mode === "latest" ? "no" : "yes"}
             className="block w-full max-w-full border-0"
             style={{
-              height: activeHeight,
+              height: previewHeight,
               border: 0,
               overflow: mode === "latest" ? "hidden" : "auto",
               display: "block",
@@ -265,7 +368,7 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
         <p className="text-sm font-semibold text-white">Embed code</p>
 
         <p className="mt-1 text-xs font-light leading-5 text-white/60">
-          Paste this iframe wherever your site allows custom embeds.
+          Paste this responsive HTML wherever your site allows custom embeds.
         </p>
 
         <pre className="mt-3 max-h-56 w-full max-w-full overflow-x-auto overflow-y-auto rounded-[1rem] border border-white/10 bg-[#2b355f]/35 p-4 text-xs font-normal leading-6 text-white/80">
