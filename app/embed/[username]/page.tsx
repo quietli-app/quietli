@@ -77,38 +77,25 @@ function EmbedPageResetStyles() {
             min-height: 0;
             overflow: hidden;
             border: 1px solid rgba(255,255,255,0.25);
-            border-radius: clamp(16px, 4vw, 28px);
+            border-radius: clamp(18px, 3vw, 28px);
             box-shadow: 0 18px 35px rgba(0,0,0,0.12);
 
-            /*
-              This makes the layout respond to both iframe width and iframe height.
-              Wider/taller embeds get more breathing room.
-              Shorter embeds tighten up automatically.
-            */
-            padding:
-              clamp(10px, 10vh, 22px)
-              clamp(14px, 3.2vw, 30px);
-
-            grid-template-rows: auto minmax(0, 1fr);
-            row-gap: clamp(4px, 3vh, 12px);
-          }
-
-          .quietli-latest-top-row {
-            display: grid;
-            min-width: 0;
+            grid-template-columns: clamp(34px, min(8vw, 38vh), 58px) minmax(0, 1fr);
+            column-gap: clamp(10px, 1.8vw, 18px);
             align-items: center;
-            grid-template-columns:
-              clamp(26px, min(9vw, 36vh), 56px)
-              minmax(0, 1fr);
-            column-gap: clamp(8px, 2vw, 16px);
-            padding-right: clamp(28px, 8vw, 58px);
+
+            padding:
+              clamp(10px, 9vh, 20px)
+              clamp(42px, 7vw, 64px)
+              clamp(10px, 9vh, 20px)
+              clamp(14px, 3vw, 28px);
           }
 
           .quietli-latest-avatar {
             position: relative;
             overflow: hidden;
-            width: clamp(26px, min(9vw, 36vh), 56px);
-            height: clamp(26px, min(9vw, 36vh), 56px);
+            width: clamp(34px, min(8vw, 38vh), 58px);
+            height: clamp(34px, min(8vw, 38vh), 58px);
             border-radius: 999px;
             border: 2px solid rgba(255,255,255,0.7);
             background: rgba(255,255,255,0.25);
@@ -135,6 +122,12 @@ function EmbedPageResetStyles() {
             font-weight: 700;
           }
 
+          .quietli-latest-content {
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+          }
+
           .quietli-latest-username {
             margin: 0;
             min-width: 0;
@@ -142,73 +135,78 @@ function EmbedPageResetStyles() {
             text-overflow: ellipsis;
             white-space: nowrap;
             color: white;
-            font-size: clamp(12px, min(3.1vw, 20vh), 24px);
+            font-size: clamp(12px, min(2.5vw, 16vh), 19px);
             font-weight: 700;
-            line-height: 1;
-          }
-
-          .quietli-latest-text-wrap {
-            min-width: 0;
-            min-height: 0;
-            overflow: hidden;
-            padding-right: clamp(28px, 7vw, 52px);
+            line-height: 1.05;
           }
 
           .quietli-latest-text {
-            margin: 0;
+            margin: clamp(2px, 1vh, 6px) 0 0 0;
             display: -webkit-box;
             -webkit-box-orient: vertical;
-            -webkit-line-clamp: 3;
+            -webkit-line-clamp: 2;
             overflow: hidden;
             color: rgba(255,255,255,0.93);
-            font-size: clamp(13px, min(2.8vw, 18vh), 24px);
+            font-size: clamp(12px, min(2.35vw, 14vh), 18px);
             line-height: 1.18;
           }
 
           .quietli-latest-logo {
             position: absolute;
             right: clamp(14px, 2.8vw, 26px);
-            bottom: clamp(12px, 2.6vh, 22px);
-            width: clamp(20px, min(5vw, 22vh), 40px);
-            height: clamp(20px, min(5vw, 22vh), 40px);
+            bottom: clamp(12px, 2.6vh, 20px);
+            width: clamp(20px, min(4.2vw, 16vh), 32px);
+            height: clamp(20px, min(4.2vw, 16vh), 32px);
             object-fit: contain;
-            opacity: 0.86;
+            opacity: 0.84;
           }
 
-          /*
-            Very short embeds need fewer text lines.
-          */
-          @media (max-height: 115px) {
+          @media (max-height: 105px) {
             .quietli-latest-card {
-              row-gap: 4px;
+              padding-top: 10px;
+              padding-bottom: 10px;
             }
 
             .quietli-latest-text {
               -webkit-line-clamp: 2;
-              line-height: 1.14;
+              font-size: clamp(12px, min(2.15vw, 13vh), 16px);
+              line-height: 1.12;
             }
           }
 
-          @media (max-height: 90px) {
+          @media (max-height: 84px) {
             .quietli-latest-text {
               -webkit-line-clamp: 1;
             }
           }
 
-          /*
-            Narrow embeds need a little more compression.
-          */
           @media (max-width: 420px) {
             .quietli-latest-card {
-              padding: 10px 14px;
+              grid-template-columns: 34px minmax(0, 1fr);
+              column-gap: 10px;
+              padding-left: 14px;
+              padding-right: 42px;
             }
 
-            .quietli-latest-top-row {
-              padding-right: 34px;
+            .quietli-latest-avatar {
+              width: 34px;
+              height: 34px;
             }
 
-            .quietli-latest-text-wrap {
-              padding-right: 34px;
+            .quietli-latest-username {
+              font-size: 13px;
+            }
+
+            .quietli-latest-text {
+              font-size: 13px;
+              line-height: 1.13;
+            }
+
+            .quietli-latest-logo {
+              width: 20px;
+              height: 20px;
+              right: 14px;
+              bottom: 12px;
             }
           }
 
@@ -311,21 +309,19 @@ export default async function EmbedPage({
                 background: cardBackground,
               }}
             >
-              <div className="quietli-latest-top-row">
-                <div className="quietli-latest-avatar">
-                  {profile.avatar_url ? (
-                    <img src={profile.avatar_url} alt={profile.username} />
-                  ) : (
-                    <div className="quietli-latest-avatar-fallback">
-                      {profile.username.slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-
-                <p className="quietli-latest-username">@{profile.username}</p>
+              <div className="quietli-latest-avatar">
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt={profile.username} />
+                ) : (
+                  <div className="quietli-latest-avatar-fallback">
+                    {profile.username.slice(0, 1).toUpperCase()}
+                  </div>
+                )}
               </div>
 
-              <div className="quietli-latest-text-wrap">
+              <div className="quietli-latest-content">
+                <p className="quietli-latest-username">@{profile.username}</p>
+
                 <p className="quietli-latest-text">
                   {latestBlip?.content ?? "No blips yet."}
                 </p>
