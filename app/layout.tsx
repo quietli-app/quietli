@@ -13,6 +13,26 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => {
+  try {
+    const quietliTheme = localStorage.getItem("quietli-theme");
+    const oldBrainBlipTheme = localStorage.getItem("brainblip-theme");
+    const theme = quietliTheme === "dark" || oldBrainBlipTheme === "dark" ? "dark" : "light";
+    const root = document.documentElement;
+
+    root.classList.toggle("dark", theme === "dark");
+    root.dataset.theme = theme;
+    root.style.colorScheme = theme;
+  } catch {
+  }
+})();`,
+          }}
+        />
+      </head>
+
       <body className="min-h-screen antialiased">
         <ThemeProvider />
 

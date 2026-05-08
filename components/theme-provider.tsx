@@ -22,6 +22,7 @@ export function ThemeProvider() {
 
     applyTheme(theme);
     localStorage.setItem(THEME_STORAGE_KEY, theme);
+    localStorage.setItem("brainblip-theme", theme);
   }, []);
 
   return null;

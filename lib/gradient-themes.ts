@@ -58,6 +58,26 @@ export const profileBackgroundThemes: Record<string, string> = {
     "linear-gradient(to bottom right, #064e3b, #134e4a, #083344)",
 };
 
+export const darkProfileBackgroundThemes: Record<string, string> = {
+  blush:
+    "linear-gradient(to bottom, #24163a 0%, #1b1230 36%, #161023 68%, #120d18 100%)",
+
+  plum:
+    "linear-gradient(to bottom right, #24102f, #16091f, #0c0712)",
+
+  sunset:
+    "linear-gradient(to bottom right, #2f1008, #351021, #17092f)",
+
+  lavender:
+    "linear-gradient(to bottom right, #211044, #2d0d36, #320d24)",
+
+  ocean:
+    "linear-gradient(to bottom right, #062a34, #10255a, #100f3e)",
+
+  mint:
+    "linear-gradient(to bottom right, #04392c, #0d3634, #052738)",
+};
+
 export const navBackgroundThemes: Record<string, string> = {
   blush:
     "linear-gradient(135deg, rgba(166,158,232,0.34), rgba(134,118,207,0.26), rgba(184,161,169,0.24))",
@@ -76,4 +96,24 @@ export const navBackgroundThemes: Record<string, string> = {
 
   mint:
     "linear-gradient(135deg, rgba(6,78,59,0.38), rgba(19,78,74,0.34), rgba(8,51,68,0.32))",
+};
+
+export const darkNavBackgroundThemes: Record<string, string> = {
+  blush:
+    "linear-gradient(135deg, rgba(36,22,58,0.78), rgba(27,18,48,0.72), rgba(18,13,24,0.78))",
+
+  plum:
+    "linear-gradient(135deg, rgba(36,16,47,0.78), rgba(22,9,31,0.72), rgba(12,7,18,0.78))",
+
+  sunset:
+    "linear-gradient(135deg, rgba(47,16,8,0.76), rgba(53,16,33,0.72), rgba(23,9,47,0.78))",
+
+  lavender:
+    "linear-gradient(135deg, rgba(33,16,68,0.78), rgba(45,13,54,0.72), rgba(50,13,36,0.76))",
+
+  ocean:
+    "linear-gradient(135deg, rgba(6,42,52,0.78), rgba(16,37,90,0.72), rgba(16,15,62,0.78))",
+
+  mint:
+    "linear-gradient(135deg, rgba(4,57,44,0.78), rgba(13,54,52,0.72), rgba(5,39,56,0.78))",
 };

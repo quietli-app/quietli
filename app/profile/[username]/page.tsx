@@ -15,7 +15,12 @@ import { BlockButton } from "@/components/block-button";
 import { FollowRequests } from "@/components/follow-requests";
 import { FollowersManager } from "@/components/followers-manager";
 import { ProfilePrivacyToggle } from "@/components/profile-privacy-toggle";
-import { profileBackgroundThemes } from "@/lib/gradient-themes";
+import {
+  darkNavBackgroundThemes,
+  darkProfileBackgroundThemes,
+  navBackgroundThemes,
+  profileBackgroundThemes,
+} from "@/lib/gradient-themes";
 
 type FollowStatus = "none" | "pending" | "accepted";
 
@@ -56,6 +61,12 @@ export default async function ProfilePage({
 
   const profileBackground =
     profileBackgroundThemes[activeTheme] ?? profileBackgroundThemes.blush;
+  const darkProfileBackground =
+    darkProfileBackgroundThemes[activeTheme] ?? darkProfileBackgroundThemes.blush;
+  const navBackground =
+    navBackgroundThemes[activeTheme] ?? navBackgroundThemes.blush;
+  const darkNavBackground =
+    darkNavBackgroundThemes[activeTheme] ?? darkNavBackgroundThemes.blush;
 
   let followStatus: FollowStatus = "none";
   let initiallyMuted = false;
@@ -261,16 +272,20 @@ export default async function ProfilePage({
   return (
     <>
       <ProfileNavTheme
-  siteBackground={profileBackground}
-  navBackground={profileBackground}
-/>
+        siteBackground={profileBackground}
+        navBackground={navBackground}
+        darkSiteBackground={darkProfileBackground}
+        darkNavBackground={darkNavBackground}
+      />
 
       <main
         className="profile-theme-page min-h-screen px-4 pb-12 sm:py-10"
         style={
           {
             "--profile-gradient": profileBackground,
-            background: profileBackground,
+            "--profile-background-light": profileBackground,
+            "--profile-background-dark": darkProfileBackground,
+            background: "var(--profile-background-active)",
             paddingTop: 0,
           } as React.CSSProperties
         }

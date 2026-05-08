@@ -5,11 +5,15 @@ import { useEffect } from "react";
 type ProfileNavThemeProps = {
   siteBackground: string;
   navBackground?: string;
+  darkSiteBackground?: string;
+  darkNavBackground?: string;
 };
 
 export function ProfileNavTheme({
   siteBackground,
   navBackground = "rgba(255, 255, 255, 0.16)",
+  darkSiteBackground = siteBackground,
+  darkNavBackground = navBackground,
 }: ProfileNavThemeProps) {
   useEffect(() => {
     const root = document.documentElement;
@@ -18,16 +22,36 @@ export function ProfileNavTheme({
     const previousNavBg = root.style.getPropertyValue("--nav-bg");
     const previousMobileMenuBg = root.style.getPropertyValue("--mobile-menu-bg");
 
-    root.style.setProperty("--site-bg", siteBackground);
-    root.style.setProperty("--nav-bg", navBackground);
+    function getCurrentTheme() {
+      return root.dataset.theme === "dark" || root.classList.contains("dark")
+        ? "dark"
+        : "light";
+    }
 
-    /*
-      This makes the mobile dropdown feel like a lighter glass panel
-      sitting on top of the selected profile theme.
-    */
-    root.style.setProperty("--mobile-menu-bg", siteBackground);
+    function applyProfileTheme() {
+      const isDark = getCurrentTheme() === "dark";
+      const nextSiteBackground = isDark ? darkSiteBackground : siteBackground;
+      const nextNavBackground = isDark ? darkNavBackground : navBackground;
+
+      root.style.setProperty("--site-bg", nextSiteBackground);
+      root.style.setProperty("--nav-bg", nextNavBackground);
+
+      /*
+        This makes the mobile dropdown feel like a glass panel sitting on top
+        of the selected profile theme.
+      */
+      root.style.setProperty("--mobile-menu-bg", nextSiteBackground);
+    }
+
+    applyProfileTheme();
+
+    window.addEventListener("quietli:themechange", applyProfileTheme);
+    window.addEventListener("storage", applyProfileTheme);
 
     return () => {
+      window.removeEventListener("quietli:themechange", applyProfileTheme);
+      window.removeEventListener("storage", applyProfileTheme);
+
       if (previousSiteBg) {
         root.style.setProperty("--site-bg", previousSiteBg);
       } else {
@@ -46,7 +70,7 @@ export function ProfileNavTheme({
         root.style.removeProperty("--mobile-menu-bg");
       }
     };
-  }, [siteBackground, navBackground]);
+  }, [siteBackground, navBackground, darkSiteBackground, darkNavBackground]);
 
   return null;
 }

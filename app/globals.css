@@ -50,6 +50,15 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.profile-theme-page {
+  --profile-background-active: var(--profile-background-light);
+}
+
+html.dark .profile-theme-page,
+html[data-theme="dark"] .profile-theme-page {
+  --profile-background-active: var(--profile-background-dark);
+}
+
 img {
   display: block;
   max-width: 100%;
