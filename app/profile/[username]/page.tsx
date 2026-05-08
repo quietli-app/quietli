@@ -266,7 +266,7 @@ export default async function ProfilePage({
       />
 
       <main
-        className="profile-theme-page min-h-screen px-4 pb-12 pt-6 sm:py-10"
+        className="profile-theme-page min-h-screen px-4 pb-12 pt-8 sm:py-10"
         style={
           {
             "--profile-gradient": profileBackground,
