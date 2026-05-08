@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type EmbedCodeBoxProps = {
   username: string;
@@ -39,10 +39,20 @@ const latestSizeOptions: {
 const feedHeightOptions: FeedEmbedHeight[] = [300, 420, 600];
 
 export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
-  const [message, setMessage] = useState("");
+  const [copyError, setCopyError] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
   const [mode, setMode] = useState<EmbedMode>("latest");
   const [latestSize, setLatestSize] = useState<LatestEmbedSize>("compact");
   const [feedHeight, setFeedHeight] = useState<FeedEmbedHeight>(420);
+  const copyResetTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyResetTimeout.current) {
+        clearTimeout(copyResetTimeout.current);
+      }
+    };
+  }, []);
 
   const selectedLatestOption =
     latestSizeOptions.find((option) => option.value === latestSize) ??
@@ -68,13 +78,23 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
   }"></iframe>`;
 
   async function copyEmbedCode() {
-    setMessage("");
+    setCopyError("");
 
     try {
       await navigator.clipboard.writeText(embedCode);
-      setMessage("Embed code copied.");
+      setIsCopied(true);
+
+      if (copyResetTimeout.current) {
+        clearTimeout(copyResetTimeout.current);
+      }
+
+      copyResetTimeout.current = setTimeout(() => {
+        setIsCopied(false);
+        copyResetTimeout.current = null;
+      }, 3000);
     } catch {
-      setMessage(
+      setIsCopied(false);
+      setCopyError(
         "Could not copy automatically. You can select and copy it manually."
       );
     }
@@ -129,7 +149,7 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
           onClick={copyEmbedCode}
           className="w-full rounded-full bg-gradient-to-r from-[#C6426E] via-[#A13E7A] to-[#642B73] px-5 py-3 text-center text-sm font-semibold text-white transition hover:brightness-110"
         >
-          Copy embed code
+          {isCopied ? "Code copied!" : "Copy embed code"}
         </button>
 
         {mode === "latest" ? (
@@ -255,9 +275,9 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
         </pre>
       </div>
 
-      {message ? (
+      {copyError ? (
         <p className="mt-4 rounded-2xl border border-white/15 bg-white/10 p-4 text-sm leading-6 text-white/85">
-          {message}
+          {copyError}
         </p>
       ) : null}
     </div>
