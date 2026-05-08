@@ -90,10 +90,10 @@ function EmbedPageResetStyles() {
           }
 
           .quietli-latest-card[data-size="compact"] {
-            grid-template-columns: 40px minmax(0, 1fr);
-            column-gap: 12px;
+            grid-template-columns: 36px minmax(0, 1fr);
+            column-gap: 11px;
             align-items: center;
-            padding: 12px 44px 12px 14px;
+            padding: 10px 42px 10px 14px;
           }
 
           .quietli-latest-card[data-size="standard"] {
@@ -119,8 +119,8 @@ function EmbedPageResetStyles() {
           }
 
           .quietli-latest-card[data-size="compact"] .quietli-latest-avatar {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
           }
 
           .quietli-latest-card[data-size="standard"] .quietli-latest-avatar {
@@ -154,7 +154,7 @@ function EmbedPageResetStyles() {
           }
 
           .quietli-latest-card[data-size="compact"] .quietli-latest-avatar-fallback {
-            font-size: 14px;
+            font-size: 13px;
           }
 
           .quietli-latest-card[data-size="standard"] .quietli-latest-avatar-fallback {
@@ -205,9 +205,9 @@ function EmbedPageResetStyles() {
 
           .quietli-latest-card[data-size="compact"] .quietli-latest-text {
             margin-top: 4px;
-            -webkit-line-clamp: 1;
-            font-size: 14px;
-            line-height: 1.18;
+            -webkit-line-clamp: 2;
+            font-size: 13px;
+            line-height: 1.15;
           }
 
           .quietli-latest-card[data-size="standard"] .quietli-latest-text {
@@ -231,10 +231,10 @@ function EmbedPageResetStyles() {
           }
 
           .quietli-latest-card[data-size="compact"] .quietli-latest-logo {
-            right: 16px;
-            bottom: 14px;
-            width: 20px;
-            height: 20px;
+            right: 15px;
+            bottom: 13px;
+            width: 18px;
+            height: 18px;
           }
 
           .quietli-latest-card[data-size="standard"] .quietli-latest-logo {
@@ -255,16 +255,16 @@ function EmbedPageResetStyles() {
             .quietli-latest-card[data-size="compact"],
             .quietli-latest-card[data-size="standard"],
             .quietli-latest-card[data-size="large"] {
-              grid-template-columns: 38px minmax(0, 1fr);
+              grid-template-columns: 36px minmax(0, 1fr);
               column-gap: 11px;
-              padding: 12px 42px 12px 14px;
+              padding: 10px 42px 10px 14px;
             }
 
             .quietli-latest-card[data-size="compact"] .quietli-latest-avatar,
             .quietli-latest-card[data-size="standard"] .quietli-latest-avatar,
             .quietli-latest-card[data-size="large"] .quietli-latest-avatar {
-              width: 38px;
-              height: 38px;
+              width: 36px;
+              height: 36px;
             }
 
             .quietli-latest-card[data-size="compact"] .quietli-latest-username,
@@ -276,19 +276,19 @@ function EmbedPageResetStyles() {
             .quietli-latest-card[data-size="compact"] .quietli-latest-text,
             .quietli-latest-card[data-size="standard"] .quietli-latest-text,
             .quietli-latest-card[data-size="large"] .quietli-latest-text {
-              margin-top: 5px;
+              margin-top: 4px;
               -webkit-line-clamp: 2;
               font-size: 13px;
-              line-height: 1.18;
+              line-height: 1.15;
             }
 
             .quietli-latest-card[data-size="compact"] .quietli-latest-logo,
             .quietli-latest-card[data-size="standard"] .quietli-latest-logo,
             .quietli-latest-card[data-size="large"] .quietli-latest-logo {
               right: 15px;
-              bottom: 14px;
-              width: 20px;
-              height: 20px;
+              bottom: 13px;
+              width: 18px;
+              height: 18px;
             }
           }
 
