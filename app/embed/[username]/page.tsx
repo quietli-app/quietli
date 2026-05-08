@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { gradientThemes } from "@/lib/gradient-themes";
 
 type EmbedVariant = "latest" | "feed";
-type EmbedHeight = 160 | 220 | 300 | 420 | 600;
+type EmbedHeight = 100 | 160 | 200 | 220 | 300 | 420 | 600;
 
 type Profile = {
   id: string;
@@ -21,10 +21,14 @@ type Blip = {
 };
 
 function getEmbedHeight(value?: string): EmbedHeight {
+  if (value === "100") return 100;
+  if (value === "160") return 160;
+  if (value === "200") return 200;
   if (value === "220") return 220;
   if (value === "300") return 300;
   if (value === "420") return 420;
   if (value === "600") return 600;
+
   return 160;
 }
 
@@ -38,7 +42,6 @@ function EmbedPageResetStyles() {
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
-            height: 100% !important;
             min-height: 0 !important;
             overflow: hidden !important;
             background: transparent !important;
@@ -112,7 +115,7 @@ export default async function EmbedPage({
       <>
         <EmbedPageResetStyles />
 
-        <main className="fixed inset-0 overflow-hidden bg-transparent font-sans">
+        <main className="fixed inset-0 flex items-center justify-center overflow-hidden bg-transparent p-0 font-sans">
           <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[24px] border border-white/25 bg-white/20 px-4 text-center text-sm font-normal text-white/85">
             This Quietli profile is private.
           </div>
@@ -133,83 +136,56 @@ export default async function EmbedPage({
 
   if (embedVariant === "latest") {
     const latestBlip = blips?.[0];
-    const isTallLatest = embedHeight >= 220;
 
     return (
       <>
         <EmbedPageResetStyles />
 
-        <main className="fixed inset-0 overflow-hidden bg-transparent font-sans">
-          <div
-            className="relative flex h-full w-full flex-col justify-center overflow-hidden rounded-[24px] border border-white/25 px-4 py-4"
-            style={{ background: cardBackground }}
+        <main className="fixed inset-0 flex items-center justify-center overflow-hidden bg-transparent p-0 font-sans">
+          <a
+            href={profileUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Open @${profile.username} on Quietli`}
+            className="block h-full w-full text-white no-underline"
           >
-            <div className="flex min-w-0 items-center gap-3 pr-10">
-              <div
-                className={`relative flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/25 ${
-                  isTallLatest ? "h-14 w-14" : "h-12 w-12"
-                }`}
-              >
-                {profile.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt={profile.username}
-                    className="absolute inset-0 h-full w-full rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-full text-base font-medium text-white/90">
-                    {profile.username.slice(0, 1).toUpperCase()}
-                  </div>
-                )}
-              </div>
+            <article
+              className="relative flex h-full w-full flex-col justify-center overflow-hidden rounded-[24px] border border-white/25 px-5 py-4 shadow-lg shadow-black/10"
+              style={{ background: cardBackground }}
+            >
+              <div className="flex min-w-0 items-center gap-3 pr-12">
+                <div className="relative h-12 w-12 flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/25">
+                  {profile.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile.username}
+                      className="absolute inset-0 h-full w-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded-full text-base font-semibold text-white/90">
+                      {profile.username.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                </div>
 
-              <div className="min-w-0 flex-1">
-                <p
-                  className={`truncate font-semibold leading-5 text-white ${
-                    isTallLatest ? "text-lg" : "text-base"
-                  }`}
-                >
+                <p className="min-w-0 truncate text-base font-semibold leading-5 text-white sm:text-lg">
                   @{profile.username}
                 </p>
-
-                {isTallLatest ? (
-                  <p className="mt-1 truncate text-sm font-normal text-white/72">
-                    {profile.bio || "A stream of passing thoughts."}
-                  </p>
-                ) : null}
               </div>
-            </div>
 
-            <div className={`${isTallLatest ? "mt-4" : "mt-3"} min-w-0`}>
-              <p
-                className={`text-white/94 ${
-                  isTallLatest
-                    ? "line-clamp-4 text-xl font-normal leading-8"
-                    : "line-clamp-3 text-base font-normal leading-6"
-                }`}
-              >
+              <p className="mt-4 line-clamp-3 text-lg font-normal leading-7 text-white/94 sm:text-xl sm:leading-8">
                 {latestBlip?.content ?? "No blips yet."}
               </p>
-            </div>
 
-            <a
-              href={profileUrl}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={`Open @${profile.username} on Quietli`}
-              className={`absolute object-contain opacity-85 transition hover:opacity-100 ${
-                isTallLatest
-                  ? "right-4 top-4 h-10 w-10"
-                  : "right-4 top-4 h-8 w-8"
-              }`}
-            >
-              <img
-                src="/quietli-q.png"
-                alt="Quietli"
-                className="h-full w-full object-contain"
-              />
-            </a>
-          </div>
+              <div className="absolute right-5 top-5 h-10 w-10 opacity-90">
+                <img
+                  src="/quietli-q.png"
+                  alt="Quietli"
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            </article>
+          </a>
         </main>
       </>
     );
