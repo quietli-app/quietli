@@ -146,17 +146,17 @@ html[data-theme="dark"] .theme-gradient-card {
   isolation: isolate;
   background: linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.24),
-      rgba(255, 255, 255, 0.08)
+      rgba(255, 255, 255, 0.17),
+      rgba(255, 255, 255, 0.06)
     ),
-    rgba(255, 255, 255, 0.08);
+    rgba(255, 255, 255, 0.06);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.54),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.24),
-    inset 0 0 24px rgba(255, 255, 255, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.32),
+    inset 0 0 18px rgba(255, 255, 255, 0.1),
     0 24px 60px rgba(43, 15, 47, 0.12);
-  -webkit-backdrop-filter: blur(30px) saturate(1.36);
-  backdrop-filter: blur(30px) saturate(1.36);
+  -webkit-backdrop-filter: blur(24px) saturate(1.28);
+  backdrop-filter: blur(24px) saturate(1.28);
 }
 
 .frosted-blip-card::before,
@@ -170,40 +170,40 @@ html[data-theme="dark"] .theme-gradient-card {
 
 .frosted-blip-card::before {
   background: var(--theme-gradient-card-light, var(--theme-gradient-card-active));
-  opacity: 0.24;
+  opacity: 0.17;
 }
 
 .frosted-blip-card::after {
   background:
     linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0.5),
-      rgba(255, 255, 255, 0.2) 3%,
-      transparent 9%,
-      transparent 91%,
-      rgba(255, 255, 255, 0.18) 97%,
-      rgba(255, 255, 255, 0.42)
+      rgba(255, 255, 255, 0.78),
+      rgba(255, 255, 255, 0.36) 2%,
+      transparent 7%,
+      transparent 93%,
+      rgba(255, 255, 255, 0.32) 98%,
+      rgba(255, 255, 255, 0.7)
     ),
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.34),
-      rgba(255, 255, 255, 0.12) 4%,
-      transparent 13%,
-      transparent 88%,
-      rgba(255, 255, 255, 0.12)
+      rgba(255, 255, 255, 0.5),
+      rgba(255, 255, 255, 0.18) 3%,
+      transparent 10%,
+      transparent 90%,
+      rgba(255, 255, 255, 0.18)
     ),
     radial-gradient(
       ellipse at 12% 2%,
-      rgba(255, 255, 255, 0.4),
-      transparent 24%
+      rgba(255, 255, 255, 0.32),
+      transparent 20%
     ),
     radial-gradient(
       ellipse at 98% 8%,
-      rgba(255, 255, 255, 0.22),
-      transparent 18%
+      rgba(255, 255, 255, 0.26),
+      transparent 16%
     ),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 40%);
-  opacity: 0.84;
+    linear-gradient(135deg, rgba(255, 255, 255, 0.11), transparent 34%);
+  opacity: 0.9;
 }
 
 .frosted-blip-card > * {
@@ -215,21 +215,21 @@ html.dark .frosted-blip-card,
 html[data-theme="dark"] .frosted-blip-card {
   background: linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.12),
-      rgba(255, 255, 255, 0.04)
+      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.03)
     ),
-    rgba(12, 7, 18, 0.22);
+    rgba(12, 7, 18, 0.15);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.34),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
-    inset 0 0 24px rgba(255, 255, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.24),
+    inset 0 0 18px rgba(255, 255, 255, 0.06),
     0 24px 60px rgba(6, 4, 10, 0.28);
 }
 
 html.dark .frosted-blip-card::before,
 html[data-theme="dark"] .frosted-blip-card::before {
   background: var(--theme-gradient-card-dark, var(--theme-gradient-card-active));
-  opacity: 0.42;
+  opacity: 0.3;
 }
 
 .theme-gradient-card-copy {
