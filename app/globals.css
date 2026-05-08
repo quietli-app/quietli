@@ -94,6 +94,70 @@ html[data-theme="dark"] .theme-gradient-card {
   background: var(--theme-gradient-card-dark, var(--theme-gradient-card-active));
 }
 
+.frosted-blip-card {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.34),
+      rgba(255, 255, 255, 0.12)
+    ),
+    rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 24px 60px rgba(43, 15, 47, 0.16);
+  -webkit-backdrop-filter: blur(24px) saturate(1.28);
+  backdrop-filter: blur(24px) saturate(1.28);
+}
+
+.frosted-blip-card::before,
+.frosted-blip-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.frosted-blip-card::before {
+  background: var(--theme-gradient-card-light, var(--theme-gradient-card-active));
+  opacity: 0.38;
+}
+
+.frosted-blip-card::after {
+  background:
+    radial-gradient(
+      circle at 12% 0%,
+      rgba(255, 255, 255, 0.38),
+      transparent 34%
+    ),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 52%);
+}
+
+.frosted-blip-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+html.dark .frosted-blip-card,
+html[data-theme="dark"] .frosted-blip-card {
+  background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.16),
+      rgba(255, 255, 255, 0.06)
+    ),
+    rgba(12, 7, 18, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 24px 60px rgba(6, 4, 10, 0.32);
+}
+
+html.dark .frosted-blip-card::before,
+html[data-theme="dark"] .frosted-blip-card::before {
+  background: var(--theme-gradient-card-dark, var(--theme-gradient-card-active));
+  opacity: 0.5;
+}
+
 .theme-gradient-card-copy {
   color: var(--theme-gradient-card-copy);
 }

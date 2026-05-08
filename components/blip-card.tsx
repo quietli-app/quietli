@@ -49,7 +49,7 @@ export function BlipCard({
 
   return (
     <article
-      className="theme-gradient-card overflow-hidden rounded-[2rem] border border-white/25 p-6 text-white shadow-[0_24px_60px_rgba(43,15,47,0.18)] backdrop-blur-xl"
+      className="frosted-blip-card overflow-hidden rounded-[2rem] border border-white/30 p-6 text-white"
       style={
         {
           "--theme-gradient-card-light": cardBackground,
