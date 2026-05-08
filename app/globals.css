@@ -2,7 +2,14 @@
 
 :root {
 
-  --site-bg: linear-gradient(to bottom right, #c6426e, #642b73);
+  --site-bg: linear-gradient(
+    to bottom,
+    #a69ee8 0%,
+    #9589dc 32%,
+    #8676cf 62%,
+    #a590a3 86%,
+    #b8a1a9 100%
+  );
 
   --site-text: #f8fafc;
 
