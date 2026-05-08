@@ -244,21 +244,21 @@ export function HomeShell() {
       {authChecked && profile ? (
         <BlipComposer userId={profile.id} onPosted={refreshFeed} />
       ) : (
-        <div className="mb-8 rounded-[2rem] border border-white/20 bg-white/20 p-5 text-lg font-normal text-white/90 backdrop-blur-xl">
+        <div className="liquid-panel mb-8 rounded-[2rem] border p-5 text-lg font-normal text-white/90">
           Sign in to post a blip.
         </div>
       )}
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex gap-2 rounded-full border border-white/20 bg-white/15 p-1 backdrop-blur-xl">
+        <div className="liquid-control flex gap-2 rounded-full border p-1">
           <button
             type="button"
             onClick={() => changeFeedView("following")}
             disabled={!profile}
-            className={`rounded-full px-5 py-2 text-sm font-normal transition disabled:cursor-not-allowed disabled:opacity-50 ${
+            className={`rounded-full border px-5 py-2 text-sm font-normal transition disabled:cursor-not-allowed disabled:opacity-50 ${
               feedView === "following"
-                ? "bg-white text-[#642B73]"
-                : "text-white/80 hover:bg-white/10"
+                ? "liquid-active"
+                : "border-transparent text-white/80 hover:bg-white/10"
             }`}
           >
             Following
@@ -267,10 +267,10 @@ export function HomeShell() {
           <button
             type="button"
             onClick={() => changeFeedView("world")}
-            className={`rounded-full px-5 py-2 text-sm font-normal transition ${
+            className={`rounded-full border px-5 py-2 text-sm font-normal transition ${
               feedView === "world"
-                ? "bg-white text-[#642B73]"
-                : "text-white/80 hover:bg-white/10"
+                ? "liquid-active"
+                : "border-transparent text-white/80 hover:bg-white/10"
             }`}
           >
             World View
@@ -289,11 +289,11 @@ export function HomeShell() {
       </div>
 
       {loadingFeed ? (
-        <div className="rounded-[2rem] border border-white/20 bg-white/20 p-5 font-normal text-white/80 backdrop-blur-xl">
+        <div className="liquid-panel rounded-[2rem] border p-5 font-normal text-white/80">
           Loading blips...
         </div>
       ) : feed.length === 0 ? (
-        <div className="rounded-[2rem] border border-white/20 bg-white/20 p-8 text-center font-normal text-white backdrop-blur-xl">
+        <div className="liquid-panel rounded-[2rem] border p-8 text-center font-normal text-white">
           {feedView === "following" ? (
             <>
               <h2 className="text-2xl font-semibold">
@@ -308,7 +308,7 @@ export function HomeShell() {
               <button
                 type="button"
                 onClick={() => changeFeedView("world")}
-                className="mt-5 rounded-full bg-white px-5 py-2 text-sm font-normal text-[#642B73] transition hover:bg-white/90"
+                className="liquid-primary mt-5 rounded-full border px-5 py-2 text-sm font-semibold transition"
               >
                 View World
               </button>

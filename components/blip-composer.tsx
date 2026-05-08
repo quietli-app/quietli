@@ -160,7 +160,7 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
   return (
     <form
       onSubmit={postBlip}
-      className="mb-8 rounded-[2rem] border border-white/20 bg-white/20 p-5 text-white backdrop-blur-xl"
+      className="liquid-panel mb-8 rounded-[2rem] border p-5 text-white"
     >
       <label htmlFor="blip-content" className="sr-only">
         Write a blip
@@ -176,7 +176,7 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
         onKeyDown={handleKeyDown}
         maxLength={MAX_LENGTH}
         placeholder="What floated through your brain?"
-        className="min-h-32 w-full resize-none rounded-[1.5rem] border border-white/20 bg-white/50 p-4 text-base font-light leading-7 tracking-[-0.01em] text-[#642B73] outline-none placeholder:text-base placeholder:font-light placeholder:tracking-[-0.01em] placeholder:text-[#8f6a99]/65"
+        className="liquid-input min-h-32 w-full resize-none rounded-[1.5rem] border p-4 text-base font-light leading-7 tracking-[-0.01em] text-[#08111f] outline-none placeholder:text-base placeholder:font-light placeholder:tracking-[-0.01em] placeholder:text-slate-600/65"
       />
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -191,7 +191,7 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
         <button
           type="submit"
           disabled={isPosting || cooldownSeconds > 0}
-          className="rounded-full bg-white px-5 py-2 text-sm font-normal text-[#642B73] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="liquid-primary rounded-full border px-5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isPosting
             ? "Posting..."
@@ -202,7 +202,7 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
       </div>
 
       {message ? (
-        <p className="mt-4 rounded-2xl border border-white/20 bg-white/15 p-3 text-sm font-normal leading-6 text-white/85">
+        <p className="liquid-control mt-4 rounded-2xl border p-3 text-sm font-normal leading-6 text-white/85">
           {message}
         </p>
       ) : null}

@@ -54,7 +54,7 @@ export function MobileMenu({
   }, [isOpen]);
 
   const mobilePrimaryButtonClass =
-    "flex w-full items-center justify-between rounded-2xl px-5 py-4 text-left text-base font-semibold text-white transition hover:bg-white/20 active:bg-white/25";
+    "flex w-full items-center justify-between rounded-2xl px-5 py-4 text-left text-base font-semibold text-white transition hover:bg-white/15 active:bg-white/20";
 
   const mobileSecondaryButtonClass =
     "flex w-full items-center justify-between rounded-2xl px-5 py-4 text-left text-base font-medium text-white/80 transition hover:bg-white/20 hover:text-white active:bg-white/25";
@@ -66,7 +66,7 @@ export function MobileMenu({
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        className="rounded-full border border-white/30 bg-white/20 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30"
+        className="liquid-control rounded-full border px-5 py-2.5 text-sm font-medium text-white transition hover:border-white/35"
         aria-expanded={isOpen}
         aria-label="Open menu"
       >
@@ -75,13 +75,9 @@ export function MobileMenu({
 
       {isOpen ? (
         <div
-          className="absolute right-0 top-14 z-50 w-[calc(100vw-40px)] !max-w-[360px] overflow-hidden rounded-[30px] border border-white/25 p-3 text-white shadow-2xl shadow-black/20 backdrop-blur-2xl"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.10)), var(--mobile-menu-bg, #8f87dc)",
-          }}
+          className="liquid-panel absolute right-0 top-14 z-50 w-[calc(100vw-40px)] !max-w-[360px] rounded-[30px] border p-3 text-white"
         >
-          <div className="mb-2 rounded-[24px] border border-white/15 bg-white/15 px-5 py-4 backdrop-blur-xl">
+          <div className="liquid-control mb-2 rounded-[24px] border px-5 py-4">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/65">
               Quietli
             </p>
@@ -167,7 +163,7 @@ export function MobileMenu({
               <button
                 type="submit"
                 onClick={closeMenu}
-                className="flex w-full items-center justify-center rounded-2xl bg-white px-5 py-4 text-center text-base font-semibold text-[#642b73] transition hover:bg-white/90 active:bg-white/80"
+                className="liquid-primary flex w-full items-center justify-center rounded-2xl border px-5 py-4 text-center text-base font-semibold transition"
               >
                 Sign out
               </button>
@@ -176,7 +172,7 @@ export function MobileMenu({
             <button
               type="button"
               onClick={() => goTo("/login")}
-              className="flex w-full items-center justify-center rounded-2xl bg-white px-5 py-4 text-center text-base font-semibold text-[#642b73] transition hover:bg-white/90 active:bg-white/80"
+              className="liquid-primary flex w-full items-center justify-center rounded-2xl border px-5 py-4 text-center text-base font-semibold transition"
             >
               Sign in
             </button>

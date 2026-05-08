@@ -33,15 +33,11 @@ export async function TopNav() {
   }
 
   const desktopLinkClass =
-    "rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30";
+    "liquid-control rounded-full border px-4 py-2 text-sm font-medium text-white transition hover:border-white/35 hover:bg-white/15";
 
   return (
     <header
-      className="nav-bar sticky top-0 z-50 border-b border-white/20 backdrop-blur-xl"
-      style={{
-  background:
-    "linear-gradient(135deg, rgba(255,255,255,0.20), rgba(255,255,255,0.08)), var(--nav-bg, #8f87dc)",
-}}
+      className="nav-bar sticky top-0 z-50 border-b border-white/15 backdrop-blur-xl"
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
         <Link href="/" className="flex items-center">
