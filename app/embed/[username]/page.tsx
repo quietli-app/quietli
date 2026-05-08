@@ -93,8 +93,10 @@ function EmbedPageResetStyles() {
             }
 
             .quietli-latest-logo {
-              width: 28px !important;
-              height: 28px !important;
+              width: 22px !important;
+              height: 22px !important;
+              right: 16px !important;
+              bottom: 14px !important;
             }
           }
 
@@ -118,8 +120,10 @@ function EmbedPageResetStyles() {
             }
 
             .quietli-latest-logo {
-              width: 24px !important;
-              height: 24px !important;
+              width: 20px !important;
+              height: 20px !important;
+              right: 14px !important;
+              bottom: 13px !important;
             }
           }
 
@@ -217,14 +221,14 @@ export default async function EmbedPage({
             className="block h-[100px] w-full text-white no-underline"
           >
             <article
-              className="quietli-latest-card grid w-full overflow-hidden rounded-[24px] border border-white/25 px-4 py-3 shadow-lg shadow-black/10"
+              className="quietli-latest-card relative grid w-full overflow-hidden rounded-[24px] border border-white/25 px-4 py-3 shadow-lg shadow-black/10"
               style={{
                 background: cardBackground,
                 gridTemplateRows: "30px minmax(0, 1fr)",
                 rowGap: "4px",
               }}
             >
-              <div className="grid min-w-0 items-center grid-cols-[34px_minmax(0,1fr)_32px] gap-3">
+              <div className="grid min-w-0 grid-cols-[34px_minmax(0,1fr)] items-center gap-3 pr-9">
                 <div
                   className="quietli-latest-avatar relative overflow-hidden rounded-full border-2 border-white/70 bg-white/25"
                   style={{
@@ -253,20 +257,10 @@ export default async function EmbedPage({
                 >
                   @{profile.username}
                 </p>
-
-                <img
-                  src="/quietli-q.png"
-                  alt="Quietli"
-                  className="quietli-latest-logo object-contain opacity-90"
-                  style={{
-                    width: 32,
-                    height: 32,
-                  }}
-                />
               </div>
 
               <p
-                className="quietli-latest-text quietli-clamp-2 m-0 min-w-0 text-white/92"
+                className="quietli-latest-text quietli-clamp-2 m-0 min-w-0 pr-9 text-white/92"
                 style={{
                   fontSize: 15,
                   lineHeight: 1.16,
@@ -274,6 +268,16 @@ export default async function EmbedPage({
               >
                 {latestBlip?.content ?? "No blips yet."}
               </p>
+
+              <img
+                src="/quietli-q.png"
+                alt="Quietli"
+                className="quietli-latest-logo absolute bottom-4 right-5 object-contain opacity-85"
+                style={{
+                  width: 24,
+                  height: 24,
+                }}
+              />
             </article>
           </a>
         </main>
