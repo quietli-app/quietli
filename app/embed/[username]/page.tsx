@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { gradientThemes } from "@/lib/gradient-themes";
 
 type EmbedVariant = "latest" | "feed";
-type LatestEmbedSize = "compact" | "standard" | "large";
 type FeedEmbedHeight = 300 | 420 | 600;
 
 type Profile = {
@@ -20,13 +19,6 @@ type Blip = {
   content: string;
   created_at: string;
 };
-
-function getLatestEmbedSize(value?: string): LatestEmbedSize {
-  if (value === "compact") return "compact";
-  if (value === "large") return "large";
-
-  return "standard";
-}
 
 function getFeedEmbedHeight(value?: string): FeedEmbedHeight {
   if (value === "300") return 300;
@@ -60,235 +52,74 @@ function EmbedPageResetStyles() {
             box-sizing: border-box;
           }
 
-          .quietli-embed-root {
-            width: 100vw;
-            height: 100vh;
-            min-height: 0;
+          .quietli-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
             overflow: hidden;
-            background: transparent;
-            font-family: inherit;
           }
 
-          .quietli-latest-link {
-            display: block;
-            width: 100%;
-            height: 100%;
-            color: white;
-            text-decoration: none;
+          .quietli-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
           }
 
           .quietli-latest-card {
-            position: relative;
-            display: grid;
-            width: 100%;
-            height: 100%;
-            min-height: 0;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.25);
-            border-radius: 24px;
-            box-shadow: 0 18px 35px rgba(0,0,0,0.12);
+            height: 100px;
+            min-height: 100px;
+            max-height: 100px;
           }
 
-          .quietli-latest-card[data-size="compact"] {
-            grid-template-columns: 36px minmax(0, 1fr);
-            column-gap: 11px;
-            align-items: center;
-            padding: 10px 42px 10px 14px;
-          }
-
-          .quietli-latest-card[data-size="standard"] {
-            grid-template-columns: 48px minmax(0, 1fr);
-            column-gap: 15px;
-            align-items: center;
-            padding: 18px 56px 18px 18px;
-          }
-
-          .quietli-latest-card[data-size="large"] {
-            grid-template-columns: 62px minmax(0, 1fr);
-            column-gap: 18px;
-            align-items: center;
-            padding: 24px 72px 24px 24px;
-          }
-
-          .quietli-latest-avatar {
-            position: relative;
-            overflow: hidden;
-            border-radius: 999px;
-            border: 2px solid rgba(255,255,255,0.7);
-            background: rgba(255,255,255,0.25);
-          }
-
-          .quietli-latest-card[data-size="compact"] .quietli-latest-avatar {
-            width: 36px;
-            height: 36px;
-          }
-
-          .quietli-latest-card[data-size="standard"] .quietli-latest-avatar {
-            width: 48px;
-            height: 48px;
-          }
-
-          .quietli-latest-card[data-size="large"] .quietli-latest-avatar {
-            width: 62px;
-            height: 62px;
-          }
-
-          .quietli-latest-avatar img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 999px;
-            object-fit: cover;
-          }
-
-          .quietli-latest-avatar-fallback {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            align-items: center;
-            justify-content: center;
-            border-radius: 999px;
-            color: rgba(255,255,255,0.9);
-            font-weight: 700;
-          }
-
-          .quietli-latest-card[data-size="compact"] .quietli-latest-avatar-fallback {
-            font-size: 13px;
-          }
-
-          .quietli-latest-card[data-size="standard"] .quietli-latest-avatar-fallback {
-            font-size: 16px;
-          }
-
-          .quietli-latest-card[data-size="large"] .quietli-latest-avatar-fallback {
-            font-size: 22px;
-          }
-
-          .quietli-latest-content {
-            min-width: 0;
-            min-height: 0;
-            overflow: hidden;
-          }
-
-          .quietli-latest-username {
-            margin: 0;
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            color: white;
-            font-weight: 700;
-            line-height: 1.05;
-          }
-
-          .quietli-latest-card[data-size="compact"] .quietli-latest-username {
-            font-size: 14px;
-          }
-
-          .quietli-latest-card[data-size="standard"] .quietli-latest-username {
-            font-size: 18px;
-          }
-
-          .quietli-latest-card[data-size="large"] .quietli-latest-username {
-            font-size: 24px;
-          }
-
-          .quietli-latest-text {
-            margin: 0;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            color: rgba(255,255,255,0.93);
-            overflow-wrap: anywhere;
-          }
-
-          .quietli-latest-card[data-size="compact"] .quietli-latest-text {
-            margin-top: 4px;
-            -webkit-line-clamp: 2;
-            font-size: 13px;
-            line-height: 1.15;
-          }
-
-          .quietli-latest-card[data-size="standard"] .quietli-latest-text {
-            margin-top: 8px;
-            -webkit-line-clamp: 3;
-            font-size: 17px;
-            line-height: 1.25;
-          }
-
-          .quietli-latest-card[data-size="large"] .quietli-latest-text {
-            margin-top: 12px;
-            -webkit-line-clamp: 5;
-            font-size: 22px;
-            line-height: 1.35;
-          }
-
-          .quietli-latest-logo {
-            position: absolute;
-            object-fit: contain;
-            opacity: 0.84;
-          }
-
-          .quietli-latest-card[data-size="compact"] .quietli-latest-logo {
-            right: 15px;
-            bottom: 13px;
-            width: 18px;
-            height: 18px;
-          }
-
-          .quietli-latest-card[data-size="standard"] .quietli-latest-logo {
-            right: 20px;
-            bottom: 18px;
-            width: 26px;
-            height: 26px;
-          }
-
-          .quietli-latest-card[data-size="large"] .quietli-latest-logo {
-            right: 26px;
-            bottom: 24px;
-            width: 36px;
-            height: 36px;
-          }
-
-          @media (max-width: 420px) {
-            .quietli-latest-card[data-size="compact"],
-            .quietli-latest-card[data-size="standard"],
-            .quietli-latest-card[data-size="large"] {
-              grid-template-columns: 36px minmax(0, 1fr);
-              column-gap: 11px;
-              padding: 10px 42px 10px 14px;
+          @media (max-width: 520px) {
+            .quietli-latest-card {
+              border-radius: 22px;
+              padding: 10px 14px 10px 14px !important;
             }
 
-            .quietli-latest-card[data-size="compact"] .quietli-latest-avatar,
-            .quietli-latest-card[data-size="standard"] .quietli-latest-avatar,
-            .quietli-latest-card[data-size="large"] .quietli-latest-avatar {
-              width: 36px;
-              height: 36px;
+            .quietli-latest-avatar {
+              width: 30px !important;
+              height: 30px !important;
             }
 
-            .quietli-latest-card[data-size="compact"] .quietli-latest-username,
-            .quietli-latest-card[data-size="standard"] .quietli-latest-username,
-            .quietli-latest-card[data-size="large"] .quietli-latest-username {
-              font-size: 14px;
+            .quietli-latest-username {
+              font-size: 13px !important;
             }
 
-            .quietli-latest-card[data-size="compact"] .quietli-latest-text,
-            .quietli-latest-card[data-size="standard"] .quietli-latest-text,
-            .quietli-latest-card[data-size="large"] .quietli-latest-text {
-              margin-top: 4px;
-              -webkit-line-clamp: 2;
-              font-size: 13px;
-              line-height: 1.15;
+            .quietli-latest-text {
+              font-size: 14px !important;
+              line-height: 1.16 !important;
             }
 
-            .quietli-latest-card[data-size="compact"] .quietli-latest-logo,
-            .quietli-latest-card[data-size="standard"] .quietli-latest-logo,
-            .quietli-latest-card[data-size="large"] .quietli-latest-logo {
-              right: 15px;
-              bottom: 13px;
-              width: 18px;
-              height: 18px;
+            .quietli-latest-logo {
+              width: 28px !important;
+              height: 28px !important;
+            }
+          }
+
+          @media (max-width: 360px) {
+            .quietli-latest-card {
+              padding: 9px 12px 9px 12px !important;
+            }
+
+            .quietli-latest-avatar {
+              width: 26px !important;
+              height: 26px !important;
+            }
+
+            .quietli-latest-username {
+              font-size: 12px !important;
+            }
+
+            .quietli-latest-text {
+              font-size: 13px !important;
+              line-height: 1.14 !important;
+            }
+
+            .quietli-latest-logo {
+              width: 24px !important;
+              height: 24px !important;
             }
           }
 
@@ -321,17 +152,12 @@ export default async function EmbedPage({
   searchParams,
 }: {
   params: Promise<{ username: string }>;
-  searchParams: Promise<{
-    variant?: string;
-    height?: string;
-    size?: string;
-  }>;
+  searchParams: Promise<{ variant?: string; height?: string }>;
 }) {
   const { username } = await params;
-  const { variant, height, size } = await searchParams;
+  const { variant, height } = await searchParams;
 
   const embedVariant: EmbedVariant = variant === "feed" ? "feed" : "latest";
-  const latestEmbedSize = getLatestEmbedSize(size);
   const feedEmbedHeight = getFeedEmbedHeight(height);
 
   const supabase = await createClient();
@@ -356,7 +182,7 @@ export default async function EmbedPage({
       <>
         <EmbedPageResetStyles />
 
-        <main className="quietli-embed-root">
+        <main className="fixed inset-0 overflow-hidden bg-transparent p-0 font-sans">
           <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[24px] border border-white/25 bg-white/20 px-4 text-center text-sm font-normal text-white/85">
             This Quietli profile is private.
           </div>
@@ -382,44 +208,72 @@ export default async function EmbedPage({
       <>
         <EmbedPageResetStyles />
 
-        <main className="quietli-embed-root">
+        <main className="fixed inset-0 overflow-hidden bg-transparent p-0 font-sans">
           <a
             href={profileUrl}
             target="_blank"
             rel="noreferrer"
             aria-label={`Open @${profile.username} on Quietli`}
-            className="quietli-latest-link"
+            className="block h-[100px] w-full text-white no-underline"
           >
             <article
-              className="quietli-latest-card"
-              data-size={latestEmbedSize}
+              className="quietli-latest-card grid w-full overflow-hidden rounded-[24px] border border-white/25 px-4 py-3 shadow-lg shadow-black/10"
               style={{
                 background: cardBackground,
+                gridTemplateRows: "30px minmax(0, 1fr)",
+                rowGap: "4px",
               }}
             >
-              <div className="quietli-latest-avatar">
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt={profile.username} />
-                ) : (
-                  <div className="quietli-latest-avatar-fallback">
-                    {profile.username.slice(0, 1).toUpperCase()}
-                  </div>
-                )}
-              </div>
+              <div className="grid min-w-0 items-center grid-cols-[34px_minmax(0,1fr)_32px] gap-3">
+                <div
+                  className="quietli-latest-avatar relative overflow-hidden rounded-full border-2 border-white/70 bg-white/25"
+                  style={{
+                    width: 34,
+                    height: 34,
+                  }}
+                >
+                  {profile.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile.username}
+                      className="absolute inset-0 h-full w-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded-full text-sm font-semibold text-white/90">
+                      {profile.username.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                </div>
 
-              <div className="quietli-latest-content">
-                <p className="quietli-latest-username">@{profile.username}</p>
-
-                <p className="quietli-latest-text">
-                  {latestBlip?.content ?? "No blips yet."}
+                <p
+                  className="quietli-latest-username m-0 truncate font-semibold leading-none text-white"
+                  style={{
+                    fontSize: 14,
+                  }}
+                >
+                  @{profile.username}
                 </p>
+
+                <img
+                  src="/quietli-q.png"
+                  alt="Quietli"
+                  className="quietli-latest-logo object-contain opacity-90"
+                  style={{
+                    width: 32,
+                    height: 32,
+                  }}
+                />
               </div>
 
-              <img
-                src="/quietli-q.png"
-                alt="Quietli"
-                className="quietli-latest-logo"
-              />
+              <p
+                className="quietli-latest-text quietli-clamp-2 m-0 min-w-0 text-white/92"
+                style={{
+                  fontSize: 15,
+                  lineHeight: 1.16,
+                }}
+              >
+                {latestBlip?.content ?? "No blips yet."}
+              </p>
             </article>
           </a>
         </main>
@@ -431,7 +285,7 @@ export default async function EmbedPage({
     <>
       <EmbedPageResetStyles />
 
-      <main className="quietli-embed-root">
+      <main className="fixed inset-0 overflow-hidden bg-transparent font-sans">
         <div
           className="relative h-full w-full overflow-hidden rounded-[24px] border border-white/25"
           style={{
