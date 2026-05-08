@@ -74,9 +74,15 @@ export function MobileMenu({
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 top-14 z-50 w-[calc(100vw-40px)] !max-w-[360px] overflow-hidden rounded-[30px] border border-white/20 bg-[#8f87dc] p-3 text-white shadow-2xl shadow-black/20">
-          <div className="mb-2 rounded-[24px] bg-white/10 px-5 py-4">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/60">
+        <div
+          className="absolute right-0 top-14 z-50 w-[calc(100vw-40px)] !max-w-[360px] overflow-hidden rounded-[30px] border border-white/25 p-3 text-white shadow-2xl shadow-black/20 backdrop-blur-2xl"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.10)), var(--mobile-menu-bg, #8f87dc)",
+          }}
+        >
+          <div className="mb-2 rounded-[24px] border border-white/15 bg-white/15 px-5 py-4 backdrop-blur-xl">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/65">
               Quietli
             </p>
 

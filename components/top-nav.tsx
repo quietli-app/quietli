@@ -36,7 +36,12 @@ export async function TopNav() {
     "rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/30";
 
   return (
-    <header className="nav-bar sticky top-0 z-50 border-b border-white/20">
+    <header
+      className="nav-bar sticky top-0 z-50 border-b border-white/20 backdrop-blur-xl"
+      style={{
+        background: "var(--nav-bg, rgba(255, 255, 255, 0.16))",
+      }}
+    >
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
         <Link href="/" className="flex items-center">
           <Image
