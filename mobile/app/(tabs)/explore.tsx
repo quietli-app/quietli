@@ -146,7 +146,7 @@ export default function MobileExploreScreen() {
   if (isLoading) {
     return (
       <LinearGradient
-        colors={["#C6426E", "#642B73"]}
+        colors={["#a69ee8", "#9589dc", "#8676cf", "#a590a3", "#b8a1a9"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientScreen}
@@ -162,7 +162,7 @@ export default function MobileExploreScreen() {
   if (!session) {
     return (
       <LinearGradient
-        colors={["#C6426E", "#642B73"]}
+        colors={["#a69ee8", "#9589dc", "#8676cf", "#a590a3", "#b8a1a9"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientScreen}
@@ -188,7 +188,7 @@ export default function MobileExploreScreen() {
 
   return (
     <LinearGradient
-      colors={["#C6426E", "#642B73"]}
+      colors={["#a69ee8", "#9589dc", "#8676cf", "#a590a3", "#b8a1a9"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradientScreen}

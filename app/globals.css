@@ -2,27 +2,34 @@
 
 :root {
 
-  --site-bg: linear-gradient(135deg, #c6426e 0%, #642b73 100%);
+  --site-bg: linear-gradient(
+    to bottom,
+    #a69ee8 0%,
+    #9589dc 32%,
+    #8676cf 62%,
+    #a590a3 86%,
+    #b8a1a9 100%
+  );
 
   --site-text: #f8fafc;
 
   --nav-bg: rgba(255, 255, 255, 0.18);
 
-  --mobile-menu-bg: #642b73;
+  --mobile-menu-bg: #8f87dc;
 
   --site-ambient-glow: radial-gradient(
       circle at 8% 4%,
       rgba(255, 255, 255, 0.16),
       transparent 30%
     ),
-    radial-gradient(circle at 82% 16%, rgba(198, 66, 110, 0.2), transparent 30%),
-    radial-gradient(circle at 44% 78%, rgba(100, 43, 115, 0.18), transparent 34%);
+    radial-gradient(circle at 82% 16%, rgba(216, 180, 254, 0.18), transparent 30%),
+    radial-gradient(circle at 44% 78%, rgba(249, 168, 212, 0.14), transparent 34%);
 
   --site-ambient-motion:
     radial-gradient(circle at 20% 28%, rgba(255, 255, 255, 0.16), transparent 24%),
-    radial-gradient(circle at 72% 18%, rgba(198, 66, 110, 0.34), transparent 28%),
-    radial-gradient(circle at 48% 74%, rgba(100, 43, 115, 0.3), transparent 30%),
-    linear-gradient(120deg, rgba(245, 158, 139, 0.12), transparent 48%);
+    radial-gradient(circle at 72% 18%, rgba(196, 181, 253, 0.28), transparent 28%),
+    radial-gradient(circle at 48% 74%, rgba(249, 168, 212, 0.2), transparent 30%),
+    linear-gradient(120deg, rgba(166, 158, 232, 0.12), transparent 48%);
 
   --theme-gradient-card-active: var(--theme-gradient-card-light);
 

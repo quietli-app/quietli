@@ -10,9 +10,9 @@ type MobileGradientTheme = {
 
 export const mobileGradientThemes: Record<GradientTheme, MobileGradientTheme> = {
   blush: {
-    colors: ["#C6426E", "#642B73"],
+    colors: ["#a69ee8", "#9589dc", "#8676cf", "#a590a3", "#b8a1a9"],
     start: { x: 0, y: 0 },
-    end: { x: 1, y: 1 },
+    end: { x: 0, y: 1 },
   },
   violet: {
     colors: ["#642B73", "#3A1C71"],

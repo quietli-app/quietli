@@ -46,9 +46,9 @@ const themeOptions: {
 }[] = [
   {
     id: "blush",
-    label: "Blush",
-    description: "Warm pink Quietli classic.",
-    color: "#C6426E",
+    label: "Quietli",
+    description: "Soft light purple Quietli classic.",
+    color: "#a69ee8",
   },
   {
     id: "violet",
@@ -558,7 +558,7 @@ export default function MobileSettingsScreen() {
   if (isLoading) {
     return (
       <LinearGradient
-        colors={["#C6426E", "#642B73"]}
+        colors={["#a69ee8", "#9589dc", "#8676cf", "#a590a3", "#b8a1a9"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientScreen}
@@ -574,7 +574,7 @@ export default function MobileSettingsScreen() {
   if (!session) {
     return (
       <LinearGradient
-        colors={["#C6426E", "#642B73"]}
+        colors={["#a69ee8", "#9589dc", "#8676cf", "#a590a3", "#b8a1a9"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientScreen}
@@ -608,7 +608,7 @@ export default function MobileSettingsScreen() {
 
   return (
     <LinearGradient
-      colors={["#C6426E", "#642B73"]}
+      colors={["#a69ee8", "#9589dc", "#8676cf", "#a590a3", "#b8a1a9"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradientScreen}
