@@ -75,57 +75,51 @@ function EmbedPageResetStyles() {
           @media (max-width: 520px) {
             .quietli-latest-card {
               border-radius: 22px;
-              padding-left: 16px !important;
-              padding-right: 16px !important;
-              grid-template-columns: 46px minmax(0, 1fr) 38px !important;
-              column-gap: 12px !important;
+              padding: 10px 14px 10px 14px !important;
             }
 
             .quietli-latest-avatar {
-              width: 46px !important;
-              height: 46px !important;
+              width: 30px !important;
+              height: 30px !important;
             }
 
             .quietli-latest-username {
-              font-size: 17px !important;
+              font-size: 13px !important;
             }
 
             .quietli-latest-text {
-              font-size: 16px !important;
-              line-height: 1.22 !important;
+              font-size: 14px !important;
+              line-height: 1.16 !important;
             }
 
             .quietli-latest-logo {
-              width: 38px !important;
-              height: 38px !important;
+              width: 28px !important;
+              height: 28px !important;
             }
           }
 
           @media (max-width: 360px) {
             .quietli-latest-card {
-              padding-left: 14px !important;
-              padding-right: 14px !important;
-              grid-template-columns: 40px minmax(0, 1fr) 32px !important;
-              column-gap: 10px !important;
+              padding: 9px 12px 9px 12px !important;
             }
 
             .quietli-latest-avatar {
-              width: 40px !important;
-              height: 40px !important;
+              width: 26px !important;
+              height: 26px !important;
             }
 
             .quietli-latest-username {
-              font-size: 15px !important;
+              font-size: 12px !important;
             }
 
             .quietli-latest-text {
-              font-size: 14px !important;
-              line-height: 1.2 !important;
+              font-size: 13px !important;
+              line-height: 1.14 !important;
             }
 
             .quietli-latest-logo {
-              width: 32px !important;
-              height: 32px !important;
+              width: 24px !important;
+              height: 24px !important;
             }
           }
 
@@ -223,63 +217,63 @@ export default async function EmbedPage({
             className="block h-[100px] w-full text-white no-underline"
           >
             <article
-              className="quietli-latest-card grid w-full items-center overflow-hidden rounded-[24px] border border-white/25 px-[18px] shadow-lg shadow-black/10"
+              className="quietli-latest-card grid w-full overflow-hidden rounded-[24px] border border-white/25 px-4 py-3 shadow-lg shadow-black/10"
               style={{
                 background: cardBackground,
-                gridTemplateColumns: "46px minmax(0, 1fr) 38px",
-                columnGap: "14px",
+                gridTemplateRows: "30px minmax(0, 1fr)",
+                rowGap: "4px",
               }}
             >
-              <div
-                className="quietli-latest-avatar relative overflow-hidden rounded-full border-2 border-white/70 bg-white/25"
-                style={{
-                  width: 46,
-                  height: 46,
-                }}
-              >
-                {profile.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt={profile.username}
-                    className="absolute inset-0 h-full w-full rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-full text-base font-semibold text-white/90">
-                    {profile.username.slice(0, 1).toUpperCase()}
-                  </div>
-                )}
-              </div>
-
-              <div className="min-w-0">
-                <p
-                  className="quietli-latest-username m-0 truncate font-semibold leading-tight text-white"
+              <div className="grid min-w-0 items-center grid-cols-[34px_minmax(0,1fr)_32px] gap-3">
+                <div
+                  className="quietli-latest-avatar relative overflow-hidden rounded-full border-2 border-white/70 bg-white/25"
                   style={{
-                    fontSize: 18,
+                    width: 34,
+                    height: 34,
+                  }}
+                >
+                  {profile.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile.username}
+                      className="absolute inset-0 h-full w-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded-full text-sm font-semibold text-white/90">
+                      {profile.username.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+
+                <p
+                  className="quietli-latest-username m-0 truncate font-semibold leading-none text-white"
+                  style={{
+                    fontSize: 14,
                   }}
                 >
                   @{profile.username}
                 </p>
 
-                <p
-                  className="quietli-latest-text quietli-clamp-1 m-0 mt-1 text-white/92"
+                <img
+                  src="/quietli-q.png"
+                  alt="Quietli"
+                  className="quietli-latest-logo object-contain opacity-90"
                   style={{
-                    fontSize: 16,
-                    lineHeight: 1.22,
+                    width: 32,
+                    height: 32,
                   }}
-                >
-                  {latestBlip?.content ?? "No blips yet."}
-                </p>
+                />
               </div>
 
-              <img
-                src="/quietli-q.png"
-                alt="Quietli"
-                className="quietli-latest-logo object-contain opacity-90"
+              <p
+                className="quietli-latest-text quietli-clamp-2 m-0 min-w-0 text-white/92"
                 style={{
-                  width: 38,
-                  height: 38,
+                  fontSize: 15,
+                  lineHeight: 1.16,
                 }}
-              />
+              >
+                {latestBlip?.content ?? "No blips yet."}
+              </p>
             </article>
           </a>
         </main>
