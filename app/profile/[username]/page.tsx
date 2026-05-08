@@ -266,7 +266,7 @@ export default async function ProfilePage({
       />
 
       <main
-        className="profile-theme-page min-h-screen px-4 pb-12 pt-8 sm:py-10"
+        className="profile-theme-page min-h-screen px-4 pb-12 pt-5 sm:py-10"
         style={
           {
             "--profile-gradient": profileBackground,
@@ -274,7 +274,7 @@ export default async function ProfilePage({
         }
       >
         <div className="mx-auto max-w-5xl">
-          <section className="mb-8 mt-5 rounded-[2rem] border border-white/20 bg-white/20 p-5 text-white backdrop-blur-xl sm:mt-0 sm:p-6">
+          <section className="mb-8 rounded-[2rem] border border-white/20 bg-white/20 p-5 text-white backdrop-blur-xl sm:p-6">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex min-w-0 flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
                 <div
@@ -357,9 +357,7 @@ export default async function ProfilePage({
               </div>
 
               <div className="w-full shrink-0 lg:w-auto">
-                {isOwnProfile
-                  ? ownerPreviewButton
-                  : visitorControls}
+                {isOwnProfile ? ownerPreviewButton : visitorControls}
               </div>
             </div>
 
@@ -402,7 +400,9 @@ export default async function ProfilePage({
 
           {blockedByProfileOwner ? (
             <div className="rounded-[2rem] border border-white/20 bg-white/20 p-8 text-center text-white backdrop-blur-xl">
-              <h2 className="text-2xl font-bold">This profile is unavailable.</h2>
+              <h2 className="text-2xl font-bold">
+                This profile is unavailable.
+              </h2>
 
               <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/75">
                 You cannot view this Quietli page.
