@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 type BlipComposerProps = {
   userId: string;
@@ -22,8 +21,6 @@ const HOURLY_LIMIT_MESSAGE =
   "Hey buddy, are you ok? Maybe you need to chill on the blips for a minute... Have a tea, maybe meditate for a bit? Lets put the blips down for a little bit and come back to it when you're more relaxed.";
 
 export function BlipComposer({ onPosted }: BlipComposerProps) {
-  const supabase = createClient();
-
   const [content, setContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [message, setMessage] = useState("");
@@ -66,21 +63,40 @@ export function BlipComposer({ onPosted }: BlipComposerProps) {
     setIsPosting(true);
     setMessage("");
 
-    const { data, error } = await supabase.rpc("post_blip", {
-      p_content: trimmedContent,
-    });
+    let result: PostBlipResult | null = null;
 
-    setIsPosting(false);
+    try {
+      const response = await fetch("/api/blips", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: trimmedContent }),
+      });
 
-    if (error) {
+      result = (await response.json()) as PostBlipResult;
+
+      if (!response.ok && result?.ok !== false) {
+        throw new Error("Post request failed.");
+      }
+    } catch (error) {
       console.error("Error posting blip:", error);
+      setIsPosting(false);
       setMessage("Something went wrong posting your blip.");
       return;
     }
 
-    const result = data as PostBlipResult | null;
+    setIsPosting(false);
 
     if (!result?.ok) {
+      if (result?.reason === "blocked_hate_speech") {
+        setMessage(
+          result.message ??
+            "This blip can’t be posted because it appears to target a protected group or identity."
+        );
+        return;
+      }
+
       if (result?.reason === "cooldown") {
         const secondsRemaining =
           typeof result.seconds_remaining === "number"
