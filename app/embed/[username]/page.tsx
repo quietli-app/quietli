@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { gradientThemes } from "@/lib/gradient-themes";
 
 type EmbedVariant = "latest" | "feed";
-type EmbedHeight = 100 | 120 | 140 | 160 | 180 | 200 | 220 | 300 | 420 | 600;
+type EmbedHeight = 96 | 100 | 120 | 140 | 160 | 180 | 200 | 220 | 300 | 420 | 600;
 
 type Profile = {
   id: string;
@@ -209,15 +209,15 @@ export default async function EmbedPage({
     const latestBlip = blips?.[0];
 
     const isUltraShort = embedHeight <= 100;
-    const isShort = embedHeight <= 140;
-    const isMedium = embedHeight <= 180;
+const isShort = embedHeight <= 140;
+const isMedium = embedHeight <= 180;
 
-    const avatarSize = isUltraShort ? 36 : isShort ? 40 : 48;
-    const logoSize = isUltraShort ? 32 : isShort ? 36 : 44;
-    const cardPaddingX = isUltraShort ? 18 : isShort ? 20 : 24;
-    const cardPaddingY = isUltraShort ? 12 : isShort ? 14 : 18;
-    const usernameSize = isUltraShort ? 16 : isShort ? 18 : 20;
-    const blipTextSize = isUltraShort ? 18 : isShort ? 20 : 22;
+const avatarSize = isUltraShort ? 36 : isShort ? 40 : 48;
+const logoSize = isUltraShort ? 32 : isShort ? 36 : 44;
+const cardPaddingX = isUltraShort ? 18 : isShort ? 20 : 24;
+const cardPaddingY = isUltraShort ? 12 : isShort ? 14 : 18;
+const usernameSize = isUltraShort ? 16 : isShort ? 18 : 20;
+const blipTextSize = isUltraShort ? 18 : isShort ? 20 : 22;
 
     return (
       <>
@@ -237,7 +237,7 @@ export default async function EmbedPage({
                 background: cardBackground,
                 padding: `${cardPaddingY}px ${cardPaddingX}px`,
                 gridTemplateRows: "auto minmax(0, 1fr)",
-                rowGap: isUltraShort ? "7px" : isShort ? "9px" : "12px",
+                rowGap: isUltraShort ? "4px" : isShort ? "8px" : "12px",
               }}
             >
               <div
