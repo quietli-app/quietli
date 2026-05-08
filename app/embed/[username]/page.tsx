@@ -3,18 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { gradientThemes } from "@/lib/gradient-themes";
 
 type EmbedVariant = "latest" | "feed";
-type EmbedHeight =
-  | 96
-  | 100
-  | 120
-  | 140
-  | 160
-  | 180
-  | 200
-  | 220
-  | 300
-  | 420
-  | 600;
+type FeedEmbedHeight = 300 | 420 | 600;
 
 type Profile = {
   id: string;
@@ -31,20 +20,11 @@ type Blip = {
   created_at: string;
 };
 
-function getEmbedHeight(value?: string): EmbedHeight {
-  if (value === "96") return 96;
-  if (value === "100") return 100;
-  if (value === "120") return 120;
-  if (value === "140") return 140;
-  if (value === "160") return 160;
-  if (value === "180") return 180;
-  if (value === "200") return 200;
-  if (value === "220") return 220;
+function getFeedEmbedHeight(value?: string): FeedEmbedHeight {
   if (value === "300") return 300;
-  if (value === "420") return 420;
   if (value === "600") return 600;
 
-  return 100;
+  return 420;
 }
 
 function EmbedPageResetStyles() {
@@ -86,6 +66,69 @@ function EmbedPageResetStyles() {
             overflow: hidden;
           }
 
+          .quietli-latest-card {
+            height: 100px;
+            min-height: 100px;
+            max-height: 100px;
+          }
+
+          @media (max-width: 520px) {
+            .quietli-latest-card {
+              border-radius: 22px;
+              padding-left: 16px !important;
+              padding-right: 16px !important;
+              grid-template-columns: 46px minmax(0, 1fr) 38px !important;
+              column-gap: 12px !important;
+            }
+
+            .quietli-latest-avatar {
+              width: 46px !important;
+              height: 46px !important;
+            }
+
+            .quietli-latest-username {
+              font-size: 17px !important;
+            }
+
+            .quietli-latest-text {
+              font-size: 16px !important;
+              line-height: 1.22 !important;
+            }
+
+            .quietli-latest-logo {
+              width: 38px !important;
+              height: 38px !important;
+            }
+          }
+
+          @media (max-width: 360px) {
+            .quietli-latest-card {
+              padding-left: 14px !important;
+              padding-right: 14px !important;
+              grid-template-columns: 40px minmax(0, 1fr) 32px !important;
+              column-gap: 10px !important;
+            }
+
+            .quietli-latest-avatar {
+              width: 40px !important;
+              height: 40px !important;
+            }
+
+            .quietli-latest-username {
+              font-size: 15px !important;
+            }
+
+            .quietli-latest-text {
+              font-size: 14px !important;
+              line-height: 1.2 !important;
+            }
+
+            .quietli-latest-logo {
+              width: 32px !important;
+              height: 32px !important;
+            }
+          }
+
           .quietli-embed-scroll {
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.55) rgba(255,255,255,0.14);
@@ -121,7 +164,7 @@ export default async function EmbedPage({
   const { variant, height } = await searchParams;
 
   const embedVariant: EmbedVariant = variant === "feed" ? "feed" : "latest";
-  const embedHeight = getEmbedHeight(height);
+  const feedEmbedHeight = getFeedEmbedHeight(height);
 
   const supabase = await createClient();
 
@@ -167,15 +210,6 @@ export default async function EmbedPage({
   if (embedVariant === "latest") {
     const latestBlip = blips?.[0];
 
-    const isVeryShort = embedHeight <= 100;
-    const isShort = embedHeight <= 120;
-
-    const avatarSize = isVeryShort ? 46 : isShort ? 50 : 56;
-    const logoSize = isVeryShort ? 38 : isShort ? 42 : 48;
-    const cardPaddingX = isVeryShort ? 18 : 22;
-    const usernameSize = isVeryShort ? 17 : 19;
-    const blipTextSize = isVeryShort ? 16 : 18;
-
     return (
       <>
         <EmbedPageResetStyles />
@@ -186,23 +220,21 @@ export default async function EmbedPage({
             target="_blank"
             rel="noreferrer"
             aria-label={`Open @${profile.username} on Quietli`}
-            className="block h-full w-full text-white no-underline"
+            className="block h-[100px] w-full text-white no-underline"
           >
             <article
-              className="grid h-full w-full items-center overflow-hidden rounded-[24px] border border-white/25 shadow-lg shadow-black/10"
+              className="quietli-latest-card grid w-full items-center overflow-hidden rounded-[24px] border border-white/25 px-[18px] shadow-lg shadow-black/10"
               style={{
                 background: cardBackground,
-                paddingLeft: cardPaddingX,
-                paddingRight: cardPaddingX,
-                gridTemplateColumns: `${avatarSize}px minmax(0, 1fr) ${logoSize}px`,
-                columnGap: isVeryShort ? "14px" : "18px",
+                gridTemplateColumns: "46px minmax(0, 1fr) 38px",
+                columnGap: "14px",
               }}
             >
               <div
-                className="relative overflow-hidden rounded-full border-2 border-white/70 bg-white/25"
+                className="quietli-latest-avatar relative overflow-hidden rounded-full border-2 border-white/70 bg-white/25"
                 style={{
-                  width: avatarSize,
-                  height: avatarSize,
+                  width: 46,
+                  height: 46,
                 }}
               >
                 {profile.avatar_url ? (
@@ -220,21 +252,19 @@ export default async function EmbedPage({
 
               <div className="min-w-0">
                 <p
-                  className="m-0 truncate font-semibold leading-tight text-white"
+                  className="quietli-latest-username m-0 truncate font-semibold leading-tight text-white"
                   style={{
-                    fontSize: usernameSize,
+                    fontSize: 18,
                   }}
                 >
                   @{profile.username}
                 </p>
 
                 <p
-                  className={`m-0 mt-1 text-white/92 ${
-                    isVeryShort ? "quietli-clamp-1" : "quietli-clamp-2"
-                  }`}
+                  className="quietli-latest-text quietli-clamp-1 m-0 mt-1 text-white/92"
                   style={{
-                    fontSize: blipTextSize,
-                    lineHeight: isVeryShort ? "1.2" : "1.28",
+                    fontSize: 16,
+                    lineHeight: 1.22,
                   }}
                 >
                   {latestBlip?.content ?? "No blips yet."}
@@ -244,10 +274,10 @@ export default async function EmbedPage({
               <img
                 src="/quietli-q.png"
                 alt="Quietli"
-                className="object-contain opacity-90"
+                className="quietli-latest-logo object-contain opacity-90"
                 style={{
-                  width: logoSize,
-                  height: logoSize,
+                  width: 38,
+                  height: 38,
                 }}
               />
             </article>
@@ -264,7 +294,10 @@ export default async function EmbedPage({
       <main className="fixed inset-0 overflow-hidden bg-transparent font-sans">
         <div
           className="relative h-full w-full overflow-hidden rounded-[24px] border border-white/25"
-          style={{ background: cardBackground }}
+          style={{
+            background: cardBackground,
+            height: feedEmbedHeight,
+          }}
         >
           <div className="absolute inset-0 overflow-hidden">
             <div className="sticky top-0 z-10 border-b border-white/18 bg-white/10 p-4 backdrop-blur-md">
