@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
 import { HomeShell } from "@/components/home-shell";
@@ -117,7 +118,13 @@ export default async function HomePage() {
         <div className="grid gap-4 md:grid-cols-3">
           <RevealOnScroll delay={100}>
             <div className="rounded-[2rem] border border-white/20 bg-white/15 p-6 backdrop-blur-xl">
-              <div className="mb-5 rounded-[1.5rem] border border-white/15 bg-white/15 p-4">
+              <div
+                className="mb-5 rounded-[1.5rem] border border-white/15 p-4 shadow-lg shadow-[#5c4abb]/10"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(166,158,232,0.46), rgba(249,168,212,0.26), rgba(255,255,255,0.12))",
+                }}
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-white">
@@ -133,11 +140,16 @@ export default async function HomePage() {
                   </span>
                 </div>
 
-                <div className="mt-4 rounded-[1.1rem] bg-white/16 p-4">
+                <div className="mt-4 rounded-[1.1rem] border border-white/15 bg-white/18 p-4">
                   <p className="text-sm leading-6 text-white/82">
                     I can let this thought exist without asking it to become a
                     whole personality.
                   </p>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between text-[11px] font-medium uppercase tracking-[0.12em] text-white/50">
+                  <span>quietly posted</span>
+                  <span>just now</span>
                 </div>
               </div>
 
@@ -153,19 +165,31 @@ export default async function HomePage() {
 
           <RevealOnScroll delay={220}>
             <div className="rounded-[2rem] border border-white/20 bg-white/15 p-6 backdrop-blur-xl">
-              <div className="mb-5 rounded-[1.5rem] border border-white/15 bg-white/15 p-4">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-white/25 bg-white/15">
-                  <div className="h-9 w-9 rounded-full border-4 border-white/70 border-t-white/20" />
+              <div
+                className="mb-5 rounded-[1.5rem] border border-white/15 p-4 shadow-lg shadow-[#7a3b8f]/10"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(216,180,254,0.36), rgba(103,232,249,0.20), rgba(255,255,255,0.12))",
+                }}
+              >
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-white/25 bg-white/18">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/18">
+                    <span className="text-2xl leading-none text-white/85">”</span>
+                  </div>
                 </div>
 
                 <div className="mt-4 grid gap-2">
-                  <div className="rounded-full bg-white/18 px-4 py-2 text-center text-xs font-medium text-white/72">
+                  <div className="rounded-full bg-white/22 px-4 py-2 text-center text-xs font-medium text-white/78">
                     draft gently
                   </div>
-                  <div className="rounded-full bg-white/10 px-4 py-2 text-center text-xs font-medium text-white/58">
+                  <div className="rounded-full bg-white/12 px-4 py-2 text-center text-xs font-medium text-white/64">
                     post when ready
                   </div>
                 </div>
+
+                <p className="mt-3 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-white/50">
+                  no pressure loop
+                </p>
               </div>
 
               <h3 className="mb-2 text-xl font-bold text-white">
@@ -180,9 +204,15 @@ export default async function HomePage() {
 
           <RevealOnScroll delay={340}>
             <div className="rounded-[2rem] border border-white/20 bg-white/15 p-6 backdrop-blur-xl">
-              <div className="mb-5 rounded-[1.5rem] border border-white/15 bg-white/15 p-4">
+              <div
+                className="mb-5 rounded-[1.5rem] border border-white/15 p-4 shadow-lg shadow-[#3d7f8f]/10"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(167,243,208,0.28), rgba(147,197,253,0.28), rgba(255,255,255,0.12))",
+                }}
+              >
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-[1rem] bg-white/20 p-3">
+                  <div className="rounded-[1rem] bg-white/22 p-3">
                     <p className="text-lg font-bold leading-none text-white">
                       240
                     </p>
@@ -191,7 +221,7 @@ export default async function HomePage() {
                     </p>
                   </div>
 
-                  <div className="rounded-[1rem] bg-white/12 p-3">
+                  <div className="rounded-[1rem] bg-white/14 p-3">
                     <p className="text-lg font-bold leading-none text-white">
                       0
                     </p>
@@ -200,8 +230,8 @@ export default async function HomePage() {
                     </p>
                   </div>
 
-                  <div className="col-span-2 rounded-[1rem] bg-white/10 px-3 py-2 text-xs font-medium text-white/68">
-                    tiny feed, quiet profile, simple embeds
+                  <div className="col-span-2 rounded-[1rem] bg-white/12 px-3 py-2 text-xs font-medium text-white/70">
+                    tiny feed • quiet profile • simple embeds
                   </div>
                 </div>
               </div>
@@ -234,7 +264,15 @@ export default async function HomePage() {
           <RevealOnScroll delay={100}>
             <div className="rounded-[2rem] border border-white/20 bg-white/15 p-5 backdrop-blur-xl">
               <div className="mb-4 flex items-center gap-3">
-                <div className="h-16 w-16 rounded-full border-2 border-white bg-white/20" />
+                <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-white bg-white/20">
+                  <Image
+                    src="/wallflower-avatar.png"
+                    alt="@wallflower demo profile flower avatar"
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
+                </div>
                 <div>
                   <p className="text-xl font-bold text-white">@wallflower</p>
                   <p className="text-sm text-white/70">
@@ -341,9 +379,14 @@ export default async function HomePage() {
             </div>
 
             <div className="rounded-[1.75rem] border border-white/20 bg-white/10 p-4">
-              <div className="mb-4 rounded-[1.25rem] bg-white/15 p-4">
-                <div className="mb-2 h-3 w-28 rounded-full bg-white/40" />
-                <div className="h-3 w-44 rounded-full bg-white/20" />
+              <div className="mb-4 rounded-[1.25rem] border border-white/15 bg-white/15 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
+                  Responsive embed
+                </p>
+                <p className="mt-2 text-sm leading-6 text-white/76">
+                  Copy one small snippet and let your newest blip resize itself
+                  inside a blog, portfolio, or personal homepage.
+                </p>
               </div>
 
               <div
@@ -364,8 +407,9 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              <div className="mt-4 rounded-[1.25rem] bg-white/15 p-4 font-mono text-xs leading-6 text-white/70">
-                &lt;iframe src=&quot;/embed/quietsignal&quot;&gt;&lt;/iframe&gt;
+              <div className="mt-4 rounded-[1.25rem] bg-[#2b355f]/35 p-4 font-mono text-xs leading-6 text-white/72">
+                &lt;iframe src=&quot;/embed/quietsignal?variant=latest&quot;
+                width=&quot;100%&quot;&gt;&lt;/iframe&gt;
               </div>
             </div>
           </div>
