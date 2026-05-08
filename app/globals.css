@@ -1,19 +1,31 @@
 @import "tailwindcss";
 
 :root {
+
   --site-bg: linear-gradient(to bottom right, #c6426e, #642b73);
+
   --site-text: #f8fafc;
+
   --nav-bg: rgba(255, 255, 255, 0.18);
+
   --mobile-menu-bg: #8f87dc;
+
 }
 
 html.dark,
+
 html[data-theme="dark"] {
+
   --site-bg: linear-gradient(to bottom right, #130818, #1d1028, #09060f);
+
   --site-text: #f8fafc;
+
   --nav-bg: rgba(20, 8, 28, 0.72);
+
   --mobile-menu-bg: #1d1028;
+
 }
+
 
 * {
   box-sizing: border-box;

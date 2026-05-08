@@ -2,25 +2,53 @@
 
 import { useEffect, useState } from "react";
 
+const THEME_STORAGE_KEY = "quietli-theme";
+
+type Theme = "light" | "dark";
+
+function getStoredTheme(): Theme {
+  if (typeof window === "undefined") return "light";
+
+  const quietliTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  const oldBrainBlipTheme = window.localStorage.getItem("brainblip-theme");
+
+  if (quietliTheme === "dark" || oldBrainBlipTheme === "dark") {
+    return "dark";
+  }
+
+  return "light";
+}
+
+function applyTheme(theme: Theme) {
+  const root = document.documentElement;
+
+  root.classList.toggle("dark", theme === "dark");
+  root.dataset.theme = theme;
+  root.style.colorScheme = theme;
+
+  window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  window.localStorage.setItem("brainblip-theme", theme);
+}
+
 export function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
+  const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("brainblip-theme");
-    const dark = savedTheme === "dark";
+  const isDark = theme === "dark";
 
-    document.documentElement.classList.toggle("dark", dark);
-    setIsDark(dark);
+  useEffect(() => {
+    const storedTheme = getStoredTheme();
+
+    applyTheme(storedTheme);
+    setTheme(storedTheme);
     setMounted(true);
   }, []);
 
   function toggleTheme() {
-    const nextDark = !isDark;
+    const nextTheme: Theme = isDark ? "light" : "dark";
 
-    setIsDark(nextDark);
-    document.documentElement.classList.toggle("dark", nextDark);
-    localStorage.setItem("brainblip-theme", nextDark ? "dark" : "light");
+    applyTheme(nextTheme);
+    setTheme(nextTheme);
   }
 
   return (
@@ -40,15 +68,13 @@ export function ThemeToggle() {
           aria-pressed={isDark}
           aria-label="Toggle dark mode"
           disabled={!mounted}
-          className={`relative h-8 w-14 rounded-full border border-white/30 transition-colors duration-300 ${
-            isDark ? "bg-[#2a1833]" : "bg-white/30"
+          className={`flex h-8 w-14 shrink-0 items-center rounded-full border border-white/30 p-1 transition-colors duration-300 ${
+            isDark
+              ? "justify-end bg-[#24142f]"
+              : "justify-start bg-white/30"
           } ${mounted ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
         >
-          <span
-            className={`absolute top-1 h-6 w-6 rounded-full bg-white transition-transform duration-300 ${
-              isDark ? "translate-x-7" : "translate-x-1"
-            }`}
-          />
+          <span className="block h-6 w-6 rounded-full bg-white shadow-md transition-all duration-300" />
         </button>
       </div>
     </div>
