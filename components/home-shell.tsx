@@ -324,7 +324,7 @@ export function HomeShell() {
           )}
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="blip-feed-grid grid gap-4">
           {feed.map((blip) => (
             <BlipCard
               key={blip.id}
