@@ -117,10 +117,28 @@ export default async function HomePage() {
         <div className="grid gap-4 md:grid-cols-3">
           <RevealOnScroll delay={100}>
             <div className="rounded-[2rem] border border-white/20 bg-white/15 p-6 backdrop-blur-xl">
-              <div className="mb-5 h-28 rounded-[1.5rem] bg-white/15 p-4">
-                <div className="mb-3 h-3 w-24 rounded-full bg-white/40" />
-                <div className="mb-2 h-3 w-40 rounded-full bg-white/25" />
-                <div className="h-3 w-28 rounded-full bg-white/20" />
+              <div className="mb-5 rounded-[1.5rem] border border-white/15 bg-white/15 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-white">
+                      just posting this here
+                    </p>
+                    <p className="mt-1 text-xs text-white/55">
+                      no likes • no replies
+                    </p>
+                  </div>
+
+                  <span className="rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/65">
+                    blip
+                  </span>
+                </div>
+
+                <div className="mt-4 rounded-[1.1rem] bg-white/16 p-4">
+                  <p className="text-sm leading-6 text-white/82">
+                    I can let this thought exist without asking it to become a
+                    whole personality.
+                  </p>
+                </div>
               </div>
 
               <h3 className="mb-2 text-xl font-bold text-white">
@@ -135,8 +153,19 @@ export default async function HomePage() {
 
           <RevealOnScroll delay={220}>
             <div className="rounded-[2rem] border border-white/20 bg-white/15 p-6 backdrop-blur-xl">
-              <div className="mb-5 flex h-28 items-center justify-center rounded-[1.5rem] bg-white/15">
-                <div className="h-14 w-14 rounded-full border-4 border-white/60" />
+              <div className="mb-5 rounded-[1.5rem] border border-white/15 bg-white/15 p-4">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-white/25 bg-white/15">
+                  <div className="h-9 w-9 rounded-full border-4 border-white/70 border-t-white/20" />
+                </div>
+
+                <div className="mt-4 grid gap-2">
+                  <div className="rounded-full bg-white/18 px-4 py-2 text-center text-xs font-medium text-white/72">
+                    draft gently
+                  </div>
+                  <div className="rounded-full bg-white/10 px-4 py-2 text-center text-xs font-medium text-white/58">
+                    post when ready
+                  </div>
+                </div>
               </div>
 
               <h3 className="mb-2 text-xl font-bold text-white">
@@ -151,11 +180,30 @@ export default async function HomePage() {
 
           <RevealOnScroll delay={340}>
             <div className="rounded-[2rem] border border-white/20 bg-white/15 p-6 backdrop-blur-xl">
-              <div className="mb-5 grid h-28 grid-cols-2 gap-3 rounded-[1.5rem] bg-white/15 p-3">
-                <div className="rounded-[1rem] bg-white/25" />
-                <div className="rounded-[1rem] bg-white/15" />
-                <div className="rounded-[1rem] bg-white/10" />
-                <div className="rounded-[1rem] bg-white/20" />
+              <div className="mb-5 rounded-[1.5rem] border border-white/15 bg-white/15 p-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-[1rem] bg-white/20 p-3">
+                    <p className="text-lg font-bold leading-none text-white">
+                      240
+                    </p>
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-white/55">
+                      chars
+                    </p>
+                  </div>
+
+                  <div className="rounded-[1rem] bg-white/12 p-3">
+                    <p className="text-lg font-bold leading-none text-white">
+                      0
+                    </p>
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-white/55">
+                      counts
+                    </p>
+                  </div>
+
+                  <div className="col-span-2 rounded-[1rem] bg-white/10 px-3 py-2 text-xs font-medium text-white/68">
+                    tiny feed, quiet profile, simple embeds
+                  </div>
+                </div>
               </div>
 
               <h3 className="mb-2 text-xl font-bold text-white">
@@ -240,9 +288,26 @@ export default async function HomePage() {
               </p>
 
               <div className="rounded-[1.5rem] border border-white/20 bg-white/10 p-4">
-                <div className="mb-4 h-24 rounded-[1.25rem] bg-white/15" />
-                <div className="mb-2 h-3 w-32 rounded-full bg-white/40" />
-                <div className="h-3 w-48 rounded-full bg-white/20" />
+                <div className="rounded-[1.25rem] bg-white/12 p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/20 text-lg font-bold text-white">
+                      q
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-bold text-white">
+                        @quietcorner
+                      </p>
+                      <p className="truncate text-xs text-white/65">
+                        soft notes, low stakes
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="mt-4 rounded-[1rem] bg-white/12 p-3 text-sm leading-6 text-white/78">
+                    A little place for thoughts that do not need a stage.
+                  </p>
+                </div>
               </div>
 
               <p className="mt-5 text-sm leading-6 text-white/75">
