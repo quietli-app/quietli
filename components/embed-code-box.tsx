@@ -7,28 +7,63 @@ type EmbedCodeBoxProps = {
 };
 
 type EmbedMode = "latest" | "feed";
-type EmbedHeight = 100 | 140 | 300 | 420 | 600;
+type LatestEmbedSize = "compact" | "standard" | "large";
+type FeedEmbedHeight = 300 | 420 | 600;
 
-const latestHeightOptions: EmbedHeight[] = [100, 140];
-const feedHeightOptions: EmbedHeight[] = [300, 420, 600];
+const latestSizeOptions: {
+  label: string;
+  value: LatestEmbedSize;
+  height: number;
+  description: string;
+}[] = [
+  {
+    label: "Compact",
+    value: "compact",
+    height: 100,
+    description: "Small preview",
+  },
+  {
+    label: "Standard",
+    value: "standard",
+    height: 152,
+    description: "Recommended",
+  },
+  {
+    label: "Large",
+    value: "large",
+    height: 220,
+    description: "Roomier display",
+  },
+];
+
+const feedHeightOptions: FeedEmbedHeight[] = [300, 420, 600];
 
 export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
   const [message, setMessage] = useState("");
   const [mode, setMode] = useState<EmbedMode>("latest");
-  const [latestHeight, setLatestHeight] = useState<EmbedHeight>(100);
-  const [feedHeight, setFeedHeight] = useState<EmbedHeight>(420);
+  const [latestSize, setLatestSize] = useState<LatestEmbedSize>("compact");
+  const [feedHeight, setFeedHeight] = useState<FeedEmbedHeight>(420);
 
-  const activeHeight = mode === "latest" ? latestHeight : feedHeight;
+  const selectedLatestOption =
+    latestSizeOptions.find((option) => option.value === latestSize) ??
+    latestSizeOptions[0];
+
+  const activeHeight =
+    mode === "latest" ? selectedLatestOption.height : feedHeight;
 
   const embedUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
 
-    return `${window.location.origin}/embed/${username}?variant=${mode}&height=${activeHeight}`;
-  }, [username, mode, activeHeight]);
+    if (mode === "latest") {
+      return `${window.location.origin}/embed/${username}?variant=latest&size=${latestSize}`;
+    }
 
-  const embedCode = `<iframe src="${embedUrl}" width="100%" height="${activeHeight}" style="border:0;border-radius:24px;overflow:hidden;display:block;" ${
-    mode === "latest" ? `scrolling="no"` : ``
-  } title="Quietli ${
+    return `${window.location.origin}/embed/${username}?variant=feed&height=${feedHeight}`;
+  }, [username, mode, latestSize, feedHeight]);
+
+  const embedCode = `<iframe src="${embedUrl}" width="100%" height="${activeHeight}" style="border:0;border-radius:24px;overflow:hidden;display:block;" scrolling="${
+    mode === "latest" ? "no" : "yes"
+  }" loading="lazy" title="Quietli ${
     mode === "latest" ? "latest blip" : "blip feed"
   }"></iframe>`;
 
@@ -44,9 +79,6 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
       );
     }
   }
-
-  const heightOptions =
-    mode === "latest" ? latestHeightOptions : feedHeightOptions;
 
   return (
     <div className="w-full max-w-full overflow-hidden rounded-[1.5rem] border border-white/20 bg-white/20 p-4 text-white backdrop-blur-xl sm:p-6">
@@ -100,36 +132,69 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
           Copy embed code
         </button>
 
-        <div className="rounded-[1.25rem] border border-white/15 bg-white/10 p-4">
-          <p className="text-sm font-semibold text-white">Preview height</p>
+        {mode === "latest" ? (
+          <div className="rounded-[1.25rem] border border-white/15 bg-white/10 p-4">
+            <p className="text-sm font-semibold text-white">Embed size</p>
 
-          <p className="mt-1 text-xs font-light leading-5 text-white/60">
-            Choose how tall the embedded Quietli box should appear.
-          </p>
+            <p className="mt-1 text-xs font-light leading-5 text-white/60">
+              Choose a Spotify-style preset for your latest blip.
+            </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {heightOptions.map((height) => (
-              <button
-                key={height}
-                type="button"
-                onClick={() => {
-                  if (mode === "latest") {
-                    setLatestHeight(height);
-                  } else {
-                    setFeedHeight(height);
-                  }
-                }}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                  activeHeight === height
-                    ? "bg-white text-[#642B73]"
-                    : "border border-white/25 bg-white/15 text-white hover:bg-white/25"
-                }`}
-              >
-                {height}px
-              </button>
-            ))}
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              {latestSizeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setLatestSize(option.value)}
+                  className={`rounded-[1rem] border px-4 py-3 text-left transition ${
+                    latestSize === option.value
+                      ? "border-white bg-white text-[#642B73]"
+                      : "border-white/25 bg-white/15 text-white hover:bg-white/25"
+                  }`}
+                >
+                  <span className="block text-sm font-semibold">
+                    {option.label}
+                  </span>
+
+                  <span
+                    className={`mt-1 block text-xs ${
+                      latestSize === option.value
+                        ? "text-[#642B73]/70"
+                        : "text-white/60"
+                    }`}
+                  >
+                    {option.height}px · {option.description}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-[1.25rem] border border-white/15 bg-white/10 p-4">
+            <p className="text-sm font-semibold text-white">Feed height</p>
+
+            <p className="mt-1 text-xs font-light leading-5 text-white/60">
+              Choose how tall the embedded Quietli feed should appear.
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {feedHeightOptions.map((height) => (
+                <button
+                  key={height}
+                  type="button"
+                  onClick={() => setFeedHeight(height)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                    feedHeight === height
+                      ? "bg-white text-[#642B73]"
+                      : "border border-white/25 bg-white/15 text-white hover:bg-white/25"
+                  }`}
+                >
+                  {height}px
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <a
           href={embedUrl}
@@ -146,17 +211,19 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
           <p className="text-sm font-semibold text-white">Live preview</p>
 
           <p className="text-xs font-light text-white/55">
-            {mode === "latest" ? "Latest blip" : "Blip feed"}
+            {mode === "latest"
+              ? `${selectedLatestOption.label} latest blip`
+              : "Blip feed"}
           </p>
         </div>
 
         <div
-  className="w-full max-w-full overflow-hidden rounded-[24px] bg-transparent"
-  style={{
-    height: activeHeight,
-    minHeight: activeHeight,
-  }}
->
+          className="w-full max-w-full overflow-hidden rounded-[24px] bg-transparent"
+          style={{
+            height: activeHeight,
+            minHeight: activeHeight,
+          }}
+        >
           <iframe
             src={embedUrl}
             title="Quietli embed preview"
