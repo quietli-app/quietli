@@ -134,7 +134,7 @@ export default async function EmbedPage({
       <>
         <EmbedPageResetStyles />
 
-        <main className="fixed inset-0 flex items-center justify-center overflow-hidden bg-transparent p-0 font-sans">
+        <main className="fixed inset-0 flex items-start overflow-hidden bg-transparent p-0 font-sans">
           <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[24px] border border-white/25 bg-white/20 px-4 text-center text-sm font-normal text-white/85">
             This Quietli profile is private.
           </div>
@@ -178,7 +178,7 @@ export default async function EmbedPage({
             className="block h-full w-full text-white no-underline"
           >
             <article
-              className="grid h-full w-full items-center overflow-hidden rounded-[24px] border border-white/25 shadow-lg shadow-black/10"
+  className="grid w-full items-center overflow-hidden rounded-[24px] border border-white/25 shadow-lg shadow-black/10"
               style={{
                 background: cardBackground,
                 paddingLeft: cardPaddingX,
