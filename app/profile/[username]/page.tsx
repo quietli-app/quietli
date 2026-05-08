@@ -261,9 +261,9 @@ export default async function ProfilePage({
   return (
     <>
       <ProfileNavTheme
-        siteBackground={profileBackground}
-        navBackground="rgba(255, 255, 255, 0.10)"
-      />
+  siteBackground={profileBackground}
+  navBackground={profileBackground}
+/>
 
       <main
         className="profile-theme-page min-h-screen px-4 pb-12 sm:py-10"

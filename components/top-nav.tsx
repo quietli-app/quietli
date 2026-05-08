@@ -39,8 +39,9 @@ export async function TopNav() {
     <header
       className="nav-bar sticky top-0 z-50 border-b border-white/20 backdrop-blur-xl"
       style={{
-        background: "var(--nav-bg, rgba(255, 255, 255, 0.16))",
-      }}
+  background:
+    "linear-gradient(135deg, rgba(255,255,255,0.20), rgba(255,255,255,0.08)), var(--nav-bg, #8f87dc)",
+}}
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
         <Link href="/" className="flex items-center">
