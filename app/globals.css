@@ -86,7 +86,12 @@ body {
 }
 
 .theme-gradient-card {
-  background: var(--theme-gradient-card-active);
+  background: var(--theme-gradient-card-light, var(--theme-gradient-card-active));
+}
+
+html.dark .theme-gradient-card,
+html[data-theme="dark"] .theme-gradient-card {
+  background: var(--theme-gradient-card-dark, var(--theme-gradient-card-active));
 }
 
 .theme-gradient-card-copy {
