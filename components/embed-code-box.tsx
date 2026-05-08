@@ -7,15 +7,15 @@ type EmbedCodeBoxProps = {
 };
 
 type EmbedMode = "latest" | "feed";
-type EmbedHeight = 100 | 200 | 300 | 420 | 600;
+type EmbedHeight = 160 | 220 | 300 | 420 | 600;
 
-const latestHeightOptions: EmbedHeight[] = [100, 200];
+const latestHeightOptions: EmbedHeight[] = [160, 220];
 const feedHeightOptions: EmbedHeight[] = [300, 420, 600];
 
 export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
   const [message, setMessage] = useState("");
   const [mode, setMode] = useState<EmbedMode>("latest");
-  const [latestHeight, setLatestHeight] = useState<EmbedHeight>(100);
+  const [latestHeight, setLatestHeight] = useState<EmbedHeight>(160);
   const [feedHeight, setFeedHeight] = useState<EmbedHeight>(420);
 
   const activeHeight = mode === "latest" ? latestHeight : feedHeight;
