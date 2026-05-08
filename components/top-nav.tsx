@@ -52,7 +52,7 @@ export async function TopNav() {
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden items-center justify-end gap-3 md:flex">
+        <div className="nav-float-in hidden items-center justify-end gap-3 md:flex">
           <Link href="/discover" className={desktopLinkClass}>
             Discover
           </Link>
