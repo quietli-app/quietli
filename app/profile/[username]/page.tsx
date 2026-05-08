@@ -266,14 +266,21 @@ export default async function ProfilePage({
       />
 
       <main
-        className="profile-theme-page min-h-screen px-4 pb-12 pt-5 sm:py-10"
+        className="profile-theme-page min-h-screen px-4 pb-12 sm:py-10"
         style={
           {
             "--profile-gradient": profileBackground,
+            background: profileBackground,
+            paddingTop: 0,
           } as React.CSSProperties
         }
       >
-        <div className="mx-auto max-w-5xl">
+        <div
+          className="mx-auto max-w-5xl"
+          style={{
+            paddingTop: "20px",
+          }}
+        >
           <section className="mb-8 rounded-[2rem] border border-white/20 bg-white/20 p-5 text-white backdrop-blur-xl sm:p-6">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex min-w-0 flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
