@@ -32,7 +32,7 @@ function getEmbedHeight(value?: string): EmbedHeight {
   if (value === "420") return 420;
   if (value === "600") return 600;
 
-  return 160;
+  return 120;
 }
 
 function EmbedPageResetStyles() {
@@ -60,25 +60,71 @@ function EmbedPageResetStyles() {
             box-sizing: border-box;
           }
 
-          .quietli-line-clamp-1 {
+          .quietli-single-blip {
+            container-type: inline-size;
+          }
+
+          .quietli-clamp-1 {
             display: -webkit-box;
             -webkit-line-clamp: 1;
             -webkit-box-orient: vertical;
             overflow: hidden;
           }
 
-          .quietli-line-clamp-2 {
+          .quietli-clamp-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
           }
 
-          .quietli-line-clamp-3 {
+          .quietli-clamp-3 {
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
+          }
+
+          @container (max-width: 420px) {
+            .quietli-latest-avatar {
+              width: 38px !important;
+              height: 38px !important;
+            }
+
+            .quietli-latest-username {
+              font-size: 16px !important;
+            }
+
+            .quietli-latest-logo {
+              width: 32px !important;
+              height: 32px !important;
+            }
+
+            .quietli-latest-text {
+              font-size: 17px !important;
+              line-height: 1.35 !important;
+            }
+          }
+
+          @container (max-width: 320px) {
+            .quietli-latest-avatar {
+              width: 32px !important;
+              height: 32px !important;
+            }
+
+            .quietli-latest-username {
+              font-size: 14px !important;
+            }
+
+            .quietli-latest-logo {
+              width: 28px !important;
+              height: 28px !important;
+            }
+
+            .quietli-latest-text {
+              font-size: 15px !important;
+              line-height: 1.3 !important;
+            }
           }
 
           .quietli-embed-scroll {
@@ -162,8 +208,16 @@ export default async function EmbedPage({
   if (embedVariant === "latest") {
     const latestBlip = blips?.[0];
 
-    const isTiny = embedHeight <= 120;
-    const isShort = embedHeight <= 160;
+    const isUltraShort = embedHeight <= 100;
+    const isShort = embedHeight <= 140;
+    const isMedium = embedHeight <= 180;
+
+    const avatarSize = isUltraShort ? 36 : isShort ? 40 : 48;
+    const logoSize = isUltraShort ? 32 : isShort ? 36 : 44;
+    const cardPaddingX = isUltraShort ? 18 : isShort ? 20 : 24;
+    const cardPaddingY = isUltraShort ? 12 : isShort ? 14 : 18;
+    const usernameSize = isUltraShort ? 16 : isShort ? 18 : 20;
+    const blipTextSize = isUltraShort ? 18 : isShort ? 20 : 22;
 
     return (
       <>
@@ -178,24 +232,26 @@ export default async function EmbedPage({
             className="block h-full w-full text-white no-underline"
           >
             <article
-              className="relative flex h-full w-full flex-col justify-center overflow-hidden rounded-[24px] border border-white/25 shadow-lg shadow-black/10"
+              className="quietli-single-blip relative grid h-full w-full overflow-hidden rounded-[24px] border border-white/25 shadow-lg shadow-black/10"
               style={{
                 background: cardBackground,
-                padding: isTiny ? "14px 18px" : "18px 22px",
+                padding: `${cardPaddingY}px ${cardPaddingX}px`,
+                gridTemplateRows: "auto minmax(0, 1fr)",
+                rowGap: isUltraShort ? "7px" : isShort ? "9px" : "12px",
               }}
             >
               <div
                 className="grid min-w-0 items-center"
                 style={{
-                  gridTemplateColumns: isTiny ? "38px 1fr 34px" : "48px 1fr 42px",
-                  columnGap: isTiny ? "10px" : "14px",
+                  gridTemplateColumns: `${avatarSize}px minmax(0, 1fr) ${logoSize}px`,
+                  columnGap: isUltraShort ? "10px" : "14px",
                 }}
               >
                 <div
-                  className="relative flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/25"
+                  className="quietli-latest-avatar relative flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/25"
                   style={{
-                    width: isTiny ? "38px" : "48px",
-                    height: isTiny ? "38px" : "48px",
+                    width: avatarSize,
+                    height: avatarSize,
                   }}
                 >
                   {profile.avatar_url ? (
@@ -212,9 +268,9 @@ export default async function EmbedPage({
                 </div>
 
                 <p
-                  className="min-w-0 truncate font-semibold leading-tight text-white"
+                  className="quietli-latest-username min-w-0 truncate font-semibold leading-tight text-white"
                   style={{
-                    fontSize: isTiny ? "16px" : "20px",
+                    fontSize: usernameSize,
                   }}
                 >
                   @{profile.username}
@@ -223,26 +279,31 @@ export default async function EmbedPage({
                 <img
                   src="/quietli-q.png"
                   alt="Quietli"
-                  className="object-contain opacity-90"
+                  className="quietli-latest-logo object-contain opacity-90"
                   style={{
-                    width: isTiny ? "34px" : "42px",
-                    height: isTiny ? "34px" : "42px",
+                    width: logoSize,
+                    height: logoSize,
                   }}
                 />
               </div>
 
-              <p
-                className={`mt-3 text-white/94 ${
-                  isShort ? "quietli-line-clamp-2" : "quietli-line-clamp-3"
-                }`}
-                style={{
-                  fontSize: isTiny ? "17px" : isShort ? "20px" : "22px",
-                  lineHeight: isTiny ? "1.35" : "1.42",
-                  marginTop: isTiny ? "8px" : "14px",
-                }}
-              >
-                {latestBlip?.content ?? "No blips yet."}
-              </p>
+              <div className="flex min-h-0 items-start overflow-hidden">
+                <p
+                  className={`quietli-latest-text m-0 text-white/94 ${
+                    isUltraShort
+                      ? "quietli-clamp-1"
+                      : isMedium
+                        ? "quietli-clamp-2"
+                        : "quietli-clamp-3"
+                  }`}
+                  style={{
+                    fontSize: blipTextSize,
+                    lineHeight: isUltraShort ? "1.2" : "1.32",
+                  }}
+                >
+                  {latestBlip?.content ?? "No blips yet."}
+                </p>
+              </div>
             </article>
           </a>
         </main>
