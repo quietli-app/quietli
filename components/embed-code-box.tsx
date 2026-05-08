@@ -151,12 +151,12 @@ export function EmbedCodeBox({ username }: EmbedCodeBoxProps) {
         </div>
 
         <div
-          className="w-full max-w-full overflow-hidden rounded-[1.5rem] border border-white/25 bg-transparent"
-          style={{
-            height: activeHeight,
-            minHeight: activeHeight,
-          }}
-        >
+  className="w-full max-w-full overflow-hidden rounded-[24px] bg-transparent"
+  style={{
+    height: activeHeight,
+    minHeight: activeHeight,
+  }}
+>
           <iframe
             src={embedUrl}
             title="Quietli embed preview"
