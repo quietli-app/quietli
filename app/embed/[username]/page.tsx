@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { gradientThemes } from "@/lib/gradient-themes";
 
 type EmbedVariant = "latest" | "feed";
-type EmbedHeight = 100 | 200 | 300 | 420 | 600;
+type EmbedHeight = 160 | 220 | 300 | 420 | 600;
 
 type Profile = {
   id: string;
@@ -21,11 +21,11 @@ type Blip = {
 };
 
 function getEmbedHeight(value?: string): EmbedHeight {
-  if (value === "200") return 200;
+  if (value === "220") return 220;
   if (value === "300") return 300;
   if (value === "420") return 420;
   if (value === "600") return 600;
-  return 100;
+  return 160;
 }
 
 function EmbedPageResetStyles() {
@@ -133,9 +133,7 @@ export default async function EmbedPage({
 
   if (embedVariant === "latest") {
     const latestBlip = blips?.[0];
-
-    const isCompact = embedHeight === 100;
-    const isMedium = embedHeight === 200 || embedHeight === 300;
+    const isTallLatest = embedHeight >= 220;
 
     return (
       <>
@@ -143,23 +141,13 @@ export default async function EmbedPage({
 
         <main className="fixed inset-0 overflow-hidden bg-transparent font-sans">
           <div
-            className={`relative flex h-full w-full overflow-hidden rounded-[24px] border border-white/25 ${
-              isCompact
-                ? "items-center px-5"
-                : "flex-col justify-center px-6 py-5"
-            }`}
+            className="relative flex h-full w-full flex-col justify-center overflow-hidden rounded-[24px] border border-white/25 px-4 py-4"
             style={{ background: cardBackground }}
           >
-            <div
-              className={`flex min-w-0 ${
-                isCompact
-                  ? "items-center gap-4 pr-16"
-                  : "items-start gap-4 pr-20"
-              }`}
-            >
+            <div className="flex min-w-0 items-center gap-3 pr-10">
               <div
                 className={`relative flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/25 ${
-                  isCompact ? "h-14 w-14" : "h-16 w-16"
+                  isTallLatest ? "h-14 w-14" : "h-12 w-12"
                 }`}
               >
                 {profile.avatar_url ? (
@@ -169,39 +157,39 @@ export default async function EmbedPage({
                     className="absolute inset-0 h-full w-full rounded-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-full text-lg font-medium text-white/90">
+                  <div className="flex h-full w-full items-center justify-center rounded-full text-base font-medium text-white/90">
                     {profile.username.slice(0, 1).toUpperCase()}
                   </div>
                 )}
               </div>
 
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p
-                  className={`truncate font-medium leading-5 text-white ${
-                    isCompact ? "text-base" : "text-lg"
+                  className={`truncate font-semibold leading-5 text-white ${
+                    isTallLatest ? "text-lg" : "text-base"
                   }`}
                 >
                   @{profile.username}
                 </p>
 
-                {!isCompact ? (
+                {isTallLatest ? (
                   <p className="mt-1 truncate text-sm font-normal text-white/72">
                     {profile.bio || "A stream of passing thoughts."}
                   </p>
                 ) : null}
-
-                <p
-                  className={`text-white/92 ${
-                    isCompact
-                      ? "mt-1 line-clamp-2 text-lg font-normal leading-6"
-                      : isMedium
-                        ? "mt-5 line-clamp-4 text-2xl font-normal leading-9"
-                        : "mt-8 line-clamp-6 text-3xl font-normal leading-[3rem]"
-                  }`}
-                >
-                  {latestBlip?.content ?? "No blips yet."}
-                </p>
               </div>
+            </div>
+
+            <div className={`${isTallLatest ? "mt-4" : "mt-3"} min-w-0`}>
+              <p
+                className={`text-white/94 ${
+                  isTallLatest
+                    ? "line-clamp-4 text-xl font-normal leading-8"
+                    : "line-clamp-3 text-base font-normal leading-6"
+                }`}
+              >
+                {latestBlip?.content ?? "No blips yet."}
+              </p>
             </div>
 
             <a
@@ -209,10 +197,10 @@ export default async function EmbedPage({
               target="_blank"
               rel="noreferrer"
               aria-label={`Open @${profile.username} on Quietli`}
-              className={`absolute object-contain opacity-90 transition hover:opacity-100 ${
-                isCompact
-                  ? "bottom-3 right-4 h-10 w-10"
-                  : "bottom-5 right-5 h-14 w-14"
+              className={`absolute object-contain opacity-85 transition hover:opacity-100 ${
+                isTallLatest
+                  ? "right-4 top-4 h-10 w-10"
+                  : "right-4 top-4 h-8 w-8"
               }`}
             >
               <img
@@ -238,8 +226,8 @@ export default async function EmbedPage({
         >
           <div className="absolute inset-0 overflow-hidden">
             <div className="sticky top-0 z-10 border-b border-white/18 bg-white/10 p-4 backdrop-blur-md">
-              <div className="flex items-center gap-3 pr-16">
-                <div className="relative h-14 w-14 flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/25">
+              <div className="flex min-w-0 items-center gap-3 pr-12">
+                <div className="relative h-12 w-12 flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/25 sm:h-14 sm:w-14">
                   {profile.avatar_url ? (
                     <img
                       src={profile.avatar_url}
@@ -254,7 +242,7 @@ export default async function EmbedPage({
                 </div>
 
                 <div className="min-w-0">
-                  <p className="truncate text-xl font-medium text-white">
+                  <p className="truncate text-lg font-medium text-white sm:text-xl">
                     @{profile.username}
                   </p>
 
