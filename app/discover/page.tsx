@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { gradientThemes } from "@/lib/gradient-themes";
+import { darkGradientThemes, gradientThemes } from "@/lib/gradient-themes";
 import { FollowButton } from "@/components/follow-button";
 
 type FollowStatus = "none" | "pending" | "accepted";
@@ -157,6 +157,9 @@ export default async function DiscoverPage() {
             const cardBackground =
               gradientThemes[profile.gradientTheme ?? "blush"] ??
               gradientThemes.blush;
+            const darkCardBackground =
+              darkGradientThemes[profile.gradientTheme ?? "blush"] ??
+              darkGradientThemes.blush;
 
             return (
               <article
@@ -165,8 +168,13 @@ export default async function DiscoverPage() {
               >
                 <Link href={`/profile/${profile.username}`} className="block">
                   <div
-                    className="rounded-[1.6rem] p-5"
-                    style={{ background: cardBackground }}
+                    className="theme-gradient-card rounded-[1.6rem] p-5"
+                    style={
+                      {
+                        "--theme-gradient-card-light": cardBackground,
+                        "--theme-gradient-card-dark": darkCardBackground,
+                      } as React.CSSProperties
+                    }
                   >
                     <div className="mb-5 flex items-center gap-4">
                       <div className="relative h-16 w-16 flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/30">
@@ -177,24 +185,24 @@ export default async function DiscoverPage() {
                             className="absolute inset-0 h-full w-full rounded-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center rounded-full text-xl font-bold text-[#2b0f2f]">
+                          <div className="theme-gradient-card-copy flex h-full w-full items-center justify-center rounded-full text-xl font-bold">
                             {profile.username.slice(0, 1).toUpperCase()}
                           </div>
                         )}
                       </div>
 
                       <div className="min-w-0">
-                        <p className="truncate text-xl font-bold text-[#2b0f2f]">
+                        <p className="theme-gradient-card-copy truncate text-xl font-bold">
                           @{profile.username}
                         </p>
 
-                        <p className="truncate text-sm text-[#2b0f2f]/75">
+                        <p className="theme-gradient-card-muted truncate text-sm">
                           {profile.bio || "A stream of passing thoughts."}
                         </p>
                       </div>
                     </div>
 
-                    <p className="line-clamp-3 text-base leading-7 text-[#2b0f2f]">
+                    <p className="theme-gradient-card-copy line-clamp-3 text-base leading-7">
                       {profile.latestBlip}
                     </p>
                   </div>

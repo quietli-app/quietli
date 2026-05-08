@@ -1,28 +1,17 @@
 "use client";
 
 import { useEffect } from "react";
-
-const THEME_STORAGE_KEY = "quietli-theme";
-
-function applyTheme(theme: "light" | "dark") {
-  const root = document.documentElement;
-
-  root.classList.toggle("dark", theme === "dark");
-  root.dataset.theme = theme;
-  root.style.colorScheme = theme;
-}
+import { applyTheme, getStoredTheme, subscribeToTheme } from "@/lib/theme";
 
 export function ThemeProvider() {
   useEffect(() => {
-    const savedTheme =
-      localStorage.getItem(THEME_STORAGE_KEY) ||
-      localStorage.getItem("brainblip-theme");
+    function syncTheme() {
+      applyTheme(getStoredTheme(), { notify: false });
+    }
 
-    const theme = savedTheme === "dark" ? "dark" : "light";
+    syncTheme();
 
-    applyTheme(theme);
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
-    localStorage.setItem("brainblip-theme", theme);
+    return subscribeToTheme(syncTheme);
   }, []);
 
   return null;

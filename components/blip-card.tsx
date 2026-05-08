@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { gradientThemes } from "@/lib/gradient-themes";
+import { darkGradientThemes, gradientThemes } from "@/lib/gradient-themes";
 
 type BlipCardProps = {
   id: string;
@@ -29,6 +29,8 @@ export function BlipCard({
 
   const cardBackground =
     gradientThemes[gradientTheme ?? "blush"] ?? gradientThemes.blush;
+  const darkCardBackground =
+    darkGradientThemes[gradientTheme ?? "blush"] ?? darkGradientThemes.blush;
 
   async function deleteBlip() {
     const confirmed = window.confirm("Delete this blip?");
@@ -47,8 +49,13 @@ export function BlipCard({
 
   return (
     <article
-      className="overflow-hidden rounded-[2rem] border border-white/20 p-5 text-white backdrop-blur-xl"
-      style={{ background: cardBackground }}
+      className="theme-gradient-card overflow-hidden rounded-[2rem] border border-white/20 p-5 text-white backdrop-blur-xl"
+      style={
+        {
+          "--theme-gradient-card-light": cardBackground,
+          "--theme-gradient-card-dark": darkCardBackground,
+        } as React.CSSProperties
+      }
     >
       <div className="mb-4 flex items-center justify-between gap-4">
         <Link

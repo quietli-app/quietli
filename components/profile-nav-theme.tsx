@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { THEME_CHANGE_EVENT } from "@/lib/theme";
 
 type ProfileNavThemeProps = {
   siteBackground: string;
@@ -45,11 +46,11 @@ export function ProfileNavTheme({
 
     applyProfileTheme();
 
-    window.addEventListener("quietli:themechange", applyProfileTheme);
+    window.addEventListener(THEME_CHANGE_EVENT, applyProfileTheme);
     window.addEventListener("storage", applyProfileTheme);
 
     return () => {
-      window.removeEventListener("quietli:themechange", applyProfileTheme);
+      window.removeEventListener(THEME_CHANGE_EVENT, applyProfileTheme);
       window.removeEventListener("storage", applyProfileTheme);
 
       if (previousSiteBg) {

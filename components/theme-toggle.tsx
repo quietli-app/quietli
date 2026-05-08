@@ -1,53 +1,13 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-
-const THEME_STORAGE_KEY = "quietli-theme";
-
-type Theme = "light" | "dark";
-
-function getStoredTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-
-  const quietliTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-  const oldBrainBlipTheme = window.localStorage.getItem("brainblip-theme");
-
-  if (quietliTheme === "dark" || oldBrainBlipTheme === "dark") {
-    return "dark";
-  }
-
-  return "light";
-}
-
-function applyTheme(theme: Theme) {
-  const root = document.documentElement;
-
-  root.classList.toggle("dark", theme === "dark");
-  root.dataset.theme = theme;
-  root.style.colorScheme = theme;
-
-  window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-  window.localStorage.setItem("brainblip-theme", theme);
-  window.dispatchEvent(
-    new CustomEvent("quietli:themechange", { detail: { theme } })
-  );
-}
-
-function subscribeToTheme(onStoreChange: () => void) {
-  if (typeof window === "undefined") return () => {};
-
-  window.addEventListener("quietli:themechange", onStoreChange);
-  window.addEventListener("storage", onStoreChange);
-
-  return () => {
-    window.removeEventListener("quietli:themechange", onStoreChange);
-    window.removeEventListener("storage", onStoreChange);
-  };
-}
-
-function getServerThemeSnapshot(): Theme {
-  return "light";
-}
+import {
+  applyTheme,
+  getServerThemeSnapshot,
+  getStoredTheme,
+  subscribeToTheme,
+} from "@/lib/theme";
+import type { Theme } from "@/lib/theme";
 
 export function ThemeToggle() {
   const theme = useSyncExternalStore(
@@ -69,7 +29,7 @@ export function ThemeToggle() {
       <p className="mb-2 text-xl font-bold text-white">Site settings</p>
 
       <p className="mb-4 text-base text-white/75">
-        Toggle a darker sitewide viewing mode.
+        Toggle a darker viewing mode across Quietli.
       </p>
 
       <div className="flex items-center justify-between gap-4">
@@ -78,7 +38,8 @@ export function ThemeToggle() {
         <button
           type="button"
           onClick={toggleTheme}
-          aria-pressed={isDark}
+          role="switch"
+          aria-checked={isDark}
           aria-label="Toggle dark mode"
           className={`flex h-8 w-14 shrink-0 items-center rounded-full border border-white/30 p-1 transition-colors duration-300 ${
             isDark

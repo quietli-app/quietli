@@ -10,6 +10,18 @@
 
   --mobile-menu-bg: #8f87dc;
 
+  --site-ambient-glow: radial-gradient(
+    circle at top left,
+    rgba(255, 255, 255, 0.12),
+    transparent 40%
+  );
+
+  --theme-gradient-card-active: var(--theme-gradient-card-light);
+
+  --theme-gradient-card-copy: #2b0f2f;
+
+  --theme-gradient-card-muted: rgba(43, 15, 47, 0.75);
+
 }
 
 html.dark,
@@ -23,6 +35,18 @@ html[data-theme="dark"] {
   --nav-bg: rgba(20, 8, 28, 0.72);
 
   --mobile-menu-bg: #1d1028;
+
+  --site-ambient-glow: radial-gradient(
+    circle at top left,
+    rgba(255, 255, 255, 0.08),
+    transparent 42%
+  );
+
+  --theme-gradient-card-active: var(--theme-gradient-card-dark);
+
+  --theme-gradient-card-copy: rgba(255, 255, 255, 0.92);
+
+  --theme-gradient-card-muted: rgba(255, 255, 255, 0.72);
 
 }
 
@@ -48,6 +72,22 @@ body {
   min-height: 100vh;
   background-attachment: fixed;
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.site-ambient {
+  background: var(--site-ambient-glow);
+}
+
+.theme-gradient-card {
+  background: var(--theme-gradient-card-active);
+}
+
+.theme-gradient-card-copy {
+  color: var(--theme-gradient-card-copy);
+}
+
+.theme-gradient-card-muted {
+  color: var(--theme-gradient-card-muted);
 }
 
 .profile-theme-page {
