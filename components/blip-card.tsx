@@ -49,7 +49,7 @@ export function BlipCard({
 
   return (
     <article
-      className="theme-gradient-card overflow-hidden rounded-[2rem] border border-white/20 p-5 text-white backdrop-blur-xl"
+      className="theme-gradient-card overflow-hidden rounded-[2rem] border border-white/25 p-6 text-white shadow-[0_24px_60px_rgba(43,15,47,0.18)] backdrop-blur-xl"
       style={
         {
           "--theme-gradient-card-light": cardBackground,
@@ -57,12 +57,12 @@ export function BlipCard({
         } as React.CSSProperties
       }
     >
-      <div className="mb-4 flex items-center justify-between gap-4">
+      <div className="mb-6 flex items-center justify-between gap-4">
         <Link
           href={`/profile/${username}`}
           className="flex min-w-0 items-center gap-3"
         >
-          <div className="relative h-14 w-14 flex-none overflow-hidden rounded-full border-4 border-white/90 bg-white/25">
+          <div className="relative h-14 w-14 flex-none overflow-hidden rounded-full border-4 border-white/90 bg-white/25 shadow-[0_8px_24px_rgba(43,15,47,0.16)]">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
@@ -77,11 +77,11 @@ export function BlipCard({
           </div>
 
           <div className="min-w-0">
-            <p className="truncate text-base font-normal text-white">
+            <p className="truncate text-xl font-normal text-white">
               @{username}
             </p>
 
-            <p className="text-xs font-light text-white/65">
+            <p className="text-sm font-light text-white/72">
               {new Date(createdAt).toLocaleString()}
             </p>
           </div>
@@ -98,7 +98,7 @@ export function BlipCard({
         ) : null}
       </div>
 
-      <p className="whitespace-pre-wrap text-lg font-normal leading-8 text-white/92">
+      <p className="whitespace-pre-wrap text-xl font-normal leading-8 text-white/95">
         {content}
       </p>
     </article>
