@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { gradientThemes } from "@/lib/gradient-themes";
 
 type EmbedVariant = "latest" | "feed";
-type EmbedHeight = 100 | 160 | 200 | 220 | 300 | 420 | 600;
+type EmbedHeight = 100 | 120 | 140 | 160 | 180 | 200 | 220 | 300 | 420 | 600;
 
 type Profile = {
   id: string;
@@ -22,7 +22,10 @@ type Blip = {
 
 function getEmbedHeight(value?: string): EmbedHeight {
   if (value === "100") return 100;
+  if (value === "120") return 120;
+  if (value === "140") return 140;
   if (value === "160") return 160;
+  if (value === "180") return 180;
   if (value === "200") return 200;
   if (value === "220") return 220;
   if (value === "300") return 300;
@@ -42,6 +45,7 @@ function EmbedPageResetStyles() {
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
+            height: 100% !important;
             min-height: 0 !important;
             overflow: hidden !important;
             background: transparent !important;
@@ -54,6 +58,27 @@ function EmbedPageResetStyles() {
 
           * {
             box-sizing: border-box;
+          }
+
+          .quietli-line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+
+          .quietli-line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+
+          .quietli-line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
           }
 
           .quietli-embed-scroll {
@@ -137,6 +162,9 @@ export default async function EmbedPage({
   if (embedVariant === "latest") {
     const latestBlip = blips?.[0];
 
+    const isTiny = embedHeight <= 120;
+    const isShort = embedHeight <= 160;
+
     return (
       <>
         <EmbedPageResetStyles />
@@ -150,11 +178,26 @@ export default async function EmbedPage({
             className="block h-full w-full text-white no-underline"
           >
             <article
-              className="relative flex h-full w-full flex-col justify-center overflow-hidden rounded-[24px] border border-white/25 px-5 py-4 shadow-lg shadow-black/10"
-              style={{ background: cardBackground }}
+              className="relative flex h-full w-full flex-col justify-center overflow-hidden rounded-[24px] border border-white/25 shadow-lg shadow-black/10"
+              style={{
+                background: cardBackground,
+                padding: isTiny ? "14px 18px" : "18px 22px",
+              }}
             >
-              <div className="flex min-w-0 items-center gap-3 pr-12">
-                <div className="relative h-12 w-12 flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/25">
+              <div
+                className="grid min-w-0 items-center"
+                style={{
+                  gridTemplateColumns: isTiny ? "38px 1fr 34px" : "48px 1fr 42px",
+                  columnGap: isTiny ? "10px" : "14px",
+                }}
+              >
+                <div
+                  className="relative flex-none overflow-hidden rounded-full border-2 border-white/70 bg-white/25"
+                  style={{
+                    width: isTiny ? "38px" : "48px",
+                    height: isTiny ? "38px" : "48px",
+                  }}
+                >
                   {profile.avatar_url ? (
                     <img
                       src={profile.avatar_url}
@@ -168,22 +211,38 @@ export default async function EmbedPage({
                   )}
                 </div>
 
-                <p className="min-w-0 truncate text-base font-semibold leading-5 text-white sm:text-lg">
+                <p
+                  className="min-w-0 truncate font-semibold leading-tight text-white"
+                  style={{
+                    fontSize: isTiny ? "16px" : "20px",
+                  }}
+                >
                   @{profile.username}
                 </p>
-              </div>
 
-              <p className="mt-4 line-clamp-3 text-lg font-normal leading-7 text-white/94 sm:text-xl sm:leading-8">
-                {latestBlip?.content ?? "No blips yet."}
-              </p>
-
-              <div className="absolute right-5 top-5 h-10 w-10 opacity-90">
                 <img
                   src="/quietli-q.png"
                   alt="Quietli"
-                  className="h-full w-full object-contain"
+                  className="object-contain opacity-90"
+                  style={{
+                    width: isTiny ? "34px" : "42px",
+                    height: isTiny ? "34px" : "42px",
+                  }}
                 />
               </div>
+
+              <p
+                className={`mt-3 text-white/94 ${
+                  isShort ? "quietli-line-clamp-2" : "quietli-line-clamp-3"
+                }`}
+                style={{
+                  fontSize: isTiny ? "17px" : isShort ? "20px" : "22px",
+                  lineHeight: isTiny ? "1.35" : "1.42",
+                  marginTop: isTiny ? "8px" : "14px",
+                }}
+              >
+                {latestBlip?.content ?? "No blips yet."}
+              </p>
             </article>
           </a>
         </main>
