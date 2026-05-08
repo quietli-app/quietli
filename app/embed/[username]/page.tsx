@@ -3,7 +3,18 @@ import { createClient } from "@/lib/supabase/server";
 import { gradientThemes } from "@/lib/gradient-themes";
 
 type EmbedVariant = "latest" | "feed";
-type EmbedHeight = 96 | 100 | 120 | 140 | 160 | 180 | 200 | 220 | 300 | 420 | 600;
+type EmbedHeight =
+  | 96
+  | 100
+  | 120
+  | 140
+  | 160
+  | 180
+  | 200
+  | 220
+  | 300
+  | 420
+  | 600;
 
 type Profile = {
   id: string;
@@ -33,7 +44,7 @@ function getEmbedHeight(value?: string): EmbedHeight {
   if (value === "420") return 420;
   if (value === "600") return 600;
 
-  return 96;
+  return 100;
 }
 
 function EmbedPageResetStyles() {
@@ -134,7 +145,7 @@ export default async function EmbedPage({
       <>
         <EmbedPageResetStyles />
 
-        <main className="fixed inset-0 flex items-start overflow-hidden bg-transparent p-0 font-sans">
+        <main className="fixed inset-0 overflow-hidden bg-transparent p-0 font-sans">
           <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[24px] border border-white/25 bg-white/20 px-4 text-center text-sm font-normal text-white/85">
             This Quietli profile is private.
           </div>
@@ -178,7 +189,7 @@ export default async function EmbedPage({
             className="block h-full w-full text-white no-underline"
           >
             <article
-  className="grid w-full items-center overflow-hidden rounded-[24px] border border-white/25 shadow-lg shadow-black/10"
+              className="grid h-full w-full items-center overflow-hidden rounded-[24px] border border-white/25 shadow-lg shadow-black/10"
               style={{
                 background: cardBackground,
                 paddingLeft: cardPaddingX,
