@@ -2,33 +2,36 @@
 
 :root {
 
-  --site-bg:
-    radial-gradient(circle at 18% 8%, rgba(34, 211, 238, 0.28), transparent 30%),
-    radial-gradient(circle at 86% 18%, rgba(217, 70, 239, 0.24), transparent 32%),
-    radial-gradient(circle at 62% 92%, rgba(125, 216, 197, 0.18), transparent 34%),
-    linear-gradient(145deg, #08111f 0%, #10091f 48%, #050712 100%);
+  --site-bg: linear-gradient(
+    to bottom,
+    #a69ee8 0%,
+    #9589dc 32%,
+    #8676cf 62%,
+    #a590a3 86%,
+    #b8a1a9 100%
+  );
 
   --site-text: #f8fafc;
 
-  --nav-bg: rgba(7, 11, 24, 0.62);
+  --nav-bg: rgba(255, 255, 255, 0.18);
 
-  --mobile-menu-bg: #101a30;
+  --mobile-menu-bg: #8f87dc;
 
   --site-ambient-glow: radial-gradient(
       circle at 8% 4%,
-      rgba(103, 232, 249, 0.22),
+      rgba(255, 255, 255, 0.16),
       transparent 32%
     ),
-    radial-gradient(circle at 92% 14%, rgba(244, 114, 182, 0.18), transparent 28%);
+    radial-gradient(circle at 92% 14%, rgba(255, 255, 255, 0.12), transparent 28%);
 
   --site-ambient-motion:
     linear-gradient(
       120deg,
-      rgba(34, 211, 238, 0.22),
+      rgba(255, 255, 255, 0.16),
       transparent 30%,
-      rgba(217, 70, 239, 0.22) 54%,
+      rgba(240, 171, 252, 0.16) 54%,
       transparent 74%,
-      rgba(125, 216, 197, 0.18)
+      rgba(255, 255, 255, 0.12)
     );
 
   --theme-gradient-card-active: var(--theme-gradient-card-light);
@@ -148,18 +151,16 @@ html[data-theme="dark"] .theme-gradient-card {
   isolation: isolate;
   background: linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.12),
-      rgba(255, 255, 255, 0.04)
+      rgba(255, 255, 255, 0.24),
+      rgba(255, 255, 255, 0.08)
     ),
-    rgba(8, 13, 28, 0.34);
+    rgba(255, 255, 255, 0.1);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 0 0 1px rgba(103, 232, 249, 0.18),
-    0 20px 46px rgba(5, 8, 18, 0.32),
-    0 0 32px rgba(34, 211, 238, 0.12),
-    0 0 42px rgba(217, 70, 239, 0.08);
-  -webkit-backdrop-filter: blur(22px) saturate(1.32);
-  backdrop-filter: blur(22px) saturate(1.32);
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 0 18px rgba(255, 255, 255, 0.08),
+    0 18px 44px rgba(43, 15, 47, 0.14);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  backdrop-filter: blur(22px) saturate(1.2);
 }
 
 .frosted-blip-card::before {
@@ -172,7 +173,7 @@ html[data-theme="dark"] .theme-gradient-card {
 
 .frosted-blip-card::before {
   background: var(--theme-gradient-card-light, var(--theme-gradient-card-active));
-  opacity: 0.2;
+  opacity: 0.14;
 }
 
 .frosted-blip-card > * {
@@ -223,11 +224,11 @@ img {
 
 .nav-bar {
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.08)),
     var(--nav-bg);
   box-shadow:
-    inset 0 -1px 0 rgba(103, 232, 249, 0.16),
-    0 18px 48px rgba(5, 8, 18, 0.24);
+    inset 0 -1px 0 rgba(255, 255, 255, 0.18),
+    0 18px 48px rgba(43, 15, 47, 0.12);
 }
 
 html.dark .nav-bar,
@@ -244,15 +245,14 @@ html[data-theme="dark"] .nav-bar {
   overflow: hidden;
   border-color: rgba(255, 255, 255, 0.18);
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.04)),
-    rgba(8, 13, 28, 0.32);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.08)),
+    rgba(255, 255, 255, 0.12);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 18px 46px rgba(5, 8, 18, 0.24),
-    0 0 28px rgba(34, 211, 238, 0.08),
-    0 0 36px rgba(217, 70, 239, 0.06);
-  -webkit-backdrop-filter: blur(24px) saturate(1.36);
-  backdrop-filter: blur(24px) saturate(1.36);
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 0 24px rgba(255, 255, 255, 0.08),
+    0 18px 46px rgba(43, 15, 47, 0.12);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  backdrop-filter: blur(22px) saturate(1.2);
 }
 
 .liquid-panel::before,
@@ -263,8 +263,8 @@ html[data-theme="dark"] .nav-bar {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 0% 0%, rgba(103, 232, 249, 0.26), transparent 36%),
-    radial-gradient(circle at 100% 100%, rgba(217, 70, 239, 0.22), transparent 38%);
+    radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.24), transparent 36%),
+    radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.16), transparent 38%);
 }
 
 .liquid-panel > *,
@@ -275,9 +275,8 @@ html[data-theme="dark"] .nav-bar {
 
 .liquid-control {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 10px 28px rgba(5, 8, 18, 0.18),
-    0 0 18px rgba(34, 211, 238, 0.06);
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 10px 28px rgba(43, 15, 47, 0.1);
 }
 
 .liquid-active,
@@ -301,4 +300,87 @@ html[data-theme="dark"] .nav-bar {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.7),
     0 12px 34px rgba(5, 8, 18, 0.16);
+}
+
+.splash-page :where(div, section)[class*="backdrop-blur"]:not(.absolute) {
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 0 22px rgba(255, 255, 255, 0.08),
+    0 16px 42px rgba(43, 15, 47, 0.1);
+}
+
+.splash-page :where(div, section)[class*="backdrop-blur"]:not(.absolute)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.04)
+  );
+}
+
+.splash-page :where(div, section)[class*="backdrop-blur"]:not(.absolute) > * {
+  position: relative;
+  z-index: 1;
+}
+
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0) scale(0.985);
+  filter: blur(8px);
+  transition:
+    opacity 720ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 720ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 720ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform, filter;
+}
+
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
+}
+
+main > :where(section, div, form, article):not(.pointer-events-none) {
+  animation: quietliPageFloatIn 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes quietliPageFloatIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+    filter: blur(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  main > :where(section, div, form, article):not(.pointer-events-none) {
+    animation-name: quietliPageFloatIn;
+    animation-duration: 1ms;
+    animation-fill-mode: both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 24%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll,
+  main > :where(section, div, form, article):not(.pointer-events-none) {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
 }

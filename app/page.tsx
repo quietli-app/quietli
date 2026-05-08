@@ -40,7 +40,7 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden px-4 py-16">
+    <main className="splash-page relative min-h-screen overflow-hidden px-4 py-16">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         {floatingBlips.map((text, index) => (
           <div
